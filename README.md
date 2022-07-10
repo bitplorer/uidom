@@ -17,7 +17,7 @@ This library is inspired from dominate html library and takes it further. It sup
 > pip install uidom
 ```
 
-### An Alpinejs toggle example 
+### An Alpinejs toggle example
 
 ```python
 #!/usr/bin/env python
@@ -25,8 +25,6 @@ This library is inspired from dominate html library and takes it further. It sup
 """
  This example should work as is. 
 """
-from dataclasses import dataclass
-
 from fastapi import FastAPI
 from uidom import UiDOM
 from uidom.dom import HTMLElement, script, title, div
@@ -60,7 +58,7 @@ class App(HTMLElement):
 
 @api.get('/')
 def index():
-return App(ToggleMe())
+    return App(ToggleMe())
 
 ```
 
