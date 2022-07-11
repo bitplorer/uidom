@@ -93,6 +93,9 @@ Template(MenuTemplate.render()).render(menu_items=[
 ## using raw html with uidom elements
 
 ```python
+from uidom.dom import *
+
+
 class Modal(HTMLElement):
 
     def __render__(self, *args, **kwargs):
