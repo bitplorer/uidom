@@ -66,6 +66,9 @@ def index():
 
 ```python
 from uidom.dom import HTMLElement, nav, ul, For, li, a, Var
+from jinja2.environment import Template
+from collections import namedtuple as nt
+
 
 class MenuTemplate(HTMLElement):
 
@@ -79,6 +82,12 @@ class MenuTemplate(HTMLElement):
             )
         )
 # now we can use MenuTemplate just like we use jinja templates and render it 
+menu_url = nt("menu_url", "name link")
+Template(MenuTemplate.render()).render(menu_items=[
+            menu_url("Home", "home.html"),
+            menu_url("About", "about.html"),
+            menu_url("Contact Us", "contact_us.html")
+        ])
 ```
 
 ## LICENSE
