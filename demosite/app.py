@@ -8,7 +8,7 @@ from uidom.dom import *
 from uidom.response import doc_response
 
 from demosite.api import api
-from demosite.dom import document
+from demosite.document import document
 
 
 @doc_response
