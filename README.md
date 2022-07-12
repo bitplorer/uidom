@@ -81,7 +81,9 @@ class MenuTemplate(HTMLElement):
                 )
             )
         )
+
 # now we can use MenuTemplate just like we use jinja templates and render it 
+
 menu_url = nt("menu_url", "name link")
 Template(MenuTemplate.render()).render(menu_items=[
             menu_url("Home", "home.html"),
@@ -99,7 +101,7 @@ from uidom.dom import *
 class Modal(HTMLElement):
 
     def __render__(self, *args, **kwargs):
-        return HTMLStringToDom('''
+        return HTMLStringToElement('''
 <div x-data="{ open: false }">
     <!-- Button -->
     <button x-on:click="open = true" type="button"
@@ -146,7 +148,7 @@ class Modal(HTMLElement):
             </div>
         </div>
     </div>
-</div>''').parse()
+</div>''')
 
 ```
 
