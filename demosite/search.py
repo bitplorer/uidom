@@ -109,7 +109,7 @@ class Search2(XComponent):
                 div(icon,
                     className="absolute "
                     "flex inset-0 object-contain left-1 top-2 justify-center "
-                    "items-center overflow-hidden focus:outline-none m-1 "
+                    "items-center focus:outline-none m-1 "
                     "h-5 w-5 flex-auto pointer-events-none "
                     "items-center p-0.5 pb-1.5 text-orange-400 fill-current")
 
@@ -125,7 +125,7 @@ class Search2(XComponent):
                     spellcheck="false",
                     maxlength=64,
                     autocomplete="false",
-                    hx_trigger="keyup[target.value.length > 0] changed delay:300ms",
+                    hx_trigger="keyup[target.value.length > 0] changed delay:800ms",
                     hx_target=f"#{target_id}",
                     hx_swap="innerHTML",
                     hx_post=api,
@@ -134,9 +134,8 @@ class Search2(XComponent):
                 ),
 
                 div(id=target_id,
-                    className="flex flex-row grow justify-center items-center w-full h-screen "
-                              "z-10 absolute -left-0.5 top-10 bg-yellow-200/40 "
-                              "m-0.5 mr-1 backdrop-blur-sm p-2 md:dark:bg-stone-600/10 ",
+                    className="flex flex-col grow justify-center items-center w-full h-80 "
+                              "bg-yellow-200/40 m-0.5 mr-1 backdrop-blur-sm p-2 md:dark:bg-stone-600/10 ",
                     x_on_keydown_dot_escape_dot_window="show = false",
                     x_show="show")
             return search_2
@@ -156,9 +155,16 @@ try:
 except AttributeError:
     pass
 
+last_searched =  []
+
 try:
     @api.post("/search_api")
     def search_results(search_query: str = FForm(...)):
-        return DocumentResponse(div(search_query, className="flex flex-grow w-full h-full"))
+        last_searched.append(search_query)
+        last_searched = last_searched[:-5]
+        if not any(last_searched):
+            return DocumentResponse(div(search_query, className="flex flex-grow w-full h-6 p-2"))
+        res = reversed([div(query, className="flex flex-grow w-full h-full p-2") for query in last_searched])
+        return DocumentResponse(div(*res, className="flex flex-col w-full h-full"))
 except AttributeError:
     pass

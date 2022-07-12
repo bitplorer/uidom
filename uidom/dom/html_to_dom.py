@@ -12,7 +12,6 @@ import typing as T
 from copy import deepcopy
 from dataclasses import dataclass, field
 
-from sourcetypes import html as shtml
 from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src import ext, htmltags, jinjatags, svgtags
 from uidom.dom.src.htmltags import html_tag
@@ -21,20 +20,20 @@ from uidom.dom.src.utils import dom_text
 
 __all__ = [
     "HTMLStringToDom",
-    # "HTMLToPy"
+    "HTMLStringToElement"
 ]
 
 
-def create_dynamic_element(tag_name):
+def create_dynamic_element(tag_name: str) -> T.Type[ext.Tags]:
     class _Element(ext.Tags):
         tagname = tag_name
 
     cls_name = ''.join(map(lambda x: x.capitalize(), tag_name.split("-")))
     _Element.__qualname__ = cls_name
     _Element.__name__ = cls_name
-    module_name = os.path.splitext(os.path.basename(sys.modules["__main__"].__file__))[0]
+    module_name: str = os.path.splitext(os.path.basename(sys.modules["__main__"].__file__))[0] # type: ignore
     _Element.__module__ = module_name
-    element = deepcopy(_Element)
+    element: T.Type[ext.Tags]  = deepcopy(_Element)
     del _Element
     setattr(sys.modules["__main__"], cls_name, element)
     return element
@@ -42,15 +41,25 @@ def create_dynamic_element(tag_name):
 
 @dataclass
 class HTMLStringToDom(object):
-    html_string_or_token: T.Union[str, Element, list[Element], ext.Tags, shtml]
-    modules: T.Optional[list[types.ModuleType]] = field(default_factory=list)
+    html_string_or_token: T.Union[str, Element, list[Element], ext.Tags]
+    modules: list[types.ModuleType] = field(default_factory=list)
 
     def __post_init__(self):
         self.tokens: T.Union[Element, list[Element], ext.Tags] = tokenize_html(
             self.html_string_or_token if not isinstance(self.html_string_or_token, html_tag)
             else str(self.html_string_or_token)
         ) if isinstance(self.html_string_or_token, (str, html_tag)) else self.html_string_or_token
-
+        
+        # for htmlt, svg and jinja tags lookup 
+        if htmltags not in self.modules:
+            self.modules.append(htmltags)
+            
+        if svgtags not in self.modules:
+            self.modules.append(svgtags)
+            
+        if jinjatags not in self.modules:
+            self.modules.append(jinjatags)
+        
     def parse(self, tag: T.Optional[ext.Tags] = None) -> T.Union[str, ext.Tags, None]:
         for token in self.tokens:
             if not token.name:
@@ -89,8 +98,8 @@ class HTMLStringToDom(object):
                 if tag_name in builtins.__dict__:
                     # work around for builtins like 'input' tag
                     tag_name = ''.join([token.name, "_"])
-
-                for module in [htmltags, svgtags, jinjatags, *self.modules]:
+                    
+                for module in self.modules:
                     try:
                         element = getattr(module, tag_name)
                     except (AttributeError,):
@@ -112,41 +121,26 @@ class HTMLStringToDom(object):
 
 
 @dataclass
-class HTMLToPy(HTMLElement):
-    file_extension = ".py"
-    py_code = None
+class HTMLStringToElement(HTMLElement):
+    # TODO convert DOM object instance to Code Object for AST conversion to python code.
+    # from https://stackoverflow.com/questions/68577587/how-to-find-the-ast-assignment-node-related-to-the-instance-creation
+    # this.ast_object can be easily used to create python code for any html object
+    # https://stackoverflow.com/a/68584740 for parsing a python object into an ast_object
+    # https://stackoverflow.com/a/63212256 for unparsing a python ast_object
+
 
     def __init__(self, *args, **kwargs):
-        super(HTMLToPy, self).__init__(*args, **kwargs)
-        # from https://stackoverflow.com/questions/68577587/how-to-find-the-ast-assignment-node-related-to-the-instance-creation
-        # this.ast_object can be easily used to create python code for any html object
-        # https://stackoverflow.com/a/68584740 for parsing a python object into an ast_object
-        # https://stackoverflow.com/a/63212256 for unparsing a python ast_object
-
-        # curframe = inspect.currentframe().f_back
-        # curline = inspect.currentframe().f_back.f_lineno
-        # self.nodes = ast.parse(inspect.getsource(curframe))
-        # for node in self.nodes.body:
-        #     pprint(ast.unparse(node))
-        #     if node.lineno == curline:
-        #
-        #         self.py_code = ast.unparse(node)
-        # print(self.py_code)
+        super(HTMLStringToElement, self).__init__(*args, **kwargs)
 
     def __render__(self, raw_string) -> T.Union[str, ext.Tags, None]:
         return HTMLStringToDom(raw_string).parse()
 
-    def to_py(self, file_name: str):
-        return self.save(file_name=file_name, html_template=self.py_code)
 
-    # TODO convert DOM object instance to Code Object for AST conversion to python code.
+# if __name__ == '__main__':
+#     from uidom.dom import For, Var, div, li, raw, script, ul
 
-
-if __name__ == '__main__':
-    from uidom.dom import For, Var, div, li, raw, script, ul
-
-    class XName(ext.Tags):
-        tagname = "x-name"
+#     class XName(ext.Tags):
+#         tagname = "x-name"
 
 
     # print(StringToDom(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf")).to_dom())
@@ -161,4 +155,4 @@ if __name__ == '__main__':
     #             div("Jai SHree Ram   a ", className="safn"), script(raw("function () => {}")),
     #                         script(src="https://unpkg.com/filepond/dist/filepond.js"),
     #                         className="sdaf", x_data={}, x_transition_enter=""))
-    print(HTMLStringToDom(str(ul(For("name in names", li(Var("name")))))))
+    # print(HTMLStringToDom(str(ul(For("name in names", li(Var("name")))))))

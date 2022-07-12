@@ -128,9 +128,7 @@ class Account(object):
     media: SocialMedia = EdgeQLValidator(logger=False, debug=True)
     
     
-if __name__ == '__main__':
-    # user0 = User(name="User0", email_id="name@hiranya.net")
-    # print(user0)
+# if __name__ == '__main__':
     # print(User(name='qq22'))
-    print(Account.create)
+    # print(Account.create)
     # user1 = Account(title="User1")

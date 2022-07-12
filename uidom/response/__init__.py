@@ -4,4 +4,4 @@
 # https://opensource.org/licenses/MIT
 
 
-from .starlette import DocumentResponse, doc_response
+from .starlette_response import DocumentResponse, doc_response

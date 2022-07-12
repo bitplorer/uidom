@@ -4,7 +4,6 @@
 # https://opensource.org/licenses/MIT
 
 
-from sourcetypes import javascript as js_type
 from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src.htmltags import script
 from uidom.dom.src.utils.dom_util import raw
@@ -22,7 +21,7 @@ class XComponentJS(HTMLElement):
     """
 
     def __render__(self, *args, **kwargs):
-        js: js_type = """
+        js = """
             
             function guidGenerator() {
                 const S4 = function (){

@@ -4,30 +4,25 @@
 # https://opensource.org/licenses/MIT
 
 
-import typing
+import typing as T
 from functools import wraps
 
-try:
-    from starlette.background import BackgroundTask
-    from starlette.responses import Response
-except ImportError:
-    BackgroundTask = None
-    Response = None
+from starlette.background import BackgroundTask
+from starlette.responses import Response
 
 __all__ = [
     "DocumentResponse",
     "doc_response"
 ]
 
-F = typing.TypeVar("F", bound=typing.Callable[..., typing.Any])
-
+F = T.TypeVar("F", bound=T.Callable[..., T.Any])
 
 class DocumentResponse(Response):
     media_type = "text/html"
 
     def __init__(
         self,
-        html: typing.Any,
+        html: T.Any,
         status_code: int = 200,
         headers: dict = None,
         media_type: str = None,
@@ -36,7 +31,7 @@ class DocumentResponse(Response):
         self.html = html
         super().__init__(self.html, status_code, headers, media_type, background)
 
-    def render(self, content: typing.Any) -> bytes:
+    def render(self, content: T.Any) -> bytes:
         if hasattr(content, "render"):
             content = content.render()
         content = super().render(content=content)
