@@ -149,12 +149,11 @@ x_search = Search2(
     target_id="search_results",
     api="/search_api")
 
-try:
-    @api.get("/search")
-    def search():
-        return DocumentResponse(document(x_search(className="flex w-full"), x_search, head=title("Search Bar")))
-except AttributeError:
-    pass
+
+@api.get("/search")
+def search():
+    return DocumentResponse(document(x_search(className="flex w-full"), x_search, head=title("Search Bar")))
+
 
 last_searched =  []
 
