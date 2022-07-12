@@ -215,10 +215,14 @@ class dom_tag(object):
             elif isinstance(obj, dom_tag):
                 stack = dom_tag._with_contexts.get(_get_thread_context())
                 if stack:
-                    if hasattr(obj, 'render_tag') and obj.render_tag:
-                        stack[-1].used.add(obj)
+                    if hasattr(obj, 'render_tag'):
+                        if obj.render_tag:
+                            stack[-1].used.add(obj)
+                        else:
+                            stack[-1].used.add(obj.children[0])
                     else:
-                        stack[-1].used.add(obj.children[0])
+                        stack[-1].used.add(obj)
+                        
                 self.children.append(obj)
                 obj.parent = self
                 obj.setdocument(self.document)
