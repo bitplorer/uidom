@@ -135,7 +135,8 @@ class Search2(XComponent):
 
                 div(id=target_id,
                     className="flex flex-col grow justify-center items-center w-full h-80 "
-                              "bg-yellow-200/40 m-0.5 mr-1 backdrop-blur-sm p-2 md:dark:bg-stone-600/10 ",
+                              "bg-yellow-400/40 m-0.5 mr-1 p-2 md:dark:bg-stone-600/10 "
+                              "shadow-lg shadow-gray-600 border border-rose-400",
                     x_on_keydown_dot_escape_dot_window="show = false",
                     x_show="show")
             return search_2
@@ -157,14 +158,12 @@ except AttributeError:
 
 last_searched =  []
 
-try:
-    @api.post("/search_api")
-    def search_results(search_query: str = FForm(...)):
-        last_searched.append(search_query)
-        last_searched = last_searched[:-5]
-        if not any(last_searched):
-            return DocumentResponse(div(search_query, className="flex flex-grow w-full h-6 p-2"))
-        res = reversed([div(query, className="flex flex-grow w-full h-full p-2") for query in last_searched])
-        return DocumentResponse(div(*res, className="flex flex-col w-full h-full"))
-except AttributeError:
-    pass
+@api.post("/search_api")
+def search_results(search_query: str = FForm(...)):
+    global last_searched
+    last_searched.append(search_query)
+    last_searched = last_searched[-5:]
+    if not any(last_searched):
+        return DocumentResponse(div(search_query, className="flex flex-grow w-full h-6 p-2"))
+    res = reversed([div(query, className="flex flex-grow w-full h-full p-2") for query in last_searched])
+    return DocumentResponse(div(*res, className="flex flex-col w-full h-full"))
