@@ -10,7 +10,7 @@ try:
 except ImportError:
     FastAPI, StaticFiles = None, None
     
-from demosite.dom import document
+from demosite.document import document
 
 if FastAPI is not None:
     api = FastAPI(debug=True)
