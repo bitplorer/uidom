@@ -7,10 +7,10 @@
 import os
 import typing
 
+from jinja2.utils import htmlsafe_json_dumps
 from uidom.dom.src.dom1core import dom1core
 from uidom.dom.src.dom_tag import dom_tag, unicode
 from uidom.dom.src.utils.dom_util import escape
-from jinja2.utils import htmlsafe_json_dumps
 
 __all__ = ["SingleTemplates", "DoubleTemplates", "DoubleTags", "SingleTags", "StyleTags"]
 

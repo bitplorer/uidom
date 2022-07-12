@@ -27,6 +27,7 @@ Public License along with Dominate.  If not, see
 import copy
 import numbers
 import threading
+import typing
 from collections import defaultdict, namedtuple
 from functools import wraps
 
@@ -118,7 +119,7 @@ class dom_tag(object):
     # context manager
     frame = namedtuple("frame", ["tag", "items", "used"])
     # stack of frames
-    _with_contexts = defaultdict(list)
+    _with_contexts: typing.DefaultDict = defaultdict(list)
 
     def _add_to_ctx(self):
         stack = dom_tag._with_contexts.get(_get_thread_context())
@@ -214,7 +215,10 @@ class dom_tag(object):
             elif isinstance(obj, dom_tag):
                 stack = dom_tag._with_contexts.get(_get_thread_context())
                 if stack:
-                    stack[-1].used.add(obj)
+                    if hasattr(obj, 'render_tag') and obj.render_tag:
+                        stack[-1].used.add(obj)
+                    else:
+                        stack[-1].used.add(obj.children[0])
                 self.children.append(obj)
                 obj.parent = self
                 obj.setdocument(self.document)

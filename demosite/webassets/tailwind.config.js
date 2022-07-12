@@ -1,5 +1,4 @@
-
-    module.exports = {
+module.exports = {
         mode: "jit",
         content: {
             files:[

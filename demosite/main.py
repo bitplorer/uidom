@@ -4,3 +4,4 @@
 # https://opensource.org/licenses/MIT
 
 from demosite.app import api
+from demosite.search import api

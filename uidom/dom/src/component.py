@@ -8,8 +8,7 @@
 from dataclasses import dataclass, field
 from typing import Iterable, Union
 
-from uidom.dom.src import (csstags, htmltags, jinjatags, svgtags,
-                                  vuetifytags)
+from uidom.dom.src import csstags, htmltags, jinjatags, svgtags, vuetifytags
 from uidom.dom.src.main import extension
 
 __all__ = [

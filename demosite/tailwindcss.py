@@ -5,7 +5,7 @@
 
 from uidom import TailwindCommand
 
-from demosite.dom import document
+from demosite.document import document
 
 if __name__ == '__main__':
     if document.webassets:
