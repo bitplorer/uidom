@@ -5,7 +5,7 @@
 
 
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Iterable, Union
 
 from uidom.dom.src import csstags, htmltags, jinjatags, svgtags, vuetifytags
@@ -71,11 +71,15 @@ class Component(extension.Tags):
 
     def __getitem__(self, key):
         if not self.render_tag:
-            if any(self.children):
-                return self.children[0].__getitem__(key)
+            if any(object.__getattribute__(self, 'children')):
+                return object.__getattribute__(self, 'children')[0].__getitem__(key)
         return super(Component, self).__getitem__(key)
 
     __getattr__ = __getitem__
+    
+    def asdict(self, exclude=None):
+        exclude = exclude or ['file_extension', 'render_tag', 'children', 'document', 'attributes']
+        return {key: value for key, value in asdict(self).items() if key not in exclude} 
 
     def __render__(self, *args, **kwargs) -> htmltags.html_tag:  # noqa
         raise NotImplementedError(f"method: {self.__render__.__qualname__} not implemented")
