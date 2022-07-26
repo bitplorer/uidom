@@ -81,6 +81,9 @@ class Component(extension.Tags):
         exclude = exclude or ['file_extension', 'render_tag', 'children', 'document', 'attributes']
         return {key: value for key, value in asdict(self).items() if key not in exclude} 
 
+    def __hash__(self) -> int:
+        return hash(self._entry)
+
     def __render__(self, *args, **kwargs) -> htmltags.html_tag:  # noqa
         raise NotImplementedError(f"method: {self.__render__.__qualname__} not implemented")
 
@@ -102,13 +105,15 @@ class Component(extension.Tags):
 if __name__ == '__main__':
     from valio import StringValidator
 
-    @dataclass
+    # using @dataclass(eq=False) to use super class hash function
+    @dataclass(eq=False)
     class vue(Component):
-        render_tag = True
         a: str = StringValidator(logger=False, debug=True)
-
+        
         def __post_init__(self):
             super(vue, self).__init__(a=self.a)
-
+            
         def __render__(self, a) -> htmltags.html_tag: # type: ignore[override]
-            return self.html_tags.p(cls=a)
+            return self.html_tags.p(a=a)
+
+    print(vue(a='1'))
