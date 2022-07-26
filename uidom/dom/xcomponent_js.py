@@ -213,7 +213,7 @@ class XComponentJS(HTMLElement):
                         this.observer = observeAttrChange(this, (attr, oldVal, newVal) => {
                             // slice :attr to remove leading '_' (underscore) to check in _dataState
                             console.log(attr, _dataState.includes(attr.replace('__', '')));
-                            if (_dataState.includes(attr.replace('_', ''))) {
+                            if (_dataState.includes(attr.replace('__', ''))) {
                                 this.attributeChangedCallback(attr.replace('__', ''), oldVal, newVal);
                             }
                         });
