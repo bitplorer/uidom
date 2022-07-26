@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-@dataclass
+@dataclass(eq=False)
 class FloatLabel(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
@@ -31,7 +31,7 @@ class FloatLabel(HTMLElement):
         return self.html_tags.label(label, *args, **kwargs)
 
 
-@dataclass
+@dataclass(eq=False)
 class FloatLegend(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
@@ -46,7 +46,7 @@ min_field = StringValidator(logger=False, debug=True)
 max_field = StringValidator(logger=False, debug=True)
 
 
-@dataclass
+@dataclass(eq=False)
 class FloatInput(HTMLElement):
     
     @max_field.add_validator
@@ -100,7 +100,7 @@ class FloatInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class FloatNumberInput(HTMLElement):
 
     name: str
@@ -139,7 +139,7 @@ class FloatNumberInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class FloatRangeInput(HTMLElement):
     name: str
     placeholder: str

@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 @Validator.register
-@dataclass
+@dataclass(eq=False)
 class IntegerLabel(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
@@ -38,7 +38,7 @@ class IntegerLabelValidator(Validator):
     annotation = T.Union[IntegerLabel, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class IntegerLegend(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
@@ -51,7 +51,7 @@ class IntegerLegend(HTMLElement):
 min_field = StringValidator(logger=False, debug=True, name="min")
 max_field = StringValidator(logger=False, debug=True, name="max")
 
-@dataclass
+@dataclass(eq=False)
 class IntegerInput(HTMLElement):
 
     @max_field.add_validator
@@ -113,7 +113,7 @@ class IntegerInputValidator(Validator):
     annotation = T.Union[IntegerInput, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class IntegerNumberInput(HTMLElement):
 
     name: str
@@ -159,7 +159,7 @@ class IntegerNumberInputValidator(Validator):
     annotation = T.Union[IntegerNumberInput, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class IntegerRangeInput(HTMLElement):
 
     name: str
@@ -205,7 +205,7 @@ class IntegerRangeInputValidator(Validator):
     annotation = T.Union[IntegerRangeInput, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class TelephoneInput(HTMLElement):
 
     name: str
@@ -244,7 +244,7 @@ class TelephoneInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class IntegerField(HTMLElement):
     labeled = IntegerLabelValidator(logger=False, debug=True)
     input = IntegerInputValidator(logger=False, debug=True)
@@ -292,7 +292,7 @@ class IntegerNumberField(HTMLElement):
         return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
 
 
-@dataclass
+@dataclass(eq=False)
 class IntegerRangeField(HTMLElement):
     labeled = IntegerLabelValidator(logger=False, debug=True)
     input = IntegerRangeInputValidator(logger=False, debug=True)

@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-@dataclass
+@dataclass(eq=False)
 class CharLabel(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
@@ -39,7 +39,7 @@ class CharLabelValidator(Validator):
     annotation = T.Union[CharLabel, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class CharLegend(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
@@ -57,7 +57,7 @@ spell_check_field = StringValidator(in_choice=["true", "false"],
                                     default="true")
 
 
-@dataclass
+@dataclass(eq=False)
 class CharInput(HTMLElement):
 
     @max_length_field.add_validator
@@ -128,7 +128,7 @@ class CharInputValidator(Validator):
     annotation = T.Union[CharInput, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class TextInput(HTMLElement):
 
     name: str
@@ -170,7 +170,7 @@ class TextInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class PasswordInput(HTMLElement):
     name: str
     placeholder: str
@@ -213,7 +213,7 @@ class PasswordInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class HiddenInput(HTMLElement):
     name: str
     placeholder: str
@@ -256,7 +256,7 @@ class HiddenInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class EmailInput(HTMLElement):
     name: str
     placeholder: str
@@ -299,7 +299,7 @@ class EmailInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class SearchInput(HTMLElement):
     name: str
     placeholder: str
@@ -342,7 +342,7 @@ class SearchInput(HTMLElement):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class CharField(HTMLElement):
     labeled = CharLabelValidator(logger=False, debug=True)
     input = CharInputValidator(logger=False, debug=True)

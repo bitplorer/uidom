@@ -12,7 +12,7 @@ __all__ = [
     "DateInput",
 ]
 
-@dataclass
+@dataclass(eq=False)
 class DateLabel(HTMLElement):
     
     def __init__(self, *args, **kwargs):
@@ -22,7 +22,7 @@ class DateLabel(HTMLElement):
         return self.html_tags.label(*args, **kwargs)    
 
 
-@dataclass
+@dataclass(eq=False)
 class DateInput(HTMLElement):
     
     def __init__(self, *args, **kwargs):

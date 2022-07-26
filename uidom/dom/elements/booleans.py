@@ -22,14 +22,14 @@ __all__ = [
 ]
 
 
-@dataclass
+@dataclass(eq=False)
 class BooleanLabel(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
         super(BooleanLabel, self).__init__(self.label, *args, **kwargs)
 
-    def __render__(self, label: str, *args, **kwargs):
+    def __render__(self, label: str, *args, **kwargs):  # noqa
         return self.html_tags.label(label, *args, **kwargs)
 
 
@@ -37,7 +37,7 @@ class BooleanLabelValidator(Validator):
     annotation = T.Union[BooleanLabel, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class BooleanLegend(HTMLElement):
     label: str = StringValidator(logger=False, debug=True)
 
@@ -48,7 +48,7 @@ class BooleanLegend(HTMLElement):
         return self.html_tags.legend(label, *args, **kwargs)
 
 
-@dataclass
+@dataclass(eq=False)
 class BooleanInput(HTMLElement):
     name: str = StringValidator(logger=False, debug=True)
     type: str = StringValidator(in_choice=["checkbox", "radio"], logger=False, debug=True, default="checkbox")
@@ -84,11 +84,11 @@ class BooleanInputValidator(Validator):
     annotation = T.Union[BooleanInput, None]
 
 
-@dataclass
+@dataclass(eq=False)
 class CheckboxInput(BooleanInput):
     name: str = StringValidator(logger=False, debug=True)
     checked: T.Union[str, bool] = Validator(in_choice=["unchecked", "checked", "null", True, False],
-                                                 logger=False, debug=True)
+                                            logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
         super(BooleanInput, self).__init__(*args,
@@ -113,11 +113,11 @@ class CheckboxInput(BooleanInput):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class RadioInput(BooleanInput):
     name: str = StringValidator(logger=False, debug=True)
     checked: T.Union[str, bool] = Validator(in_choice=["unchecked", "checked", "null", True, False],
-                                                 logger=False, debug=True, default="checked")
+                                            logger=False, debug=True, default="checked")
 
     def __post_init__(self, *args, **kwargs):
         super(BooleanInput, self).__init__(*args,
@@ -141,7 +141,7 @@ class RadioInput(BooleanInput):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class BooleanField(HTMLElement):
     labeled = BooleanLabelValidator(logger=False, debug=True)
     input = BooleanInputValidator(logger=False, debug=True)
