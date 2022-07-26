@@ -27,7 +27,7 @@ class HtmlBaseMiddleware(object):
     """
 
 
-@dataclass
+@dataclass(eq=False)
 class HTMLElement(component.Component):
     file_extension = ".html"
 
@@ -44,7 +44,7 @@ class HTMLElement(component.Component):
         return str(self)
 
 
-@dataclass
+@dataclass(eq=False)
 class AMPElement(HTMLElement):
     tag_name: str
 
@@ -66,7 +66,7 @@ class AMPElement(HTMLElement):
 
 
 # here init=False is necessary to avoid double initialization
-@dataclass(init=False)
+@dataclass(init=False, eq=False)
 class XComponent(HTMLElement):
     fields = None
     tag_name: str
@@ -108,7 +108,7 @@ class XComponent(HTMLElement):
         return self.Element(*args, **kwargs)
 
 
-@dataclass
+@dataclass(eq=False)
 class CustomElement(XComponent):
     # using x-component attribute to upgrade to the element in html to light-element
 
@@ -126,7 +126,7 @@ class CustomElement(XComponent):
         return self.html_tags.template(self.html_tags.div(x_component=tag_name))
 
 
-@dataclass
+@dataclass(eq=False)
 class WebComponent(XComponent):
     # using x-component attribute to upgrade to the element in html to shadow-element
 
@@ -145,7 +145,7 @@ class WebComponent(XComponent):
         return self.html_tags.template(self.html_tags.div(x_component=tag_name, shadowroot="true"))
 
 
-@dataclass
+@dataclass(eq=False)
 class AlpineElement(HTMLElement):
     x_data: Union[str, dict, bool, None] = False
 
@@ -164,7 +164,7 @@ class AlpineElement(HTMLElement):
         ...
 
 
-@dataclass
+@dataclass(eq=False)
 class AlpineComponent(AlpineElement, XComponent):
 
     def __checks__(self, element):
