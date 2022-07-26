@@ -117,7 +117,7 @@ class XComponentJS(HTMLElement):
                         var isShadowRoot = component.getAttribute('shadowroot');
                         if (!!isShadowRoot){
                             
-                            var shadow = this.attachShadow({mode: 'open'});
+                            let shadow = this.attachShadow({mode: 'open'});
                             
                             let template;
                             if (component.tagName === 'TEMPLATE'){
@@ -127,11 +127,10 @@ class XComponentJS(HTMLElement):
                             }
 
                             if (template?.content.childElementCount) {
-                                console.log(template.content.childNodes);
                                 shadow.appendChild(template.content.cloneNode(true));
                                 }
                             else {
-                                var slot = document.createElement('slot');
+                                let slot = document.createElement('slot');
                                 shadow.appendChild(slot);
                                 }
                             this.shadow = shadow;
@@ -171,25 +170,25 @@ class XComponentJS(HTMLElement):
                                 if (this.hasOwnProperty(attr)){
                                     throw new Error(`attribute ${attr} can't be assigned as its builtin HtmlElement property`);
                                 }
-                                Object.defineProperty(this, `_d_${attr}`, {
+                                Object.defineProperty(this, `_data_${attr}`, {
                                     get() {
-                                        if (this.hasAttribute(`_${attr}`)) {
-                                            return this.getAttribute(`_${attr}`);
+                                        if (this.hasAttribute(`__${attr}`)) {
+                                            return this.getAttribute(`__${attr}`);
                                         } else {
                                             let val = _dataState[attr];
                                             if (isJSON(val)) {
-                                                this.setAttribute(`_${attr}`, JSON.parse(val));
+                                                this.setAttribute(`__${attr}`, JSON.parse(val));
                                             } else {
-                                                this.setAttribute(`_${attr}`, val);
+                                                this.setAttribute(`__${attr}`, val);
                                             }
-                                            return this.getAttribute(`_${attr}`);
+                                            return this.getAttribute(`__${attr}`);
                                         }
                                     },
                                     set(value) {
                                         if (isJSON(value)) {
-                                            this.setAttribute(`_${attr}`, JSON.parse(value));
+                                            this.setAttribute(`__${attr}`, JSON.parse(value));
                                         } else {
-                                            this.setAttribute(`_${attr}`, value);
+                                            this.setAttribute(`__${attr}`, value);
                                         }
                                         let oldValue = this.dataset.state[attr];
                                         if (oldValue !== value) {
@@ -201,9 +200,11 @@ class XComponentJS(HTMLElement):
                         }
 
                         // connecting to websockets
-                        let messageHandler = document.messageHandler;
-                        messageHandler[`${this.id}`] = () => {};
-                        this.ws = document.setUpOrGetWebSocket(this.id, messageHandler, _dataState?.ws || 'ws');
+                        if (_dataState?.ws){
+                            let messageHandler = document.messageHandler;
+                            messageHandler[`${this.id}`] = () => {};
+                            this.ws = document.setUpOrGetWebSocket(this.id, messageHandler, _dataState?.ws || 'ws');
+                        }
                         if  (!!this.ws.readyState){
                             this.ws.send(JSON.stringify({id: this.id}));
                         }
@@ -211,9 +212,9 @@ class XComponentJS(HTMLElement):
                         
                         this.observer = observeAttrChange(this, (attr, oldVal, newVal) => {
                             // slice :attr to remove leading '_' (underscore) to check in _dataState
-                            console.log(attr, _dataState.includes(attr.replace('_', '')));
+                            console.log(attr, _dataState.includes(attr.replace('__', '')));
                             if (_dataState.includes(attr.replace('_', ''))) {
-                                this.attributeChangedCallback(attr.replace('_', ''), oldVal, newVal);
+                                this.attributeChangedCallback(attr.replace('__', ''), oldVal, newVal);
                             }
                         });
                     }
