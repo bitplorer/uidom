@@ -38,7 +38,7 @@ class DocumentResponse(Response):
         return content
 
 
-def doc_response(html_doc: F) -> F:
+def doc_response(html_doc: F) -> T.Callable[..., DocumentResponse]:
     @wraps(html_doc)
     def decorator(*args, **kwargs) -> DocumentResponse:
         return DocumentResponse(html_doc(*args, **kwargs))

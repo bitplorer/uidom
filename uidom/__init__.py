@@ -7,4 +7,4 @@
 from .components import *
 from .settings import *
 
-__version__ = '0.1.1a2'
+__version__ = '0.1.1a3'

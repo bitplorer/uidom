@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "uidom"
-version = "0.1.1a2"
+version = "0.1.1a3"
 description = "HTML library"
 authors = ["bitplorer <bitplorer@outlook.com>"]
 
@@ -10,9 +10,8 @@ Jinja2 = "^3.0.1"
 aiofiles = "^0.7.0"
 python-multipart = "^0.0.5"
 pytailwindcss = "^0.1.4"
-valio = "^0.1.0-beta.2"
-uvicorn = {extras = ["standard"], version = "^0.18.2"}
-fastapi = "^0.78.0"
+valio = "^0.1.0-beta.5"
+starlette = "0.19.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -20,6 +19,8 @@ black = "^21.6b0"
 mypy = "^0.942"
 toml = "^0.10.2"
 types-toml = "^0.10.8"
+uvicorn = {extras = ["standard"], version = "^0.18.2"}
+fastapi = "^0.79.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
