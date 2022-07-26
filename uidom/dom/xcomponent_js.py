@@ -205,7 +205,7 @@ class XComponentJS(HTMLElement):
                             messageHandler[`${this.id}`] = () => {};
                             this.ws = document.setUpOrGetWebSocket(this.id, messageHandler, _dataState?.ws || 'ws');
                         }
-                        if  (!!this.ws.readyState){
+                        if  (!!this?.ws.readyState){
                             this.ws.send(JSON.stringify({id: this.id}));
                         }
                         
