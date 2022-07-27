@@ -137,8 +137,15 @@ class dom_tag(object):
         stack = dom_tag._with_contexts[thread_id]
         frame = stack.pop()
         for item in frame.items:
-            if item in frame.used:
-                continue
+            if not hasattr(item, "__render__"):
+                # deal with all the Tags but not Components
+                if item in frame.used:
+                    continue
+            else:
+                # deal with all the components here, as all components have ._entry attributes
+                # we can now check the membership of it
+                if item._entry in frame.used:
+                    continue
             self.add(item)
         if not stack:
             del dom_tag._with_contexts[thread_id]

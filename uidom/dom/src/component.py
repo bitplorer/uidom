@@ -39,6 +39,8 @@ class Component(extension.Tags):
         self.__checks__(self._entry)
 
     def __checks__(self, element: extension.Tags) -> extension.Tags:  # noqa
+        if self.render_tag:
+            raise ValueError(f"{self.render_tag} can not be true for Components")
         return element
 
     def add(self, *args):

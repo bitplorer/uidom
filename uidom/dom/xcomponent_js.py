@@ -164,7 +164,7 @@ class XComponentJS(HTMLElement):
                         }
                         // for setting up data-action value
                         let _dataAction = this?.dataset.action || {};
-                        console.log("DATA_STATE: ", _dataState);
+                        //console.log("DATA_STATE: ", _dataState);
                         if (!!_dataState) {
                             Object.keys(_dataState).forEach(attr => {
                                 if (this.hasOwnProperty(attr)){
@@ -205,7 +205,7 @@ class XComponentJS(HTMLElement):
                             messageHandler[`${this.id}`] = () => {};
                             this.ws = document.setUpOrGetWebSocket(this.id, messageHandler, _dataState?.ws || 'ws');
                         }
-                        if  (!!this?.ws.readyState){
+                        if  (!!this?.ws?.readyState){
                             this.ws.send(JSON.stringify({id: this.id}));
                         }
                         
