@@ -3,10 +3,9 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-#TODO: WIP
-
-import datetime
 from dataclasses import dataclass, is_dataclass
+#TODO: WIP
+from datetime import datetime
 from typing import get_args
 
 from valio import (BOOL, CHOICE, DATE_TIME_DELTA, DEBUG, DEFAULT, DOC, INT,
@@ -198,7 +197,12 @@ class EdgeQLValidator(Validator):
         owner.create += f'''\n\t\tconstraint max_len_value({max_length});''' if max_length and max_length is not None else ''
         owner.create += f'''\n\t\tconstraint regexp({pattern});''' if pattern and pattern is not None else ''
         owner.create += f'''\n\t\tconstraint one_of({in_choice});''' if in_choice and in_choice is not None else ''
-        owner.create += f'''\n\t\tdefault := {self.default if not callable(self.default) else self.default.__qualname__};''' if default is not None else ''
+        if not self.annotation is datetime:
+            owner.create += f'''\n\t\tdefault := {self.default if not callable(self.default) else self.default.__qualname__};''' if default is not None else ''
+        else:
+            if self.default in [datetime.now, datetime.utcnow]:
+                owner.create += f'''\n\t\tdefault := datetime_current()'''
+                
         if constraint:
             owner.create += "\n\t}"
             
@@ -208,8 +212,8 @@ class EdgeQLValidator(Validator):
 @dataclass
 class User(object):
     create = ''
-    created_at: datetime.datetime = EdgeQLValidator(logger=False, debug=True, required=True, default=datetime.datetime.utcnow)
-    updated_at: datetime.datetime = EdgeQLValidator(logger=False, debug=True, reassign=True, default=datetime.datetime.utcnow)
+    created_at: datetime = EdgeQLValidator(logger=False, debug=True, required=True, default=datetime.utcnow)
+    updated_at: datetime = EdgeQLValidator(logger=False, debug=True, reassign=True, default=datetime.utcnow)
     name: str = EdgeQLValidator(
         logger=False, 
         required=True, 
