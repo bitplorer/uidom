@@ -21,12 +21,14 @@ class WebComponentSlot(XComponent):
     slot_names: typing.Union[list, tuple]
     classes: dict
     css: list[str]
+    slot_class: str = ''
 
     def __post_init__(self):
         super(WebComponentSlot, self).__post_init__(
             slot_names=self.slot_names,
             classes=self.classes,
-            css=self.css
+            css=self.css,
+            slot_class=self.slot_class
         )
 
     def __render__(
@@ -34,7 +36,8 @@ class WebComponentSlot(XComponent):
             tag_name,
             slot_names,
             classes,
-            css
+            css,
+            slot_class
     ):
         return div(
             template(
@@ -44,6 +47,7 @@ class WebComponentSlot(XComponent):
                     classes=classes,
                     css=css,
                     exportparts="*",
+                    className=slot_class if slot_class is not '' else False,
                 ), tabindex=0
             ),
             x_component=tag_name, shadowroot="true"
