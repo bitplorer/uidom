@@ -269,7 +269,7 @@ class IntegerField(HTMLElement):
         return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
 
 
-@dataclass
+@dataclass(eq=False)
 class IntegerNumberField(HTMLElement):
     labeled = IntegerLabelValidator(logger=False, debug=True)
     input = IntegerNumberInputValidator(logger=False, debug=True)
