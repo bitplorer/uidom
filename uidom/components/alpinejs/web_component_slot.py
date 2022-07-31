@@ -47,7 +47,7 @@ class WebComponentSlot(XComponent):
                     classes=classes,
                     css=css,
                     exportparts="*",
-                    className=slot_class if slot_class is not '' else False,
+                    className=slot_class if slot_class != '' else False,
                 ), tabindex=0
             ),
             x_component=tag_name, shadowroot="true"
