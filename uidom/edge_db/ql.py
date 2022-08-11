@@ -240,7 +240,7 @@ class Account(object):
     media: list[SocialMedia] = EdgeQLValidator(logger=False, debug=True)
     
     
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # print(Account(users=[User(name="User-1"), User(name="User-2")], 
     #               media=[SocialMedia(media_host="www.youtube.com", media_handle="unique1")]))
-    print(User.create)
+    # print(User.create)
