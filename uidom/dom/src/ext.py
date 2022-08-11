@@ -105,9 +105,9 @@ class Tags(dom_tag, dom1core):
             if attribute[0] == '_' and attribute[1] != "_":
                 attribute = attribute[1:]
 
-        # Workaround for dash plus support for VueJS, HTMX and AngularJS
+        # Workaround for dash plus support for VueJS, HTMX, Unpoly and AngularJS
         special_prefix = any(
-            [attribute.startswith(x) for x in ('data_', 'aria_', 'x_', 'v_', 'ng_', "hx_", "__", "ws__",
+            [attribute.startswith(x) for x in ('data_', 'aria_', 'x_', 'v_', 'ng_', "hx_", "__", "ws__", "up_",
                                                "remove_me")])
         if attribute in {'http_equiv'} or special_prefix:
             attribute = attribute.replace('_', '-')
