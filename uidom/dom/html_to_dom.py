@@ -132,9 +132,9 @@ class HTMLStringToElement(HTMLElement):
         return HTMLStringToDom(raw_string).parse()
 
 
-if __name__ == '__main__':
-    from uidom.dom import ConcatTag, For, Var, div, li, raw, script, ul
-    print(HTMLStringToElement("<li><ul><i>Hello World</i></ul><a href='www.google.com'></a></li>"))
+# if __name__ == '__main__':
+    # from uidom.dom import ConcatTag, For, Var, div, li, raw, script, ul
+    # print(HTMLStringToElement("<li><ul><i><!--Hello World--></i></ul><a href='www.google.com'></a></li>"))
 #     class XName(ext.Tags):
 #         tagname = "x-name"
 
