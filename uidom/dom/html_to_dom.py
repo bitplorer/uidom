@@ -134,12 +134,13 @@ class HTMLStringToElement(HTMLElement):
 
 # if __name__ == '__main__':
     # from uidom.dom import ConcatTag, For, Var, div, li, raw, script, ul
+
     # print(HTMLStringToElement("<li><ul><i><!--Hello World--></i></ul><a href='www.google.com'></a></li>"))
 #     class XName(ext.Tags):
 #         tagname = "x-name"
 
 
-    # print(StringToDom(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf")).to_dom())
+    # print(HTMLStringToDom(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf")).parse())
     # print(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf"))
     # print(StringToDom(str(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf", x_data=None))))
     # x = HTMLToPy(str(XName("hello", Var("haha"), ul(For("name in names", li(Var("name")))),
