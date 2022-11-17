@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src import ext, htmltags, jinjatags, svgtags
-from uidom.dom.src.htmltags import html_tag
+from uidom.dom.src.htmltags import ConcatTag, html_tag
 from uidom.dom.src.parse_html import Element, tokenize_html
 from uidom.dom.src.utils import dom_text
 
@@ -48,7 +48,7 @@ class HTMLStringToDom(object):
         self.tokens: T.Union[Element, list[Element], ext.Tags] = tokenize_html(
             self.html_string_or_token if not isinstance(self.html_string_or_token, html_tag)
             else str(self.html_string_or_token)
-        ) if isinstance(self.html_string_or_token, (str, html_tag)) else self.html_string_or_token
+        ).children if isinstance(self.html_string_or_token, (str, html_tag)) else self.html_string_or_token
         
         # for htmlt, svg and jinja tags lookup 
         if htmltags not in self.modules:
@@ -60,7 +60,7 @@ class HTMLStringToDom(object):
         if jinjatags not in self.modules:
             self.modules.append(jinjatags)
         
-    def parse(self, tag: T.Optional[ext.Tags] = None) -> T.Union[str, ext.Tags, None]:
+    def parse(self, tag: ext.Tags = ConcatTag()) -> T.Union[str, ext.Tags, None]:
         for token in self.tokens:
             if not token.name:
                 # myst_parser gives out Data['abc'] kind of Token with {"name":'', 'data': 'abc', ...} attributes
@@ -106,14 +106,10 @@ class HTMLStringToDom(object):
                         pass
                 if element is None:
                     element = create_dynamic_element(tag_name=tag_name)
-                if tag is None:
-                    with element(**token.attrs) as parent_tag:
-                        tag = parent_tag
-                        HTMLStringToDom(token.children, modules=self.modules).parse(tag=parent_tag)
-                else:
-                    with tag:
-                        with element(**token.attrs) as child_tag:
-                            HTMLStringToDom(token.children, modules=self.modules).parse(tag=child_tag)
+                    
+                with tag:
+                    with element(**token.attrs) as child_tag:
+                        HTMLStringToDom(token.children, modules=self.modules).parse(tag=child_tag)
         return tag
 
     def __repr__(self):
@@ -132,13 +128,13 @@ class HTMLStringToElement(HTMLElement):
     def __init__(self, *args, **kwargs):
         super(HTMLStringToElement, self).__init__(*args, **kwargs)
 
-    def __render__(self, raw_string) -> T.Union[str, ext.Tags, None]:
+    def __render__(self, raw_string) -> T.Union[str, ext.Tags, None]: # noqa
         return HTMLStringToDom(raw_string).parse()
 
 
-# if __name__ == '__main__':
-#     from uidom.dom import For, Var, div, li, raw, script, ul
-
+if __name__ == '__main__':
+    from uidom.dom import ConcatTag, For, Var, div, li, raw, script, ul
+    print(HTMLStringToElement("<li><ul><i>Hello World</i></ul><a href='www.google.com'></a></li>"))
 #     class XName(ext.Tags):
 #         tagname = "x-name"
 
@@ -156,3 +152,4 @@ class HTMLStringToElement(HTMLElement):
     #                         script(src="https://unpkg.com/filepond/dist/filepond.js"),
     #                         className="sdaf", x_data={}, x_transition_enter=""))
     # print(HTMLStringToDom(str(ul(For("name in names", li(Var("name")))))))
+    
