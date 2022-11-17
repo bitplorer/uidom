@@ -60,7 +60,7 @@ class HTMLStringToDom(object):
         if jinjatags not in self.modules:
             self.modules.append(jinjatags)
         
-    def parse(self, tag: ext.Tags = ConcatTag()) -> T.Union[str, ext.Tags, None]:
+    def parse(self, tag: T.Optional[ext.Tags] = None) -> T.Union[str, ext.Tags, None]:
         for token in self.tokens:
             if not token.name:
                 # myst_parser gives out Data['abc'] kind of Token with {"name":'', 'data': 'abc', ...} attributes
@@ -106,7 +106,9 @@ class HTMLStringToDom(object):
                         pass
                 if element is None:
                     element = create_dynamic_element(tag_name=tag_name)
-                    
+                
+                tag = tag or ConcatTag()
+                
                 with tag:
                     with element(**token.attrs) as child_tag:
                         HTMLStringToDom(token.children, modules=self.modules).parse(tag=child_tag)
