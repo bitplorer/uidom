@@ -37,7 +37,7 @@ class HTMLElement(component.Component):
     def __render__(self, *args, **kwargs):
         return self.html_tags.ConcatTag(*args, **kwargs)
 
-    def __script__(self, element):
+    def __script__(self, *args, **kwargs):
         ...
 
     def __repr__(self):
