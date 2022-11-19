@@ -107,7 +107,7 @@ class HTMLStringToDom(object):
                 if element is None:
                     element = create_dynamic_element(tag_name=tag_name)
                 
-                tag = tag or ConcatTag()
+                tag = tag if tag is not None else ConcatTag()
                 
                 with tag:
                     with element(**token.attrs) as child_tag:
