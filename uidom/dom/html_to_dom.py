@@ -69,29 +69,22 @@ class HTMLStringToDom(object):
                 if hasattr(token, "data"):
                     # handle leading and trailing newline with spaces in myst parser Data Token ex: "  \n Hello\n  "
                     if data := token.data.strip("\n").strip(" ").strip("\n"):
-                        if tag:
-                            with tag:
-                                # handling
-                                if tag.__class__.__name__ == "script":
-                                    dom_text(data, escape=False)
-                                else:
-                                    if token.__class__.__name__ != "Comment":
-                                        if data.startswith("{") and data.endswith("}"):
-                                            # these are jinja tags
-                                            tag.add(dom_text(data, escape=False))
-                                        else:
-                                            # normal text is here
-                                            tag.add(dom_text(data, escape=True))
-                                    else:
-                                        # this is a comment section
-                                        tag.add(htmltags.comment(data))
-                        else:
-                            if token.__class__.__name__ != "Comment":
-                                # normal string not within any tag goes here
-                                return data
+                        with (tag or ConcatTag()) as tag:
+                            # handling
+                            if tag.__class__.__name__ == "script":
+                                dom_text(data, escape=False)
                             else:
-                                # comment string parsed here...
-                                return htmltags.comment(data)
+                                if token.__class__.__name__ != "Comment":
+                                    if data.startswith("{") and data.endswith("}"):
+                                        # these are jinja tags
+                                        dom_text(data, escape=False)
+                                    else:
+                                        # normal text is here
+                                        dom_text(data, escape=True)
+                                else:
+                                    # this is a comment section
+                                    htmltags.comment(data)
+
             else:
                 element = None
                 tag_name = token.name
