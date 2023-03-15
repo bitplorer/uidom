@@ -41,7 +41,7 @@ class UiDOM(object):
 class FileSettings(object):
     BASE_DIR: T.Union[str, Path]
     SUB_DIR: T.Union[str, Path] = ""
-    TEMPLATE_PATH = "template"
+    TEMPLATE_PATH = "templates"
     CACHE_PATH = "cache"
     STATIC_PATH = "static"
     DATABASE_PATH = "database"
