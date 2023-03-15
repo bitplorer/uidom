@@ -9,13 +9,13 @@ from uidom.dom.htmlelement import HTMLElement
 
 class DecorationSlice(HTMLElement):
 
-    def __render__(self, elem):
+    def render(self, elem):
         elem["class"] += " decoration-slice"
         return elem
 
 
 class DecorationClone(HTMLElement):
 
-    def __render__(self, elem):
+    def render(self, elem):
         elem["class"] += " decoration-clone"
         return elem

@@ -7,8 +7,9 @@
 import typing as T
 from dataclasses import dataclass, field
 
-from uidom.dom.htmlelement import HTMLElement
 from valio import StringValidator
+
+from uidom.dom.htmlelement import HTMLElement
 
 __all__ = [
     # integer html
@@ -27,7 +28,7 @@ class FloatLabel(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(FloatLabel, self).__init__(self.label, *args, **kwargs)
 
-    def __render__(self, label, *args, **kwargs):
+    def render(self, label, *args, **kwargs):
         return self.html_tags.label(label, *args, **kwargs)
 
 
@@ -38,7 +39,7 @@ class FloatLegend(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(FloatLegend, self)._init__(self.label, *args, **kwargs)
 
-    def __render__(self, label, *args, **kwargs):
+    def render(self, label, *args, **kwargs):
         return self.html_tags.legend(label, *args, **kwargs)
 
 
@@ -77,7 +78,7 @@ class FloatInput(HTMLElement):
                                          **kwargs
                                          )
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -119,7 +120,7 @@ class FloatNumberInput(HTMLElement):
                                                **kwargs
                                                )
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -157,7 +158,7 @@ class FloatRangeInput(HTMLElement):
                                               **kwargs
                                               )
 
-    def __render__(
+    def render(
             self,
             *args,
             name,

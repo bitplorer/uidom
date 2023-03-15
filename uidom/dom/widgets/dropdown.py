@@ -13,7 +13,7 @@ from uidom.dom.tailwindcss import Absolute, InlineBlock, InlineFlex, Relative
 
 class DropdownItem(HTMLElement):
 
-    def __render__(self, *args, item_link, target_id, item_name=None, **kwargs):
+    def render(self, *args, item_link, target_id, item_name=None, **kwargs):
         self.htmx_link = HtmxLink(*args,
                                   item_link=item_link,
                                   target_id=target_id,
@@ -27,7 +27,7 @@ class DropdownItem(HTMLElement):
 
 class DropdownElement(HTMLElement):
 
-    def __render__(self, *args, value="Options", **kwargs):
+    def render(self, *args, value="Options", **kwargs):
         self.icon = Icons()
         button = Button("Options", self.icon, value=value)
         button["class"] = ""

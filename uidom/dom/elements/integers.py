@@ -7,8 +7,9 @@
 import typing as T
 from dataclasses import dataclass, field
 
-from uidom.dom.htmlelement import HTMLElement
 from valio import StringValidator, Validator
+
+from uidom.dom.htmlelement import HTMLElement
 
 __all__ = [
     # integer html
@@ -29,7 +30,7 @@ class IntegerLabel(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(IntegerLabel, self).__init__(*args, label=self.label, **kwargs)
 
-    def __render__(self, label, *args, **kwargs):
+    def render(self, label, *args, **kwargs):
         return self.html_tags.label(label, *args, **kwargs)
 
 
@@ -45,7 +46,7 @@ class IntegerLegend(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(IntegerLegend, self).__init__(label=self.label, *args, *kwargs)
 
-    def __render__(self, label, *args, **kwargs):
+    def render(self, label, *args, **kwargs):
         return self.html_tags.legend(label, *args, **kwargs)
 
 min_field = StringValidator(logger=False, debug=True, name="min")
@@ -82,7 +83,7 @@ class IntegerInput(HTMLElement):
                                            **kwargs
                                            )
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -132,7 +133,7 @@ class IntegerNumberInput(HTMLElement):
                                                  **kwargs
                                                  )
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -178,7 +179,7 @@ class IntegerRangeInput(HTMLElement):
                                                 **kwargs
                                                 )
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -224,7 +225,7 @@ class TelephoneInput(HTMLElement):
                                              **kwargs
                                              )
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -263,7 +264,7 @@ class IntegerField(HTMLElement):
                                            **kwargs
                                            )
 
-    def __render__(self, *args, label, name, placeholder, type, **kwargs):
+    def render(self, *args, label, name, placeholder, type, **kwargs):
         self.labeled = IntegerLabel(label=label)
         self.input = IntegerInput(name=name, placeholder=placeholder, type=type)
         return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
@@ -286,7 +287,7 @@ class IntegerNumberField(HTMLElement):
                                                  **kwargs
                                                  )
 
-    def __render__(self, *args, label, name, placeholder, **kwargs):
+    def render(self, *args, label, name, placeholder, **kwargs):
         self.labeled = IntegerLabel(label=label)
         self.input = IntegerNumberInput(name=name, placeholder=placeholder)
         return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
@@ -309,7 +310,7 @@ class IntegerRangeField(HTMLElement):
                                                 **kwargs
                                                 )
 
-    def __render__(self, *args, label, name, placeholder, **kwargs):
+    def render(self, *args, label, name, placeholder, **kwargs):
         self.labeled = IntegerLabel(label=label)
         self.input = IntegerRangeInput(name=name, placeholder=placeholder)
         return self.html_tags.div(*args, self.labeled, self.input, **kwargs)

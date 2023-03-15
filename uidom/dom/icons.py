@@ -10,7 +10,7 @@ from uidom.dom.src.utils import raw
 
 class Icons(HTMLElement):
 
-    def __render__(
+    def render(
             self,
             *args,
             version="1.1",
@@ -487,7 +487,7 @@ new_icon.add(new_icon.svg_tags.path(d="M88.558 "
 
 class MaterialDesignIcons(HTMLElement):
 
-    def __render__(self, *args, **kwargs):
+    def render(self, *args, **kwargs):
         return self.html_tags.i(*args, **kwargs)
 
 
@@ -505,7 +505,7 @@ close_md_icon = MaterialDesignIcons("chevron_left", cls="small material-icons")
 
 
 class Iconify(HTMLElement):
-    def __render__(self, *args, **kwargs):
+    def render(self, *args, **kwargs):
         return self.html_tags.span(*args, **kwargs)
 
 

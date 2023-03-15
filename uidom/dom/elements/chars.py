@@ -7,8 +7,9 @@
 import typing as T
 from dataclasses import dataclass, field
 
-from uidom.dom.htmlelement import HTMLElement
 from valio import StringValidator, Validator
+
+from uidom.dom.htmlelement import HTMLElement
 
 __all__ = [
     # char html
@@ -31,7 +32,7 @@ class CharLabel(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(CharLabel, self).__init__(label=self.label, *args, **kwargs)
 
-    def __render__(self, label: str, *args, **kwargs):  # noqa
+    def render(self, label: str, *args, **kwargs):  # noqa
         return self.html_tags.label(label, *args, **kwargs)
 
 
@@ -46,7 +47,7 @@ class CharLegend(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(CharLegend, self).__init__(label=self.label, *args, **kwargs)
 
-    def __render__(self, label, *args, **kwargs):
+    def render(self, label, *args, **kwargs):
         return self.html_tags.legend(label, *args, **kwargs)
 
 
@@ -98,7 +99,7 @@ class CharInput(HTMLElement):
                                         pattern=self.pattern,
                                         **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name: str = None,
@@ -148,7 +149,7 @@ class TextInput(HTMLElement):
                                         pattern=self.pattern,
                                         **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name: str = None,
@@ -189,7 +190,7 @@ class PasswordInput(HTMLElement):
                                             pattern=self.pattern,
                                             **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -232,7 +233,7 @@ class HiddenInput(HTMLElement):
                                           pattern=self.pattern,
                                           **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name: str = None,
@@ -275,7 +276,7 @@ class EmailInput(HTMLElement):
                                          pattern=self.pattern,
                                          **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name: str = None,
@@ -318,7 +319,7 @@ class SearchInput(HTMLElement):
                                           pattern=self.pattern,
                                           **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name: str = None,
@@ -361,7 +362,7 @@ class CharField(HTMLElement):
                                         **kwargs
                                         )
 
-    def __render__(self, *args, label, name, placeholder, type, **kwargs):
+    def render(self, *args, label, name, placeholder, type, **kwargs):
         self.labeled = CharLabel(label)
         self.input = CharInput(
                   name=name,
@@ -373,7 +374,7 @@ class CharField(HTMLElement):
 
 class CharFieldSet(HTMLElement):
 
-    def __render__(self, legend: CharLegend, *fields: HTMLElement, **kwargs):
+    def render(self, legend: CharLegend, *fields: HTMLElement, **kwargs):
         return self.html_tags.fieldset(legend, *fields, **kwargs)
 
 

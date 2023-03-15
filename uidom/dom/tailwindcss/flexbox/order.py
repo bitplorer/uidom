@@ -9,7 +9,7 @@ from uidom.dom.htmlelement import HTMLElement
 
 class Order(HTMLElement):
 
-    def __render__(self, elem, order="1"):
+    def render(self, elem, order="1"):
         elem["class"] += f" order-{order}"
         return elem
 

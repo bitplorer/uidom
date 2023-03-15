@@ -7,9 +7,10 @@
 import typing as T
 from dataclasses import dataclass
 
+from valio import StringValidator, Validator
+
 from uidom.dom.elements.buttons import SubmitButton
 from uidom.dom.htmlelement import HTMLElement
-from valio import StringValidator, Validator
 
 __all__ = [
     # boolean html
@@ -29,7 +30,7 @@ class BooleanLabel(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(BooleanLabel, self).__init__(self.label, *args, **kwargs)
 
-    def __render__(self, label: str, *args, **kwargs):  # noqa
+    def render(self, label: str, *args, **kwargs):  # noqa
         return self.html_tags.label(label, *args, **kwargs)
 
 
@@ -44,7 +45,7 @@ class BooleanLegend(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(BooleanLegend, self).__init__(self.label, *args, **kwargs)
 
-    def __render__(self, label: str, *args, **kwargs):
+    def render(self, label: str, *args, **kwargs):
         return self.html_tags.legend(label, *args, **kwargs)
 
 
@@ -62,7 +63,7 @@ class BooleanInput(HTMLElement):
                                            checked=self.checked,
                                            **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -96,7 +97,7 @@ class CheckboxInput(BooleanInput):
                                            checked=self.checked,
                                            **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
@@ -104,7 +105,7 @@ class CheckboxInput(BooleanInput):
             **kwargs
     ):
 
-        return super().__render__(
+        return super().render(
             *args,
             name=name,
             type="checkbox",
@@ -125,14 +126,14 @@ class RadioInput(BooleanInput):
                                            checked=self.checked,
                                            **kwargs)
 
-    def __render__(
+    def render(
             self,
             *args,
             name,
             checked,
             **kwargs
     ):
-        return super().__render__(
+        return super().render(
             *args,
             name=name,
             type="radio",
@@ -159,7 +160,7 @@ class BooleanField(HTMLElement):
                                            **kwargs
                                            )
 
-    def __render__(self, *args, label, name, type, checked, **kwargs):
+    def render(self, *args, label, name, type, checked, **kwargs):
         self.labeled = BooleanLabel(label)
         self.input = BooleanInput(
                   name=name,

@@ -7,9 +7,10 @@
 import typing as T
 from dataclasses import dataclass
 
+from valio import StringValidator, Validator
+
 from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src.htmltags import html_tag
-from valio import StringValidator, Validator
 
 __all__ = [
     "Button",
@@ -40,7 +41,7 @@ class _Button(HTMLElement):
             icon=self.icon if self.icon is not None else False,
             **kwargs)
 
-    def __render__(self, *args, label, type, value, icon=None, **kwargs):
+    def render(self, *args, label, type, value, icon=None, **kwargs):
         return self.html_tags.button(icon or '', label, *args, type=type, value=value, **kwargs)
 
 
@@ -52,7 +53,7 @@ class _ButtonInput(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(_ButtonInput, self).__init__(*args, type=self.type, value=self.value, **kwargs)
 
-    def __render__(self, *args, type, value, **kwargs):
+    def render(self, *args, type, value, **kwargs):
         return self.html_tags.input_(*args, type=type, value=value, **kwargs)
 
 
@@ -64,7 +65,7 @@ class Button(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(Button, self).__init__(*args, label=self.label, value=self.value, **kwargs)
 
-    def __render__(self, *args, label, value, **kwargs):
+    def render(self, *args, label, value, **kwargs):
         return _Button(label=label, type="button", value=value)
 
 
@@ -77,7 +78,7 @@ class SubmitButton(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(SubmitButton, self).__init__(*args, label=self.label, value=self.value, icon=self.icon, **kwargs)
 
-    def __render__(self, *args, value, label, icon, **kwargs):
+    def render(self, *args, value, label, icon, **kwargs):
         return _Button(type="submit", value=value, label=label, icon=icon)
 
 
@@ -90,42 +91,42 @@ class ResetButton(HTMLElement):
     def __post_init__(self, *args, **kwargs):
         super(ResetButton, self).__init__(*args, label=self.label, value=self.value, icon=self.icon, **kwargs)
 
-    def __render__(self, *args, label, value, icon, **kwargs):
+    def render(self, *args, label, value, icon, **kwargs):
         return _Button(*args, type="reset", label=label, value=value, icon=icon, **kwargs)
 
 @dataclass(eq=False)
 class ButtonInput(HTMLElement):
     value: str
     
-    def __render__(self, *args, value, **kwargs):
+    def render(self, *args, value, **kwargs):
         return _ButtonInput(type="button", value=value)
 
 @dataclass(eq=False)
 class SubmitButtonInput(HTMLElement):
     value: str 
     
-    def __render__(self, *args, value, **kwargs):
+    def render(self, *args, value, **kwargs):
         return _ButtonInput(type="submit", value=value)
 
 @dataclass(eq=False)
 class ResetButtonInput(HTMLElement):
     value: str
     
-    def __render__(self, *args, value, **kwargs):
+    def render(self, *args, value, **kwargs):
         return _ButtonInput(type="reset", value=value)
 
 @dataclass(eq=False)
 class FileButtonInput(HTMLElement):
     value: str 
     
-    def __render__(self, *args, value, **kwargs):
+    def render(self, *args, value, **kwargs):
         return _ButtonInput(type="file", value=value)
 
 @dataclass(eq=False)
 class ImageButtonInput(HTMLElement):
     value: str 
     
-    def __render__(self, *args, value, **kwargs):
+    def render(self, *args, value, **kwargs):
         return _ButtonInput(type="image", value=value)
 
 

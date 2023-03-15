@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     class x(HTMLElement):
 
-        def __render__(self, name, *args, **kwargs):
+        def render(self, name, *args, **kwargs):
             return component(name, *args, **kwargs)
 
     from uidom.dom.src.htmltags import body, script

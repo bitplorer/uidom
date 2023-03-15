@@ -4,12 +4,13 @@
 # https://opensource.org/licenses/MIT
 
 
+from valio import Validator
+
 from uidom.dom.elements import (CharFieldSet, CharLabel, CharLegend,
-                                       PasswordInput, SubmitButton, TextInput)
+                                PasswordInput, SubmitButton, TextInput)
 from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src.htmltags import div, form
 from uidom.dom.src.svgtags import svg
-from valio import Validator
 
 __all__ = [
     "LoginForm",
@@ -28,7 +29,7 @@ class LoginForm(HTMLElement):
     password_div: div = Validator(logger=False, debug=True, required=True)
     button: SubmitButton = Validator(logger=False, debug=True, required=True)
 
-    def __render__(
+    def render(
             self,
             *args,
             text_label,
@@ -64,7 +65,7 @@ class RegisterForm(HTMLElement):
     confirm_password_div: div = Validator(logger=False, debug=True, required=True)
     button: SubmitButton = Validator(logger=False, debug=True, required=True)
 
-    def __render__(
+    def render(
             self,
             *args,
             text_label,
@@ -99,7 +100,7 @@ class FieldSetLoginForm(HTMLElement):
     password: PasswordInput = Validator(logger=False, debug=True, required=True)
     button: SubmitButton = Validator(logger=False, debug=True, required=True)
 
-    def __render__(
+    def render(
             self,
             *args,
             legend_label,

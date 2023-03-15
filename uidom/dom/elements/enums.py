@@ -7,10 +7,11 @@
 import typing as T
 from enum import Enum, IntEnum
 
-from uidom.dom.htmlelement import HTMLElement
-from uidom.dom.src.htmltags import option, select
 from valio import (EnumValidator, IntegerEnumValidator, StringEnumValidator,
                    StringValidator)
+
+from uidom.dom.htmlelement import HTMLElement
+from uidom.dom.src.htmltags import option, select
 
 __all__ = [
     "EnumLabel",
@@ -23,7 +24,7 @@ __all__ = [
 class EnumLabel(HTMLElement):
     label = StringValidator(logger=False, debug=True)
 
-    def __render__(self, label, *args, **kwargs):
+    def render(self, label, *args, **kwargs):
         self.label = label
         return self.html_tags.label(self.label, *args, **kwargs)
 
@@ -31,7 +32,7 @@ class EnumLabel(HTMLElement):
 class EnumInput(HTMLElement):
     options: Enum = EnumValidator(logger=False, debug=True)
 
-    def __render__(self, *args, options, **kwargs):
+    def render(self, *args, options, **kwargs):
         self.options = options
         return select(option(opt.value, value=str(opt.value).capitalize())
                       if len(opt.value) == 1 else option(opt.value[0], value=str(opt.value[1]))
@@ -41,7 +42,7 @@ class EnumInput(HTMLElement):
 class IntegerEnumInput(HTMLElement):
     options: IntEnum = IntegerEnumValidator(logger=False, debug=True)
 
-    def __render__(self, *args, options, **kwargs):
+    def render(self, *args, options, **kwargs):
         self.options = options
         return select(option(opt.value, value=str(opt.value).capitalize())
                       if len(opt.value) == 1 else option(opt.value[0], value=str(opt.value[1]))
@@ -51,7 +52,7 @@ class IntegerEnumInput(HTMLElement):
 class CharEnumInput(HTMLElement):
     options: T.Union[str, Enum, None] = StringEnumValidator(logger=False, debug=True)
 
-    def __render__(self, *args, options, **kwargs):
+    def render(self, *args, options, **kwargs):
         self.options = options
         return select(option(opt.value, value=str(opt.value).capitalize())
                       if len(opt.value) == 1 else option(opt.value[0], value=str(opt.value[1]))

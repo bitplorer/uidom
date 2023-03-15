@@ -5,13 +5,13 @@
 
 
 from uidom.dom.htmlelement import HTMLElement
-from uidom.dom.tailwindcss import (Columns, Flex, FlexColumn, FlexRow,
-                                        Grid, Rows)
+from uidom.dom.tailwindcss import (Columns, Flex, FlexColumn, FlexRow, Grid,
+                                   Rows)
 
 
 class GridRowsColumnsDiv(HTMLElement):
 
-    def __render__(self, *args, columns, rows, **kwargs):
+    def render(self, *args, columns, rows, **kwargs):
         elem = self.html_tags.div(*args, **kwargs)
         elem["class"] = ""
         return Rows(Columns(Grid(elem), columns=columns), rows=rows)
@@ -19,7 +19,7 @@ class GridRowsColumnsDiv(HTMLElement):
 
 class FlexColumnDiv(HTMLElement):
 
-    def __render__(self, *args, **kwargs):
+    def render(self, *args, **kwargs):
         elem = self.html_tags.div(*args, **kwargs)
         elem["class"] = ""
         return Flex(FlexColumn(elem))
@@ -27,7 +27,7 @@ class FlexColumnDiv(HTMLElement):
 
 class FlexRowDiv(HTMLElement):
 
-    def __render__(self, *args, **kwargs):
+    def render(self, *args, **kwargs):
         elem = self.html_tags.div(*args, **kwargs)
         elem["class"] = ""
         return FlexRow(Flex(elem))

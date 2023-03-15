@@ -9,13 +9,13 @@ from uidom.dom.htmlelement import HTMLElement
 
 class Visible(HTMLElement):
 
-    def __render__(self, elem):
+    def render(self, elem):
         elem["class"] += "visible"
         return elem
 
 
 class Invisible(HTMLElement):
 
-    def __render__(self, elem):
+    def render(self, elem):
         elem["class"] += "invisible"
         return elem

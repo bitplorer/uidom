@@ -15,7 +15,7 @@ class VueLoader(HTMLElement):
     # for more details look at
     # https://github.com/FranckFreiburger/vue3-sfc-loader
 
-    def __render__(self, *args, **kwargs):
+    def render(self, *args, **kwargs):
         return script(
             raw('''
         // Options from the vue3-sfc-loader Example at https://github.com/FranckFreiburger/vue3-sfc-loader#example

@@ -9,13 +9,13 @@ from uidom.dom.htmlelement import HTMLElement
 
 class FlexGrow(HTMLElement):
 
-    def __render__(self, elem):
+    def render(self, elem):
         elem["class"] += " flex-grow"
         return elem
 
 
 class FlexGrow0(HTMLElement):
 
-    def __render__(self, elem):
+    def render(self, elem):
         elem["class"] += " flex-grow-0"
         return elem

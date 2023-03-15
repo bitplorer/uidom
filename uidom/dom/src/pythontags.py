@@ -12,7 +12,7 @@ class Python(extension.SingleTemplates):
     enable_left_delimiter_space = True
     enable_space_in_between = False
 
-    def render(self, indent="    ", pretty=True, xhtml=False):
+    def __html__(self, indent="    ", pretty=True, xhtml=False):
         data = self._render([], 0, indent, pretty, xhtml)
         return "".join(data)
 
