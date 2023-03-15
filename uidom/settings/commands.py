@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Union
 
 import valio
+
 from uidom.settings import WebAssets
 
 __all__ = [
@@ -124,7 +125,8 @@ class TailwindCommand(Command):
         self.project_dir = Path(self.file_path).parent
         self.input_file = self.root_dir / self.input_file
         self.output_file = self.webassets.static.css / self.output_file
-        sys.exit(self.init_tailwind_project())
+        # sys.exit(self.init_tailwind_project())
+        self.init_tailwind_project()
 
     def init_tailwind_project(self):
         if self.is_tailwindcss_available():
