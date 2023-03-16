@@ -8,6 +8,7 @@ import os
 import typing
 
 from jinja2.utils import htmlsafe_json_dumps
+
 from uidom.dom.src.dom1core import dom1core
 from uidom.dom.src.dom_tag import dom_tag, unicode
 from uidom.dom.src.utils.dom_util import escape
@@ -116,7 +117,8 @@ class Tags(dom_tag, dom1core):
             attribute = attribute.replace("v-bind", "")
             attribute = attribute.replace("x-bind-", ":")
             attribute = attribute.replace("x-bind", "")
-            attribute = attribute.replace("x-transition-", "x-transition:")
+            attribute = attribute.replace("x-transition-enter", "x-transition:enter")
+            attribute = attribute.replace("x-transition-leave", "x-transition:leave")
             attribute = attribute.replace("v-on:", "@")
             attribute = attribute.replace("v-on-", "@")
             attribute = attribute.replace("x-on:", "@")
@@ -221,38 +223,53 @@ class Tags(dom_tag, dom1core):
 
     def save(
             self,
+            html_string=None,
             file_name: str = None,
-            template_folder: str = "static",
-            html_template=None,
+            folder_name: str = None,
             current_dir=False,
+            file_path=None,
     ):
-        html_template = html_template or self.render()
-        current_folder = os.getcwd()
-        doc_folder = current_folder if current_dir else os.path.dirname(current_folder)
-        template_folder = os.path.join(doc_folder, template_folder)
-        file_name = file_name or str(self.__class__.__name__)
+        
+        if file_path is not None:
+            assert folder_name is None and current_dir is False, "folder_name and current_dir can't be initialised with file_path"
+        else:
+            folder_name = folder_name or "static" # passing default folder_name here
+            assert file_name is not None and folder_name is not None, "file_name and folder_name both should be initialised"
+        
+
         if self.file_extension is None:
             raise ValueError(f"can not save file with {self.file_extension!r} type extension")
-        template_file = (
-            file_name
-            if file_name.endswith(self.file_extension)
-            else ".".join([file_name, self.file_extension[1:]])
-        )
-        if not os.path.exists(template_folder):
-            os.makedirs(template_folder)
-
-        template_file_path = os.path.join(template_folder, template_file)
-
-        if not os.path.exists(template_file_path):
-            with open(template_file_path, "w+") as f:
-                f.write(html_template)
+        
+        file_name = file_name or str(self.__class__.__name__)
+        file_name = (
+                file_name
+                if file_name.endswith(self.file_extension)
+                else ".".join([file_name, self.file_extension[1:]])
+            )
+        
+        if folder_name is not None:
+            current_work_dir = os.getcwd()
+            dirname = current_work_dir if current_dir else os.path.dirname(current_work_dir)
+            folder_name = os.path.join(dirname, folder_name)
+            
+            if not os.path.exists(folder_name):
+                os.makedirs(folder_name)
+            file_path = os.path.join(folder_name, file_name) 
         else:
-            with open(template_file_path, "r") as temp:
+            file_path = os.path.join(file_path, file_name) if not os.path.isfile(file_path) else file_path
+            
+        html_string = html_string or self.__html__()
+        
+        if not os.path.exists(file_path):
+            with open(file_path, "w+") as f:
+                f.write(html_string)
+        else:
+            with open(file_path, "r") as temp:
                 old_html = temp.read()
-                if old_html != html_template:
-                    with open(template_file_path, "w") as f:
-                        f.write(html_template)
-        return template_file
+                if old_html != html_string:
+                    with open(file_path, "w") as f:
+                        f.write(html_string)
+        return file_name
 
 
 class SingleTags(Tags):
