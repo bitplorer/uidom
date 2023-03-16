@@ -7,12 +7,14 @@
 
 import uvicorn
 
+from demosite import settings
+
 if __name__ == "__main__":
     uvicorn.run(
-        "main:api",
+        "routes:api",
         host="127.0.0.1",
-        port=8000,
-        reload=True,
+        port=8080,
+        reload=settings.DEBUG,
         # ssl_keyfile='../demosite/key.pem',
         # ssl_certfile='../demosite/cert.pem'
     )
