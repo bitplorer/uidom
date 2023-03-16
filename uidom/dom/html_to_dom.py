@@ -12,7 +12,7 @@ import typing as T
 from copy import deepcopy
 from dataclasses import dataclass, field
 
-from uidom.dom.htmlelement import HTMLElement
+# from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src import ext, htmltags, jinjatags, svgtags
 from uidom.dom.src.htmltags import ConcatTag, html_tag
 from uidom.dom.src.parse_html import Element, tokenize_html
@@ -20,7 +20,7 @@ from uidom.dom.src.utils import dom_text
 
 __all__ = [
     "HTMLStringToDom",
-    "HTMLStringToElement"
+    "html_string_to_element"
 ]
 
 
@@ -41,6 +41,12 @@ def create_dynamic_element(tag_name: str) -> T.Type[ext.Tags]:
 
 @dataclass
 class HTMLStringToDom(object):
+    # TODO convert DOM object instance to Code Object for AST conversion to python code.
+    # from https://stackoverflow.com/questions/68577587/how-to-find-the-ast-assignment-node-related-to-the-instance-creation
+    # this.ast_object can be easily used to create python code for any html object
+    # https://stackoverflow.com/a/68584740 for parsing a python object into an ast_object
+    # https://stackoverflow.com/a/63212256 for unparsing a python ast_object
+    
     html_string_or_token: T.Union[str, Element, list[Element], ext.Tags]
     modules: list[types.ModuleType] = field(default_factory=list)
 
@@ -111,21 +117,8 @@ class HTMLStringToDom(object):
         return str(self.parse())
 
 
-@dataclass
-class HTMLStringToElement(HTMLElement):
-    # TODO convert DOM object instance to Code Object for AST conversion to python code.
-    # from https://stackoverflow.com/questions/68577587/how-to-find-the-ast-assignment-node-related-to-the-instance-creation
-    # this.ast_object can be easily used to create python code for any html object
-    # https://stackoverflow.com/a/68584740 for parsing a python object into an ast_object
-    # https://stackoverflow.com/a/63212256 for unparsing a python ast_object
-
-
-    def __init__(self, *args, **kwargs):
-        super(HTMLStringToElement, self).__init__(*args, **kwargs)
-
-    def __render__(self, raw_string) -> T.Union[str, ext.Tags, None]: # noqa
-        return HTMLStringToDom(raw_string).parse()
-
+def html_string_to_element(raw_string) -> T.Union[str, ext.Tags, None]: # noqa
+    return HTMLStringToDom(raw_string).parse()
 
 # if __name__ == '__main__':
     # from uidom.dom import ConcatTag, For, Var, div, li, raw, script, ul
