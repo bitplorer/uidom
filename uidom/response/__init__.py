@@ -4,4 +4,5 @@
 # https://opensource.org/licenses/MIT
 
 
-from .starlette_response import DocumentResponse, doc_response
+from .starlette import (HTMLResponse, StreamingResponse, async_html_response,
+                        html_response)
