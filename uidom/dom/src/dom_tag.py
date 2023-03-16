@@ -136,16 +136,11 @@ class dom_tag(object):
         thread_id = _get_thread_context()
         stack = dom_tag._with_contexts[thread_id]
         frame = stack.pop()
+        
         for item in frame.items:
-            if not hasattr(item, "__render__"):
-                # deal with all the Tags but not Components
+            if not hasattr(item, "_entry"):
                 if item in frame.used:
-                    continue
-            else:
-                # deal with all the components here, as all components have ._entry attributes
-                # we can now check the membership of it
-                if item._entry in frame.used:
-                    continue
+                        continue
             self.add(item)
         if not stack:
             del dom_tag._with_contexts[thread_id]
@@ -222,13 +217,7 @@ class dom_tag(object):
             elif isinstance(obj, dom_tag):
                 stack = dom_tag._with_contexts.get(_get_thread_context())
                 if stack:
-                    if hasattr(obj, 'render_tag'):
-                        if obj.render_tag:
-                            stack[-1].used.add(obj)
-                        else:
-                            stack[-1].used.add(obj.children[0])
-                    else:
-                        stack[-1].used.add(obj)
+                    stack[-1].used.add(obj)
                         
                 self.children.append(obj)
                 obj.parent = self
@@ -236,7 +225,7 @@ class dom_tag(object):
 
             elif isinstance(obj, dict):
                 for attr, value in obj.items():
-                    self.set_attribute(*dom_tag.clean_pair(attr, value))
+                    self.set_attribute(*self.clean_pair(attr, value))
 
             elif hasattr(obj, "__iter__"):
                 for subobj in obj:
@@ -354,13 +343,17 @@ class dom_tag(object):
 
     # String and unicode representations are the same as render()
     def __unicode__(self):
-        return self.render()
+        return self.__html__()
 
     __str__ = __unicode__
 
-    def render(self, indent="  ", pretty=True, xhtml=False):
-        data = self._render([], 0, indent, pretty, xhtml)
-        return u"".join(data)
+    def __html__(self, indent="  ", pretty=True, xhtml=False):
+        html_tokens = self._render([], 0, indent, pretty, xhtml)
+        return u"".join(html_tokens)
+
+    async def __async_html__(self, indent="  ", pretty=True, xhtml=False):
+        for html_token in self._render([], 0, indent, pretty, xhtml):
+            yield html_token
 
     def _render(self, sb, indent_level, indent_str, pretty, xhtml):
         pretty = pretty and self.is_pretty
