@@ -74,6 +74,8 @@ class DocType(HtmlSingleTemplates):
 
         super(DocType, self).__init__("DOCTYPE", template_text, *dom_elements)
 
+    def __and__(self, other: extension.Tags) -> extension.Tags:
+        return ConcatTag(self, other)
 
 class html_tag(extension.Tags):
     def __init__(self, *args, **kwargs):
@@ -81,6 +83,9 @@ class html_tag(extension.Tags):
         Creates a new html tag instance.
         '''
         super(html_tag, self).__init__(*args, **kwargs)
+    
+    def __and__(self, other: extension.Tags) -> extension.Tags:
+        return ConcatTag(self, other)
 
     # def validate(self):
     #   '''
