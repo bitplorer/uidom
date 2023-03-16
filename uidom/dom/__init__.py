@@ -4,12 +4,11 @@
 # https://opensource.org/licenses/MIT
 
 
-from .widgets import *  # isort: skip
 from .htmlelement import *  # isort: skip
 from .htmldocument import *  # isort: skip
 from .xcomponent_js import *  # isort: skip
 # from .xshadowcomponent import *  # isort: skip
-from .css import *  # isort: skip
+
 from .elements import *  # isort: skip 
 from .htmlelement import *  # isort: skip
 from .icons import *  # isort: skip
