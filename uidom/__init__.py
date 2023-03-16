@@ -4,7 +4,7 @@
 # https://opensource.org/licenses/MIT
 
 
-from .components import *
-from .settings import *
+from .slots import * # isort: skip
+from .settings import * # isort: skip
 
-__version__ = '0.1.1b6'
+__version__ = '0.2'
