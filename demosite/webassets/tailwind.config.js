@@ -15,7 +15,19 @@ module.exports = {
             require('tailwindcss/colors'),
         ],
         theme: {
-            extend: {}
+            extend: {
+                fontFamily: {
+                    roboto: ["'Roboto'"],
+                    cursive: ["'Style Script'"],
+                    oswald: ["'Oswald'"],
+                    teko: ["'Teko'"],
+                    cinzel: ["'Cinzel Decorative'"],
+                    montserrat: ["'Montserrat'"],
+                },
+                minHeight: (theme) => ({
+                    ...theme('spacing'),
+                  })
         }
         
         }
+}
