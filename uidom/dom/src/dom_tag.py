@@ -343,15 +343,15 @@ class dom_tag(object):
 
     # String and unicode representations are the same as render()
     def __unicode__(self):
-        return self.__html__()
+        return self.__render__()
 
     __str__ = __unicode__
 
-    def __html__(self, indent="  ", pretty=True, xhtml=False):
+    def __render__(self, indent="  ", pretty=True, xhtml=False):
         html_tokens = self._render([], 0, indent, pretty, xhtml)
         return u"".join(html_tokens)
 
-    async def __async_html__(self, indent="  ", pretty=True, xhtml=False):
+    async def __async_render__(self, indent="  ", pretty=True, xhtml=False):
         for html_token in self._render([], 0, indent, pretty, xhtml):
             yield html_token
 
