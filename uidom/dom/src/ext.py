@@ -1,10 +1,11 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
 
 import os
+import textwrap
 import typing
 
 from jinja2.utils import htmlsafe_json_dumps
@@ -13,7 +14,13 @@ from uidom.dom.src.dom1core import dom1core
 from uidom.dom.src.dom_tag import dom_tag, unicode
 from uidom.dom.src.utils.dom_util import escape
 
-__all__ = ["SingleTemplates", "DoubleTemplates", "DoubleTags", "SingleTags", "StyleTags"]
+__all__ = [
+    "SingleTemplates",
+    "DoubleTemplates",
+    "DoubleTags",
+    "SingleTags",
+    "StyleTags",
+]
 
 
 class Tags(dom_tag, dom1core):
@@ -38,7 +45,9 @@ class Tags(dom_tag, dom1core):
                 raise TypeError(msg)
         super(Tags, self).__init__(*args, **kwargs)
 
-    def _render_open_tag(self, sb, indent_level, indent_str, pretty, xhtml, name, open_tag):
+    def _render_open_tag(
+        self, sb, indent_level, indent_str, pretty, xhtml, name, open_tag
+    ):
         if open_tag:
             sb.append("%s" % open_tag)
         else:
@@ -46,26 +55,38 @@ class Tags(dom_tag, dom1core):
             sb.append(self.left_delimiter)
             sb.append(name)
             sb = self._render_attribute(sb, indent_level, indent_str, pretty, xhtml)
-            sb.append(''.join(["/", self.right_delimiter]) if self.is_single and xhtml else self.right_delimiter)
+            sb.append(
+                "".join(["/", self.right_delimiter])
+                if self.is_single and xhtml
+                else self.right_delimiter
+            )
         return sb
 
     def _render_attribute(self, sb, indent_level, indent_str, pretty, xhtml):
         for attribute, value in sorted(self.attributes.items()):
-            if value is not False and value not in [None]:  # False values must be omitted completely
-                if not isinstance(value, (typing.MutableMapping, typing.MutableSequence)):
+            if value is not False and value not in [
+                None
+            ]:  # False values must be omitted completely
+                if attribute == "class":
+                    value = textwrap.wrap(
+                        text=value
+                    )  # adding support to write multiline tailwindcss classes
+                if not isinstance(
+                    value, (typing.MutableMapping, typing.MutableSequence)
+                ):
                     sb.append(' %s="%s"' % (attribute, escape(unicode(value), True)))
                 else:
                     value = htmlsafe_json_dumps(value)
                     sb.append(" %s='%s'" % (attribute, escape(unicode(value), True)))
             if value in [None]:  # minified xhtml attributes are added
-                sb.append(' %s' % attribute)
+                sb.append(" %s" % attribute)
         return sb
 
     def _render_close_tag(self, sb, name, close_tag):
         if close_tag:
             sb.append("%s" % close_tag)
         else:
-            sb.append(''.join([self.left_delimiter, "/"]))
+            sb.append("".join([self.left_delimiter, "/"]))
             sb.append(name)
             sb.append(self.right_delimiter)
         return sb
@@ -93,25 +114,39 @@ class Tags(dom_tag, dom1core):
 
         # Shorthand
         attribute = {
-            'cls': 'class',
-            'className': 'class',
-            'class_name': 'class',
-            'fr': 'for',
-            'html_for': 'for',
-            'htmlFor': 'for',
+            "cls": "class",
+            "className": "class",
+            "class_name": "class",
+            "fr": "for",
+            "html_for": "for",
+            "htmlFor": "for",
         }.get(attribute, attribute)
 
         # Workaround for Python's reserved words
         if len(attribute) >= 2:
-            if attribute[0] == '_' and attribute[1] != "_":
+            if attribute[0] == "_" and attribute[1] != "_":
                 attribute = attribute[1:]
 
         # Workaround for dash plus support for VueJS, HTMX, Unpoly and AngularJS
         special_prefix = any(
-            [attribute.startswith(x) for x in ('data_', 'aria_', 'x_', 'v_', 'ng_', "hx_", "__", "ws__", "up_",
-                                               "remove_me")])
-        if attribute in {'http_equiv'} or special_prefix:
-            attribute = attribute.replace('_', '-')
+            [
+                attribute.startswith(x)
+                for x in (
+                    "data_",  # for data-type="value" support
+                    "aria_",  # for aria support
+                    "x_",  # for AlpineJS and x-component
+                    "v_",  # for Vue support
+                    "ng_",  # for Angular support
+                    "hx_",  # for HTMX support
+                    "__",  #
+                    "ws__",  #
+                    "up_",  # for Unpoly JS support
+                    "remove_me",  # for HTMX remove extension support
+                )
+            ]
+        )
+        if attribute in {"http_equiv"} or special_prefix:
+            attribute = attribute.replace("_", "-")
             attribute = attribute.replace("--", ":")
             attribute = attribute.replace("v-bind-", ":")
             attribute = attribute.replace("v-bind", "")
@@ -119,6 +154,8 @@ class Tags(dom_tag, dom1core):
             attribute = attribute.replace("x-bind", "")
             attribute = attribute.replace("x-transition-enter", "x-transition:enter")
             attribute = attribute.replace("x-transition-leave", "x-transition:leave")
+            attribute = attribute.replace("x-intersect-enter", "x-intersect:enter")
+            attribute = attribute.replace("x-intersect-leave", "x-intersect:leave")
             attribute = attribute.replace("v-on:", "@")
             attribute = attribute.replace("v-on-", "@")
             attribute = attribute.replace("x-on:", "@")
@@ -126,8 +163,8 @@ class Tags(dom_tag, dom1core):
             attribute = attribute.replace("-dot-", ".")
 
         # Workaround for colon
-        if attribute.split('_')[0] in ('xlink', 'xml', 'xmlns'):
-            attribute = attribute.replace('_', ':', 1)
+        if attribute.split("_")[0] in ("xlink", "xml", "xmlns"):
+            attribute = attribute.replace("_", ":", 1)
 
         return attribute
 
@@ -135,22 +172,26 @@ class Tags(dom_tag, dom1core):
         # Workaround for python keywords and standard classes/methods
         # (del, object, input)
         if any(name):  # to handle the case when tagname = ""
-            if name[-1] == '_':
+            if name[-1] == "_":
                 name = name[:-1]
         return name
 
     def _render_children(self, sb, indent_level, indent_str, pretty, xhtml):
         inline = True
         orig_indent = indent_level
-        self_render_tag = self.attributes.pop(Tags.RENDER_TAG,
-                                              getattr(self, Tags.RENDER_TAG)
-                                              if hasattr(self, Tags.RENDER_TAG) else True)
+        self_render_tag = self.attributes.pop(
+            Tags.RENDER_TAG,
+            getattr(self, Tags.RENDER_TAG) if hasattr(self, Tags.RENDER_TAG) else True,
+        )
         for child in self.children:
             if isinstance(child, dom_tag):
 
-                child_self_dedent = child.attributes.pop(Tags.SELF_DEDENT,
-                                                         getattr(child, Tags.SELF_DEDENT)
-                                                         if hasattr(child, Tags.SELF_DEDENT) else False)
+                child_self_dedent = child.attributes.pop(
+                    Tags.SELF_DEDENT,
+                    getattr(child, Tags.SELF_DEDENT)
+                    if hasattr(child, Tags.SELF_DEDENT)
+                    else False,
+                )
 
                 # checks if the self.child_dedent or self.self_dedent if true and dedent the tags
                 if pretty and not child.is_inline:
@@ -162,7 +203,8 @@ class Tags(dom_tag, dom1core):
 
                 if self_render_tag:
                     sb, inline = self._new_line_and_inline_handler(
-                        sb, indent_level, indent_str, pretty, inline and self.is_inline)
+                        sb, indent_level, indent_str, pretty, inline and self.is_inline
+                    )
 
                 child._render(sb, indent_level, indent_str, pretty, xhtml)
 
@@ -173,19 +215,24 @@ class Tags(dom_tag, dom1core):
                     else:
                         inline = False
                         sb, inline = self._new_line_and_inline_handler(
-                            sb, indent_level, indent_str, pretty, inline)
+                            sb, indent_level, indent_str, pretty, inline
+                        )
                         sb.append(unicode(child))
 
             # new_line_at_end caters to DOCTYPE Tag as its wrapped in an empty wrapper
-            new_line_at_child_end = self.attributes.pop(Tags.NEW_LINE_AT_CHILD_END,
-                                                        getattr(self, Tags.NEW_LINE_AT_CHILD_END)
-                                                        if hasattr(self, Tags.NEW_LINE_AT_CHILD_END) else False)
+            new_line_at_child_end = self.attributes.pop(
+                Tags.NEW_LINE_AT_CHILD_END,
+                getattr(self, Tags.NEW_LINE_AT_CHILD_END)
+                if hasattr(self, Tags.NEW_LINE_AT_CHILD_END)
+                else False,
+            )
 
             # new_line_at_child_end caters to ConcatTag as its an empty wrapper and children needs
             # '\n' new line support except the last one
             if new_line_at_child_end and self.children[-1] != child:
-                sb, _ = self._new_line_and_inline_handler(sb, indent_level, indent_str, pretty,
-                                                          inline and self.is_inline)
+                sb, _ = self._new_line_and_inline_handler(
+                    sb, indent_level, indent_str, pretty, inline and self.is_inline
+                )
         return inline
 
     def _render(self, sb, indent_level=1, indent_str="  ", pretty=True, xhtml=False):
@@ -193,73 +240,98 @@ class Tags(dom_tag, dom1core):
         close_tag = self.attributes.pop(Tags.CLOSE_TAG, False)
         pretty = pretty and self.is_pretty and not self.is_inline
         # name = self._clean_name(getattr(self, 'tagname', type(self).__name__))
-        self_child_dedent = self.attributes.pop(Tags.CHILD_DEDENT,
-                                                getattr(self, Tags.CHILD_DEDENT)
-                                                if hasattr(self, Tags.CHILD_DEDENT) else False)
+        self_child_dedent = self.attributes.pop(
+            Tags.CHILD_DEDENT,
+            getattr(self, Tags.CHILD_DEDENT)
+            if hasattr(self, Tags.CHILD_DEDENT)
+            else False,
+        )
 
-        self_render_tag = self.attributes.pop(Tags.RENDER_TAG,
-                                              getattr(self, Tags.RENDER_TAG)
-                                              if hasattr(self, Tags.RENDER_TAG) else True)
+        self_render_tag = self.attributes.pop(
+            Tags.RENDER_TAG,
+            getattr(self, Tags.RENDER_TAG) if hasattr(self, Tags.RENDER_TAG) else True,
+        )
 
         dedent = (not self_render_tag) or self_child_dedent
         if pretty and dedent:
             indent_level = self._dedent_handler(dedent, indent_level)
 
         if self_render_tag:
-            name = self._clean_name(getattr(self, 'tagname', type(self).__name__))
-            self._render_open_tag(sb, indent_level, indent_str, pretty, xhtml, name, open_tag)
+            name = self._clean_name(getattr(self, "tagname", type(self).__name__))
+            self._render_open_tag(
+                sb, indent_level, indent_str, pretty, xhtml, name, open_tag
+            )
 
-        inline = self._render_children(sb,
-                                       indent_level + 1 if not self.is_single or not self_child_dedent else indent_level,
-                                       indent_str, pretty, xhtml)
+        inline = self._render_children(
+            sb,
+            indent_level + 1
+            if not self.is_single or not self_child_dedent
+            else indent_level,
+            indent_str,
+            pretty,
+            xhtml,
+        )
         inline = self.is_inline and inline
         if self_render_tag:
             if not self.is_single:
-                sb, inline = self._new_line_and_inline_handler(sb, indent_level, indent_str, pretty, inline)
-                name = self._clean_name(getattr(self, 'tagname', type(self).__name__))
+                sb, inline = self._new_line_and_inline_handler(
+                    sb, indent_level, indent_str, pretty, inline
+                )
+                name = self._clean_name(getattr(self, "tagname", type(self).__name__))
                 self._render_close_tag(sb, name, close_tag)
 
         return sb
 
     def save(
-            self,
-            html_string=None,
-            file_name: str = None,
-            folder_name: str = None,
-            current_dir=False,
-            file_path=None,
+        self,
+        html_string=None,
+        file_name: str = None,
+        folder_name: str = None,
+        current_dir=False,
+        file_path=None,
     ):
-        
+
         if file_path is not None:
-            assert folder_name is None and current_dir is False, "folder_name and current_dir can't be initialised with file_path"
+            assert (
+                folder_name is None and current_dir is False
+            ), "folder_name and current_dir can't be initialised with file_path"
         else:
-            folder_name = folder_name or "static" # passing default folder_name here
-            assert file_name is not None and folder_name is not None, "file_name and folder_name both should be initialised"
-        
+            folder_name = folder_name or "static"  # passing default folder_name here
+            assert (
+                file_name is not None and folder_name is not None
+            ), "file_name and folder_name both should be initialised"
 
         if self.file_extension is None:
-            raise ValueError(f"can not save file with {self.file_extension!r} type extension")
-        
+            raise ValueError(
+                f"can not save file with {self.file_extension!r} type extension"
+            )
+
         file_name = file_name or str(self.__class__.__name__)
         file_name = (
-                file_name
-                if file_name.endswith(self.file_extension)
-                else ".".join([file_name, self.file_extension[1:]])
-            )
-        
+            file_name
+            if file_name.endswith(self.file_extension)
+            else ".".join([file_name, self.file_extension[1:]])
+        )
+
         if folder_name is not None:
             current_work_dir = os.getcwd()
-            dirname = current_work_dir if current_dir else os.path.dirname(current_work_dir)
+            dirname = (
+                current_work_dir if current_dir else os.path.dirname(current_work_dir)
+            )
             folder_name = os.path.join(dirname, folder_name)
-            
+
             if not os.path.exists(folder_name):
                 os.makedirs(folder_name)
-            file_path = os.path.join(folder_name, file_name) 
+            file_path = os.path.join(folder_name, file_name)
         else:
-            file_path = os.path.join(file_path, file_name) if not os.path.isfile(file_path) else file_path
-            
-        html_string = html_string or self.__html__()
-        
+            file_path = (
+                os.path.join(file_path, file_name)
+                if not os.path.isfile(file_path)
+                else file_path
+            )
+
+        html_string = html_string or self.__render__()
+
         if not os.path.exists(file_path):
             with open(file_path, "w+") as f:
                 f.write(html_string)
@@ -292,14 +364,15 @@ class SingleTemplates(SingleTags):
     enable_right_delimiter_space = True
     enable_space_in_between = True
 
-    def __init__(self,
-                 template_name,
-                 template_text,
-                 *dom_elements,
-                 self_dedent=None,
-                 child_dedent=None,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        template_name,
+        template_text,
+        *dom_elements,
+        self_dedent=None,
+        child_dedent=None,
+        **kwargs,
+    ):
         open_tag = (
             "".join(
                 [
@@ -320,15 +393,17 @@ class SingleTemplates(SingleTags):
                         " " if self.enable_left_delimiter_space else "",
                         template_text,
                         " " if self.enable_right_delimiter_space else "",
-                        self.right_delimiter
+                        self.right_delimiter,
                     ]
                 )
             )
         )
-        super(SingleTemplates, self).__init__(open_tag=open_tag,
-                                              self_dedent=self_dedent or self.self_dedent,
-                                              child_dedent=child_dedent or self.child_dedent,
-                                              **kwargs)
+        super(SingleTemplates, self).__init__(
+            open_tag=open_tag,
+            self_dedent=self_dedent or self.self_dedent,
+            child_dedent=child_dedent or self.child_dedent,
+            **kwargs,
+        )
         if any(dom_elements):
             self.add(*dom_elements)
 
@@ -343,14 +418,15 @@ class DoubleTemplates(DoubleTags):
     enable_right_delimiter_space = True
     enable_space_in_between = True
 
-    def __init__(self,
-                 template_name,
-                 template_text,
-                 *dom_elements,
-                 self_dedent=None,
-                 child_dedent=None,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        template_name,
+        template_text,
+        *dom_elements,
+        self_dedent=None,
+        child_dedent=None,
+        **kwargs,
+    ):
         open_tag = "".join(
             [
                 self.left_delimiter,
@@ -372,11 +448,13 @@ class DoubleTemplates(DoubleTags):
                 self.right_delimiter,
             ]
         )
-        super(DoubleTemplates, self).__init__(open_tag=open_tag,
-                                              close_tag=close_tag,
-                                              self_dedent=self_dedent or self.self_dedent,
-                                              child_dedent=child_dedent or self.child_dedent,
-                                              **kwargs)
+        super(DoubleTemplates, self).__init__(
+            open_tag=open_tag,
+            close_tag=close_tag,
+            self_dedent=self_dedent or self.self_dedent,
+            child_dedent=child_dedent or self.child_dedent,
+            **kwargs,
+        )
         if any(dom_elements):
             self.add(*dom_elements)
 
@@ -389,7 +467,9 @@ class StyleTags(Tags):
     is_id = False
     is_apply = False
 
-    def _render_open_tag(self, sb, indent_level, indent_str, pretty, xhtml, name, open_tag):
+    def _render_open_tag(
+        self, sb, indent_level, indent_str, pretty, xhtml, name, open_tag
+    ):
         sb.append(name)
         if pretty:
             sb.append(" ")
@@ -402,15 +482,23 @@ class StyleTags(Tags):
         return sb
 
     def _render_attribute(self, sb, indent_level, indent_str, pretty, xhtml):
-        attribute_joiner = '%s:%s;' if not pretty else '    %s: %s;\n' + (
-                indent_str * indent_level) if not self.is_apply else '@%s %s;' if not pretty else '    @%s %s;\n' + (
-                indent_str * indent_level)
+        attribute_joiner = (
+            "%s:%s;"
+            if not pretty
+            else "    %s: %s;\n" + (indent_str * indent_level)
+            if not self.is_apply
+            else "@%s %s;"
+            if not pretty
+            else "    @%s %s;\n" + (indent_str * indent_level)
+        )
         for attribute, value in sorted(self.attributes.items()):
-            if value is not False and value is not None:  # False values must be omitted completely
+            if (
+                value is not False and value is not None
+            ):  # False values must be omitted completely
                 sb.append(attribute_joiner % (attribute, escape(unicode(value), True)))
 
             if value is None:  # minified xhtml attributes are added
-                sb.append(' %s' % attribute)
+                sb.append(" %s" % attribute)
         return sb
 
     def _render_close_tag(self, sb, name, close_tag):
@@ -421,32 +509,34 @@ class StyleTags(Tags):
         # Workaround for python keywords and standard classes/methods
         # (del, object, input)
         if any(name):  # to handle the case when tagname = ""
-            if name[-1] == '_':
+            if name[-1] == "_":
                 name = name[:-1]
 
         if all([self.is_class, self.is_id]):
             raise AttributeError(f"{name} can not have both is_class and is_id as True")
 
         if self.is_class:
-            name = ''.join([".", name])
+            name = "".join([".", name])
 
         if self.is_id:
-            name = ''.join(["#", name])
+            name = "".join(["#", name])
 
         return name
 
     @property
     def attr(self):
         r = []
-        attribute_joiner = '%s:%s;' if not self.is_apply else "@%s %s;"
+        attribute_joiner = "%s:%s;" if not self.is_apply else "@%s %s;"
 
         for attribute, value in sorted(self.attributes.items()):
-            if value is not False and value is not None:  # False values must be omitted completely
+            if (
+                value is not False and value is not None
+            ):  # False values must be omitted completely
                 r.append(attribute_joiner % (attribute, escape(unicode(value), True)))
 
             if value is None:  # minified xhtml attributes are added
-                r.append(' %s' % attribute)
-        return u''.join(r)
+                r.append(" %s" % attribute)
+        return "".join(r)
 
     @staticmethod
     def clean_attribute(attribute):
@@ -457,151 +547,151 @@ class StyleTags(Tags):
 
         # Shorthand
         attribute = {
-            'cls': 'class',
-            'className': 'class',
-            'class_name': 'class',
-            'fr': 'for',
-            'html_for': 'for',
-            'htmlFor': 'for',
+            "cls": "class",
+            "className": "class",
+            "class_name": "class",
+            "fr": "for",
+            "html_for": "for",
+            "htmlFor": "for",
         }.get(attribute, attribute)
 
         # Workaround for Python's reserved words
-        if attribute[0] == '_':
+        if attribute[0] == "_":
             attribute = attribute[1:]
 
-        attribute = attribute.replace('_', '-')
+        attribute = attribute.replace("_", "-")
 
         # Workaround for colon
-        if attribute.split('_')[0] in ('xlink', 'xml', 'xmlns'):
-            attribute = attribute.replace('_', ':', 1)
+        if attribute.split("_")[0] in ("xlink", "xml", "xmlns"):
+            attribute = attribute.replace("_", ":", 1)
 
         return attribute
 
 
 # if __name__ == '__main__':
 
-    # class TestTag(Tags):
-    #     pass
-    #
-    # class TestSingle(TestTag, SingleTags):
-    #     pass
-    #
-    # class TestDouble(TestTag, DoubleTags):
-    #     pass
-    #
-    # class SelfDedentTestSingle(TestSingle):
-    #     self_dedent = True
-    #
-    # class SelfDedentTestDouble(TestDouble):
-    #     self_dedent = True
-    #
-    # class DoubleSelfDedent(SelfDedentTestDouble):
-    #     # is_inline = True
-    #     pass
-    #
-    # class SingleSelfDedent(SelfDedentTestSingle):
-    #     pass
-    #
-    #
-    # tags = [
-    #     Tags(Tags()),
-    #     Tags(DoubleSelfDedent(Tags())),
-    #     Tags(SingleSelfDedent(Tags())),
-    #     Tags(SingleSelfDedent(SingleSelfDedent(Tags()))),
-    #     Tags(DoubleSelfDedent(DoubleSelfDedent(Tags()))),
-    #     Tags(SingleSelfDedent(DoubleSelfDedent(Tags()))),
-    #     Tags(DoubleSelfDedent(SelfDedentTestDouble(Tags()))),
-    #     Tags(SingleSelfDedent(Tags(SingleSelfDedent()))),
-    #     Tags(DoubleSelfDedent(Tags(DoubleSelfDedent()))),
-    #     Tags(SingleSelfDedent(Tags(DoubleSelfDedent()))),
-    #     Tags(DoubleSelfDedent(Tags(SingleSelfDedent()))),
-    #  ]
-    #
-    # for i, tag in enumerate(tags, 1):
-    #     print(tag)
+# class TestTag(Tags):
+#     pass
+#
+# class TestSingle(TestTag, SingleTags):
+#     pass
+#
+# class TestDouble(TestTag, DoubleTags):
+#     pass
+#
+# class SelfDedentTestSingle(TestSingle):
+#     self_dedent = True
+#
+# class SelfDedentTestDouble(TestDouble):
+#     self_dedent = True
+#
+# class DoubleSelfDedent(SelfDedentTestDouble):
+#     # is_inline = True
+#     pass
+#
+# class SingleSelfDedent(SelfDedentTestSingle):
+#     pass
+#
+#
+# tags = [
+#     Tags(Tags()),
+#     Tags(DoubleSelfDedent(Tags())),
+#     Tags(SingleSelfDedent(Tags())),
+#     Tags(SingleSelfDedent(SingleSelfDedent(Tags()))),
+#     Tags(DoubleSelfDedent(DoubleSelfDedent(Tags()))),
+#     Tags(SingleSelfDedent(DoubleSelfDedent(Tags()))),
+#     Tags(DoubleSelfDedent(SelfDedentTestDouble(Tags()))),
+#     Tags(SingleSelfDedent(Tags(SingleSelfDedent()))),
+#     Tags(DoubleSelfDedent(Tags(DoubleSelfDedent()))),
+#     Tags(SingleSelfDedent(Tags(DoubleSelfDedent()))),
+#     Tags(DoubleSelfDedent(Tags(SingleSelfDedent()))),
+#  ]
+#
+# for i, tag in enumerate(tags, 1):
+#     print(tag)
 
-    # class TestTag(Tags):
-    #     pass
-
-
-    # class TestSingle(TestTag, SingleTags):
-    #     pass
+# class TestTag(Tags):
+#     pass
 
 
-    # class TestDouble(TestTag, DoubleTags):
-    #     pass
+# class TestSingle(TestTag, SingleTags):
+#     pass
 
 
-    # class SelfDedentTestSingle(TestSingle):
-    #     self_dedent = True
+# class TestDouble(TestTag, DoubleTags):
+#     pass
 
 
-    # class ChildDedentTestSingle(TestSingle):
-    #     child_dedent = True
+# class SelfDedentTestSingle(TestSingle):
+#     self_dedent = True
 
 
-    # class SelfDedentTestDouble(TestDouble):
-    #     self_dedent = True
+# class ChildDedentTestSingle(TestSingle):
+#     child_dedent = True
 
 
-    # class ChildDedentTestDouble(TestDouble):
-    #     child_dedent = True
+# class SelfDedentTestDouble(TestDouble):
+#     self_dedent = True
 
 
-    # class DoubleSelfChildDedent(SelfDedentTestDouble, ChildDedentTestDouble):
-    #     pass
+# class ChildDedentTestDouble(TestDouble):
+#     child_dedent = True
 
 
-    # class SingleSelfChildDedent(SelfDedentTestSingle, ChildDedentTestSingle):
-    #     pass
+# class DoubleSelfChildDedent(SelfDedentTestDouble, ChildDedentTestDouble):
+#     pass
 
 
-    # class DoubleSelfDedent(SelfDedentTestDouble):
-    #     # is_inline = True
-    #     pass
+# class SingleSelfChildDedent(SelfDedentTestSingle, ChildDedentTestSingle):
+#     pass
 
 
-    # class SingleSelfDedent(SelfDedentTestSingle):
-    #     pass
+# class DoubleSelfDedent(SelfDedentTestDouble):
+#     # is_inline = True
+#     pass
 
 
-    # class DoubleChildDedent(ChildDedentTestDouble):
-    #     # render_tag = False
-    #     pass
+# class SingleSelfDedent(SelfDedentTestSingle):
+#     pass
 
 
-    # class SingleChildDedent(ChildDedentTestSingle):
-    #     # render_tag = False
-    #     pass
+# class DoubleChildDedent(ChildDedentTestDouble):
+#     # render_tag = False
+#     pass
 
 
-    # tags = [Tags(SingleSelfChildDedent(SingleSelfChildDedent(Tags()))),
-    #         Tags(DoubleSelfChildDedent(DoubleSelfChildDedent(Tags()))),
-    #         Tags(SingleSelfChildDedent(SingleSelfDedent(Tags()))),
-    #         Tags(DoubleSelfChildDedent(DoubleSelfDedent("hb", Tags()))),
-    #         Tags(SingleSelfChildDedent(SingleChildDedent(Tags()))),
-    #         Tags(DoubleSelfChildDedent(DoubleChildDedent(Tags()))),
-    #         Tags(SingleSelfChildDedent(Tags(SingleSelfChildDedent()))),
-    #         Tags(DoubleSelfChildDedent(Tags(DoubleSelfChildDedent()))),
-    #         Tags(SingleSelfChildDedent(Tags(SingleSelfDedent()))),
-    #         Tags(DoubleSelfChildDedent(Tags(DoubleSelfDedent()))),
-    #         Tags(SingleSelfChildDedent(Tags(SingleChildDedent()))),
-    #         Tags(DoubleSelfChildDedent(Tags(DoubleChildDedent()))),
-    #         Tags(SingleSelfDedent(SingleSelfChildDedent(Tags()))),
-    #         Tags(DoubleSelfDedent(DoubleSelfChildDedent(Tags()))),
-    #         Tags(SingleChildDedent(SingleSelfChildDedent(Tags()))),
-    #         Tags(DoubleChildDedent(DoubleSelfChildDedent(Tags()))),
-    #         Tags(SingleSelfDedent(SingleSelfDedent(Tags()))),
-    #         Tags(DoubleSelfDedent(DoubleSelfDedent(Tags()))),
-    #         Tags(SingleChildDedent(SingleChildDedent(Tags()))),
-    #         Tags(DoubleChildDedent(DoubleChildDedent(Tags()))),
-    #         ]
+# class SingleChildDedent(ChildDedentTestSingle):
+#     # render_tag = False
+#     pass
 
-    # for i, tag in enumerate(tags, 1):
-    #     print(i, "++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    #     print(tag)
-    #     print(i, "++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
-    # x = Tags(Tags(x_bind_name="name"), x_for="name in names")
-    # x["class"] = "a"
-    # print(x)
+# tags = [Tags(SingleSelfChildDedent(SingleSelfChildDedent(Tags()))),
+#         Tags(DoubleSelfChildDedent(DoubleSelfChildDedent(Tags()))),
+#         Tags(SingleSelfChildDedent(SingleSelfDedent(Tags()))),
+#         Tags(DoubleSelfChildDedent(DoubleSelfDedent("hb", Tags()))),
+#         Tags(SingleSelfChildDedent(SingleChildDedent(Tags()))),
+#         Tags(DoubleSelfChildDedent(DoubleChildDedent(Tags()))),
+#         Tags(SingleSelfChildDedent(Tags(SingleSelfChildDedent()))),
+#         Tags(DoubleSelfChildDedent(Tags(DoubleSelfChildDedent()))),
+#         Tags(SingleSelfChildDedent(Tags(SingleSelfDedent()))),
+#         Tags(DoubleSelfChildDedent(Tags(DoubleSelfDedent()))),
+#         Tags(SingleSelfChildDedent(Tags(SingleChildDedent()))),
+#         Tags(DoubleSelfChildDedent(Tags(DoubleChildDedent()))),
+#         Tags(SingleSelfDedent(SingleSelfChildDedent(Tags()))),
+#         Tags(DoubleSelfDedent(DoubleSelfChildDedent(Tags()))),
+#         Tags(SingleChildDedent(SingleSelfChildDedent(Tags()))),
+#         Tags(DoubleChildDedent(DoubleSelfChildDedent(Tags()))),
+#         Tags(SingleSelfDedent(SingleSelfDedent(Tags()))),
+#         Tags(DoubleSelfDedent(DoubleSelfDedent(Tags()))),
+#         Tags(SingleChildDedent(SingleChildDedent(Tags()))),
+#         Tags(DoubleChildDedent(DoubleChildDedent(Tags()))),
+#         ]
+
+# for i, tag in enumerate(tags, 1):
+#     print(i, "++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+#     print(tag)
+#     print(i, "++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+# x = Tags(Tags(x_bind_name="name"), x_for="name in names")
+# x["class"] = "a"
+# print(x)
