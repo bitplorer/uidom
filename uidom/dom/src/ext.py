@@ -5,6 +5,7 @@
 
 
 import os
+import re
 import textwrap
 import typing
 
@@ -68,9 +69,12 @@ class Tags(dom_tag, dom1core):
                 None
             ]:  # False values must be omitted completely
                 if attribute == "class":
-                    value = textwrap.wrap(
-                        text=value
-                    )  # adding support to write multiline tailwindcss classes
+                    # adding support to write multiline tailwindcss classes
+                    multiline_string = textwrap.dedent(value)
+                    wrapped_string = textwrap.fill(
+                        multiline_string, break_long_words=False, break_on_hyphens=False
+                    )
+                    value = re.sub(r"\s+", " ", wrapped_string.strip())
                 if not isinstance(
                     value, (typing.MutableMapping, typing.MutableSequence)
                 ):
@@ -197,7 +201,7 @@ class Tags(dom_tag, dom1core):
                 if pretty and not child.is_inline:
                     inline = False
                     dedent = child_self_dedent
-                    if dedent:
+                    if dedent and not self.is_single:
                         if indent_level > orig_indent - 1:
                             indent_level = self._dedent_handler(dedent, indent_level)
 
@@ -210,6 +214,7 @@ class Tags(dom_tag, dom1core):
 
             else:
                 if any(child):
+                    # if any child exists here it must
                     if not (pretty and not self.is_inline):
                         sb.append(unicode(child))
                     else:
@@ -238,8 +243,11 @@ class Tags(dom_tag, dom1core):
     def _render(self, sb, indent_level=1, indent_str="  ", pretty=True, xhtml=False):
         open_tag = self.attributes.pop(Tags.OPEN_TAG, False)
         close_tag = self.attributes.pop(Tags.CLOSE_TAG, False)
+        # prettify only if _render method has pretty=True
         pretty = pretty and self.is_pretty and not self.is_inline
-        # name = self._clean_name(getattr(self, 'tagname', type(self).__name__))
+
+        # take out the 'child_dedent' attribute from the self.attributes if any present else fallback to
+        # class defined 'child_dedent' if any present else fallback to False
         self_child_dedent = self.attributes.pop(
             Tags.CHILD_DEDENT,
             getattr(self, Tags.CHILD_DEDENT)
@@ -247,21 +255,26 @@ class Tags(dom_tag, dom1core):
             else False,
         )
 
+        # take out the 'render_tag' attribute from the self.attributes if any present else fallback to
+        # class defined 'render_tag' if any present else fallback to True
         self_render_tag = self.attributes.pop(
             Tags.RENDER_TAG,
             getattr(self, Tags.RENDER_TAG) if hasattr(self, Tags.RENDER_TAG) else True,
         )
 
-        dedent = (not self_render_tag) or self_child_dedent
+        # now if "render_tag" is False or child_dedent is True for any reason
+        dedent = not self_render_tag  # or self_child_dedent
         if pretty and dedent:
             indent_level = self._dedent_handler(dedent, indent_level)
 
+        # if we have to
         if self_render_tag:
             name = self._clean_name(getattr(self, "tagname", type(self).__name__))
             self._render_open_tag(
                 sb, indent_level, indent_str, pretty, xhtml, name, open_tag
             )
 
+        # here lies the important logic
         inline = self._render_children(
             sb,
             indent_level + 1
@@ -284,7 +297,6 @@ class Tags(dom_tag, dom1core):
 
     def save(
         self,
-        html_string=None,
         file_name: str = None,
         folder_name: str = None,
         current_dir=False,
@@ -330,7 +342,7 @@ class Tags(dom_tag, dom1core):
                 else file_path
             )
 
-        html_string = html_string or self.__render__()
+        html_string = self.__render__()
 
         if not os.path.exists(file_path):
             with open(file_path, "w+") as f:
