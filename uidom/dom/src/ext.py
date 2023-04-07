@@ -197,7 +197,6 @@ class Tags(dom_tag, dom1core):
                     else False,
                 )
 
-                # checks if the self.child_dedent or self.self_dedent if true and dedent the tags
                 if pretty and not child.is_inline:
                     inline = False
                     dedent = child_self_dedent
@@ -219,9 +218,9 @@ class Tags(dom_tag, dom1core):
                         sb.append(unicode(child))
                     else:
                         inline = False
-                        sb, inline = self._new_line_and_inline_handler(
-                            sb, indent_level, indent_str, pretty, inline
-                        )
+                        # sb, inline = self._new_line_and_inline_handler(
+                        #     sb, indent_level, indent_str, pretty, inline
+                        # )
                         sb.append(unicode(child))
 
             # new_line_at_end caters to DOCTYPE Tag as its wrapped in an empty wrapper
