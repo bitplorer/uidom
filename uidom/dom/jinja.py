@@ -14,7 +14,7 @@ __all__ = [
 class JinjaComponent(component.Component):
     file_extension = ".html"
 
-    def __render__(self, *args, **kwargs):
+    def render(self, *args, **kwargs):
         pass
 
     def __block__(self, block_name, *args):
