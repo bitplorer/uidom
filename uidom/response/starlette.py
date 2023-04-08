@@ -34,8 +34,8 @@ class HTMLResponse(StarletteHTMLResponse):
         super().__init__(html_content, status_code, headers, media_type, background)
 
     def render(self, content: T.Any) -> bytes:
-        if hasattr(content, "__html__"):
-            content = content.__html__()
+        if hasattr(content, "__render__"):
+            content = content.__render__()
         return super().render(content=content)
 
 
@@ -77,7 +77,7 @@ class StreamingResponse(StarletteStreamingResponse):
         background: BackgroundTask = None,
     ) -> None:
         
-        super().__init__(html_content.__async_html__(), status_code, headers, media_type, background)
+        super().__init__(html_content.__async_render__(), status_code, headers, media_type, background)
         
 
 def async_html_response(
