@@ -2,6 +2,7 @@ import functools
 import logging
 import pathlib
 import string
+from functools import lru_cache
 from typing import List, Sequence
 
 from starlette.concurrency import run_until_first_complete
@@ -66,6 +67,7 @@ class HotReloadWebSocketRoute:
 
         await self.notify.notify()
 
+    @lru_cache
     def script(self) -> str:
         if not hasattr(self, "_script_template"):
             self._script_template = _Template(SCRIPT_TEMPLATE_PATH.read_text())
