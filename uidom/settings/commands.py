@@ -1,34 +1,38 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
 
+import asyncio
+import logging
 import platform
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import valio
 
 from uidom.settings import WebAssets
 
-__all__ = [
-    "Command",
-    "TailwindCommand"
-]
+__all__ = ["Command", "TailwindCommand"]
+
+
+logger = logging.getLogger(__name__)
+
 
 def is_windows():
-    if platform.system() == 'Windows':
+    if platform.system() == "Windows":
         return True
-    if platform.system().startswith('MINGW64_NT-'):
+    if platform.system().startswith("MINGW64_NT-"):
         return True
     return False
 
 
 IS_WINDOWS = is_windows()
+
 
 @dataclass
 class Command(object):
@@ -37,24 +41,23 @@ class Command(object):
     def run_command(self, *cmd, **kw) -> tuple[int, list[str]]:
         # self.command.logger.info(f'# {" ".join(cmd)}')
 
-        if kw.get('shell'):
+        if kw.get("shell"):
             while isinstance(cmd, list) or isinstance(cmd, tuple):
                 cmd = cmd[0]
             # self.command.logger.debug(f'shell: {cmd}')
-        with subprocess.Popen(cmd,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE,
-                              **kw) as p:
+        with subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kw
+        ) as p:
             if not p.stdout:
                 raise Exception("fail to popen")
             while p.poll() is None:
                 lines = []
-                for line_bytes in iter(p.stdout.readline, b''):
+                for line_bytes in iter(p.stdout.readline, b""):
                     line_bytes = line_bytes.rstrip()
                     try:
-                        line = line_bytes.decode(encoding)
+                        line = line_bytes.decode(kw.get("encoding"))
                     except (Exception,):
-                        encoding = 'utf-8'
+                        encoding = "utf-8"
                         line = line_bytes.decode(encoding)
                     # self.command.logger.debug(line.rstrip())
                     lines.append(line)
@@ -64,15 +67,15 @@ class Command(object):
         return p.returncode, lines
 
 
-GROUPS = Union[str, list[str], None]
+# GROUPS = Union[str, list[str], None]
 
 
-class GroupValidator(valio.Validator):
-    annotation = GROUPS
+# class GroupValidator(valio.Validator):
+#     annotation = GROUPS
 
 
-class GroupField(valio.Field):
-    validator = GroupValidator
+# class GroupField(valio.Field):
+#     validator = GroupValidator
 
 
 # @dataclass
@@ -116,107 +119,127 @@ class TailwindCommand(Command):
     tailwindcss = TailwindValidator(debug=True, logger=False, default="tailwindcss")
     file_path: Union[str, Path]
     webassets: WebAssets
-    input_file: Union[str, Path]
-    output_file: Union[str, Path]
+    input_css: Optional[Union[str, Path]] = field(default="tailwind.css")
+    output_css: Optional[Union[str, Path]] = field(default="styles.css")
     minify: bool = False
 
     def __post_init__(self):
-        self.root_dir = self.webassets.directory.ROOT_DIR
-        self.project_dir = Path(self.file_path).parent
-        self.input_file = self.root_dir / self.input_file
-        self.output_file = self.webassets.static.css / self.output_file
-        # sys.exit(self.init_tailwind_project())
+        self._root_dir = self.webassets.dir
+        self._project_dir = Path(self.file_path).parent
+        self._input_file = self._root_dir / self.input_css
+        self._output_file = self.webassets.static.css / self.output_css
         self.init_tailwind_project()
 
     def init_tailwind_project(self):
         if self.is_tailwindcss_available():
-            tailwind_config_js = (self.root_dir / 'tailwind.config.js')
+            tailwind_config_js = self._root_dir / "tailwind.config.js"
             if not tailwind_config_js.exists():
-                print("initialising Tailwindcss Config")
-                self.init_tailwind_config(init_dir=self.root_dir)
+                logger.info("initialising Tailwindcss Config")
+                self.init_tailwind_config(init_dir=self._root_dir)
                 if tailwind_config_js.exists():
                     with tailwind_config_js.open("w", encoding="utf-8") as tw:
-                        tw.write(f'''
-    module.exports = {{
-        mode: "jit",
-        content: {{
-            files:[
-            "../../{self.project_dir.relative_to(self.root_dir.parent.parent)}/*.{{html,py}}",
-            "../../{self.project_dir.relative_to(self.root_dir.parent.parent)}/**/*.{{html,py}}",
-            "../../{self.project_dir.relative_to(self.root_dir.parent.parent)}/**/**/*.{{html,py}}",
-            ]
-          }},
-        plugins: [
-            require('@tailwindcss/aspect-ratio'),
-            require('@tailwindcss/forms'),
-            require('@tailwindcss/line-clamp'),
-            require('@tailwindcss/typography'),
-            require('tailwindcss/colors'),
-        ],
-        theme: {{
-            extend: {{}}
-        }}
-        
-        }}''')
-            if not self.input_file.exists() and tailwind_config_js.exists():
-                with self.input_file.open("w", encoding="utf-8") as f:
-                    f.write('''@tailwind base;\n@tailwind components;\n@tailwind utilities;''')
-
-    def run_command(self, *cmd, **kw) -> tuple[int, list[str]]:
-        # self.command.logger.info(f'# {" ".join(cmd)}')
-
-        if kw.get('shell'):
-            while isinstance(cmd, list) or isinstance(cmd, tuple):
-                cmd = cmd[0]
-            # self.command.logger.debug(f'shell: {cmd}')
-        with subprocess.Popen(cmd,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE,
-                              **kw) as p:
-            if not p.stdout:
-                raise Exception("fail to popen")
-            while p.poll() is None:
-                lines = []
-                for line_bytes in iter(p.stdout.readline, b''):
-                    line_bytes = line_bytes.rstrip()
-                    try:
-                        line = line_bytes.decode(encoding)
-                    except (Exception,):
-                        encoding = 'utf-8'
-                        line = line_bytes.decode(encoding)
-                    # self.command.logger.debug(line.rstrip())
-                    lines.append(line)
-                returncode = p.wait()
-        if returncode != 0:
-            raise subprocess.CalledProcessError(returncode, cmd)
-        return p.returncode, lines
+                        tw.write(
+                            f"""module.exports = {{
+    mode: "jit",
+    darkMode: "class",
+    content: {{
+        files:[
+        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/*.{{html,py}}",
+        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/*.{{html,py}}",
+        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/**/*.{{html,py}}",
+        ]
+        }},
+    plugins: [
+        require('@tailwindcss/aspect-ratio'),
+        require('@tailwindcss/forms'),
+        require('@tailwindcss/line-clamp'),
+        require('@tailwindcss/typography'),
+        require('tailwindcss/colors'),
+    ],
+    theme: {{
+        extend: {{}}
+    }}
+    
+    }}"""
+                        )
+            if not self._input_file.exists() and tailwind_config_js.exists():
+                with self._input_file.open("w", encoding="utf-8") as f:
+                    f.write(
+                        """@tailwind base;\n@tailwind components;\n@tailwind utilities;"""
+                    )
 
     def is_tailwindcss_available(self):
-        output = subprocess.run([self.tailwindcss], cwd=self.root_dir.as_posix().encode() if not IS_WINDOWS else str(self.root_dir).encode())
-        print("tailwindcss command :> ", output)
+        output = subprocess.run(
+            ["which" if not IS_WINDOWS else "where", self.tailwindcss],
+            cwd=self._root_dir.as_posix().encode()
+            if not IS_WINDOWS
+            else str(self._root_dir).encode(),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+        # logger.info("tailwindcss command :> ", output)
         return output
 
     def init_tailwind_config(self, init_dir: Path):
-        print("trying to init tailwindcss config")
-        output = subprocess.run([self.tailwindcss, "init"], cwd=init_dir.as_posix().encode() if not IS_WINDOWS else str(self.root_dir).encode())
-        print("intialisation > ", bool(output))
+        logger.info("trying to init tailwindcss config")
+        output = subprocess.run(
+            [self.tailwindcss, "init"],
+            cwd=init_dir.as_posix().encode()
+            if not IS_WINDOWS
+            else str(self._root_dir).encode(),
+        )
+        logger.info(f"intialisation: { bool(output)}")
 
-    def start(self):
-        print("cwd", self.root_dir)
-        print("input_file > ", self.input_file)
-        print("output_file > ", self.output_file)
+    def run(self):
+        logger.info(f"cwd: { self._root_dir}")
+        logger.info(f"input_file: { self._input_file}")
+        logger.info(f"output_file: { self._output_file}")
         try:
-            output = subprocess.run([
-                self.tailwindcss,
-                '-i', self.input_file.relative_to(self.root_dir),
-                "-o", self.output_file.relative_to(self.root_dir),
-                f"--{(self.minify and 'minify') or 'watch'}",
+            output = subprocess.run(
+                [
+                    self.tailwindcss,
+                    "-i",
+                    self._input_file.relative_to(self._root_dir),
+                    "-o",
+                    self._output_file.relative_to(self._root_dir),
+                    f"--{(self.minify and 'minify') or 'watch'}",
                 ],
-                cwd=self.root_dir
+                cwd=self._root_dir,
             )
             return output
         except (Exception,) as e:
-            print(e)
+            logger.error(e)
+
+    async def async_run(self):
+        logger.info(f"cwd: { self._root_dir}")
+        logger.info(f"input_file: { self._input_file}")
+        logger.info(f"output_file: { self._output_file}")
+
+        try:
+            if not hasattr(self, "_tailwind_process"):
+                tailwind_process = asyncio.create_subprocess_shell(
+                    " ".join(
+                        [
+                            self.tailwindcss,
+                            "-i",
+                            str(self._input_file.relative_to(self._root_dir)),
+                            "-o",
+                            str(self._output_file.relative_to(self._root_dir)),
+                            f"--{(self.minify and 'minify') or 'watch'}",
+                        ]
+                    ),
+                    cwd=self._root_dir,
+                    stdout=subprocess.PIPE,  # if you want the output in the terminal comment this line
+                    stderr=subprocess.PIPE,
+                )
+                self._tailwind_process = tailwind_process
+            process = await self._tailwind_process
+            stdout, stderr = await process.communicate()
+            logger.info(f"Output: { stdout}")
+            logger.info(f"Error: { stderr}")
+        except (Exception,) as e:
+            logger.error(e)
+
 
 #
 # if __name__ == "__main__":
