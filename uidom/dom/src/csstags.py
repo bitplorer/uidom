@@ -84,4 +84,4 @@ if __name__ == '__main__':
     cs["background-color"] = "red"
     print(cs)
     print(category)
-    print(csss.__html__(pretty=False))
+    print(csss.__render__(pretty=False))
