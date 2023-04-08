@@ -1,35 +1,62 @@
 # Copyright (c) 2023 UiDOM
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
 import datetime
-from dataclasses import dataclass
 
 from fastapi import APIRouter
+from fastapi.websockets import WebSocket
 
 from demosite.document import document
 from uidom.dom import *
-from uidom.routing import HTMLRoute, StreamingRoute
+from uidom.dom.src.socket_adapter import (
+    EdgeDBFetcher,
+    EventsManager,
+    WebSocketAdapter,
+    WebSocketClientHandler,
+)
+from uidom.routing.fastapi import StreamingRoute
 from uidom.slots import x_slot
 
 __all__ = ["x_chart", "chart_router"]
 
 chart_router = APIRouter(route_class=StreamingRoute, tags=["Charts"])
 
+chart_event = EventsManager(registered_events=["price_change", "update_data"])
+
 
 class PriceChartTemplate(XComponent):
-    
+    @chart_event.on_receive("price_change")
+    def price_change(self):
+        print("price changed event checked")
+
+    @chart_event.on_connect
+    def on_connect(self, websocket):
+        print("chart connected to websocket")
+
+    @chart_event.on_receive("update_data")
+    def print_data(self, websocket, data):
+        print("print_data event fired from chart class >>>>>>>>>>>>>")
+        print(data)
+
+    @chart_event.on_disconnect
+    def on_disconnect(self, websocket, data):
+        pass
+
+    def to_dict(self):
+        return {"a": "a"}
+
     def render(self, tag_name):
         with template(x_component=tag_name) as _chart:
-            html_string_to_element(
+            string_to_element(
                 """
-        <div class="flex items-center justify-center p-4 bg-stone-600" x-data="{...productTicker(), ...$el.parentElement.data()}" x_effect="console.log(productTicker());">
-    <div class="w-full overflow-hidden rounded shadow-xl md:flex" style="max-width:900px">
+<div class="flex items-center justify-center p-4 bg-stone-600" x-data="{...productTicker(), ...$el.parentElement.data()}" x-effect="console.log(renderChart())">
+    <div class="w-full overflow-hidden rounded shadow-xl md:flex" style="max-width:900px" x-data="renderChart" x-init="renderChart">
         <div class="flex items-center w-full px-5 pt-8 pb-4 text-white md:w-1/2 bg-slate-500">
             <canvas x-bind:id="chartid" class="w-full"></canvas>
         </div>
-        <div class="flex items-center w-full p-10 text-gray-600 bg-gray-100 md:w-1/2" x-data="renderChart" x-init="renderChart">
+        <div class="flex items-center w-full p-10 text-gray-600 bg-gray-100 md:w-1/2" >
             <div class="w-full">
                 <h3 class="text-lg font-semibold leading-tight text-gray-800" x-text="productname"></h3>
                 <h6 class="mb-2 text-sm leading-tight"><span x-text="sellername"></span>&nbsp;&nbsp;-&nbsp;&nbsp;<span class="text-[#456782]" x-text="date"></h6>
@@ -71,14 +98,15 @@ class PriceChartTemplate(XComponent):
         </div>
     </div>
 </div>
-        """
+"""
             )
 
         return _chart
 
+
 x_chart_script = script(
-            raw(
-                """
+    raw(
+        """
     Number.prototype.m_formatter = function() {
     return this > 999999 ? (this / 1000000).toFixed(1) + 'M' : (this > 9999 ? (this / 100000).toFixed(1) + 'L': (this > 999 ? (this / 1000).toFixed(1) + 'K': this))
 };
@@ -104,7 +132,7 @@ let productTicker = function(){
             labels: ['10:00','','','','12:00','','','','2:00','','','','4:00'],
             data: [2.23,2.215,2.22,2.25,2.245,2.27,2.28,2.29,2.3,2.29,2.325,2.325,2.32],
         },
-        renderChart: function(){
+        renderChart: setTimeout(function(){
             let c = false;
 
             Chart.helpers.each(Chart.instances, function(instance) {
@@ -165,14 +193,26 @@ let productTicker = function(){
                     }
                 }
             });
-        }
+        }, 200)
     }
 }
 """
-            )
-        )
+    )
+)
 
 x_chart = PriceChartTemplate(tag_name="chart")
+
+ed_fetch = EdgeDBFetcher("efwe")
+pc_adapter = WebSocketAdapter(
+    lambda *args, **kwargs: x_chart, events=chart_event, data_fetcher=ed_fetch
+)
+sock_handler = WebSocketClientHandler(adapters={"price_chart": pc_adapter})
+
+
+@chart_router.websocket("/chart/{adapter_name}")
+async def sockets(websocket: WebSocket, adapter_name: str):
+    await sock_handler(websocket=websocket, adapter_name=adapter_name)
+
 
 @chart_router.get("/chart")
 async def chartbox():
@@ -191,9 +231,11 @@ async def chartbox():
             },
             chartdata={"labels": ["Jan", "Feb"], "data": ["50000", "2000"]},
             chartid="chart1",
-            id="silver-price-chart",
+            # id="silver-price-chart",
+            ws="/chart/price_chart",
+            ws_send={"event": "print_data"},
         ),
         x_chart,
-        x_chart_script
-        # x_slot
+        x_chart_script,
+        # x_slot,
     )
