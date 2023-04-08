@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -22,27 +22,31 @@ __all__ = [
     "CSRFToken",
     "Block",
     "Var",
-    "render"
+    "render",
 ]
 
 
-class JinjaConfig(object):
+class JinjaDoubleTags(extension.DoubleTemplates):
     self_dedent = False
     child_dedent = False
     enable_left_delimiter_space = True
     enable_right_delimiter_space = True
 
+    def __call__(self, **options):
+        return render(self, **options)
 
-class JinjaDoubleTags(JinjaConfig, extension.DoubleTemplates):
-    pass
 
+class JinjaSingleTags(extension.SingleTemplates):
+    self_dedent = False
+    child_dedent = True
+    enable_left_delimiter_space = True
+    enable_right_delimiter_space = True
 
-class JinjaSingleTags(JinjaConfig, extension.SingleTemplates):
-    pass
+    def __call__(self, **options):
+        return render(self, **options)
 
 
 class Block(JinjaDoubleTags):
-
     def __init__(self, template_text, *dom_elements):
         """
         :param template_text:
@@ -52,7 +56,6 @@ class Block(JinjaDoubleTags):
 
 
 class For(JinjaDoubleTags):
-
     def __init__(self, template_text, *dom_elements):
         """
         :param template_text:
@@ -62,7 +65,6 @@ class For(JinjaDoubleTags):
 
 
 class If(JinjaDoubleTags):
-
     def __init__(self, template_text, *dom_elements):
         """
         :param template_text:
@@ -82,7 +84,9 @@ class Elif(JinjaSingleTags):
         """
 
         super(Elif, self).__init__(
-            "elif", template_text, *dom_elements,
+            "elif",
+            template_text,
+            *dom_elements,
         )
 
 
@@ -110,7 +114,6 @@ class AutoEscape(JinjaSingleTags):
 
 
 class Include(JinjaSingleTags):
-
     def __init__(self, template_text, *dom_elements):
         """
         :param template_text:
@@ -184,49 +187,14 @@ class Var(JinjaSingleTags):
 
 
 def render(template, **options):
-    return Template(
-        template.__html__() if isinstance(template, extension.Tags) else template,
-        lstrip_blocks=True,
-        trim_blocks=True,
-        enable_async=True).render(**options)
-
-
-if __name__ == '__main__':
-    from collections import namedtuple as nt
-
-    from uidom.dom.src.htmltags import a, html, li, nav, p, section, ul
-
-    print(Block("base",
-                html(For("name in names",
-                         If("name", Block("load", Load("space")),
-                            Elif("njnsf", p("ksf")),
-                            Else(section(p("ok", Var("name"))))
-                            )
-                         )
-                     ))
-          )
-
-    menu = Block(
-        "nav",
-        nav(
-            ul(
-                For(
-                    "item in menu_items",
-                    li(a(Var("item.name"), href=Var("item.link"))),
-                )
-            )
-        ),
-    )
-    menu_url = nt("menu_url", "name link")
-    print(render(
-        menu,
-        menu_items=[
-            menu_url("Home", "home.html"),
-            menu_url("About", "about.html"),
-            menu_url("Contact Us", "contact_us.html")
-        ]
-    )
+    return raw(
+        Template(
+            template.__render__() if isinstance(template, extension.Tags) else template,
+            lstrip_blocks=True,
+            trim_blocks=True,
+            enable_async=True,
+        ).render(**options)
     )
 
-    print(ul(For("name in names", li(Var("name")))))
-    print(ul(li(x_text="name"), x_for="name in names", x_data={}))
+
+from uidom.dom.src.utils import raw
