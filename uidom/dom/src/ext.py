@@ -46,16 +46,14 @@ class Tags(dom_tag, dom1core):
                 raise TypeError(msg)
         super(Tags, self).__init__(*args, **kwargs)
 
-    def _render_open_tag(
-        self, sb, indent_level, indent_str, pretty, xhtml, name, open_tag
-    ):
+    def _render_open_tag(self, sb, xhtml, name, open_tag):
         if open_tag:
             sb.append("%s" % open_tag)
         else:
             # open tag is absent
             sb.append(self.left_delimiter)
             sb.append(name)
-            sb = self._render_attribute(sb, indent_level, indent_str, pretty, xhtml)
+            sb = self._render_attribute(sb)
             sb.append(
                 "".join(["/", self.right_delimiter])
                 if self.is_single and xhtml
@@ -63,7 +61,7 @@ class Tags(dom_tag, dom1core):
             )
         return sb
 
-    def _render_attribute(self, sb, indent_level, indent_str, pretty, xhtml):
+    def _render_attribute(self, sb):
         for attribute, value in sorted(self.attributes.items()):
             if value is not False and value not in [
                 None
@@ -189,7 +187,13 @@ class Tags(dom_tag, dom1core):
         )
         for child in self.children:
             if isinstance(child, dom_tag):
+                # get the dedent status of child from the parent or the child
 
+                # the dedent status of the child from the parent via self.child_dedent is
+                # extracted in the '_render' method already and is already taken care of
+
+                # the dedent status of the child from the child via child.self_dedent is
+                # extracted here
                 child_self_dedent = child.attributes.pop(
                     Tags.SELF_DEDENT,
                     getattr(child, Tags.SELF_DEDENT)
@@ -197,13 +201,39 @@ class Tags(dom_tag, dom1core):
                     else False,
                 )
 
+                # check if we are pretty-fying the html and only then try to dedent the indentation
                 if pretty and not child.is_inline:
                     inline = False
+                    # parent or child both can dedent the indentation, but childs value takes the presedence
+                    # always so we are skipping self_child_dedent as its already dealt with in '_render' method
                     dedent = child_self_dedent
+                    # incase if self.is_single flag is True the dedentation has already happended while
+                    # calling "_render_children" inside "_render" method by not incrementing indentation
+                    # so we skip dedentation in case the parent has is_single flag True
                     if dedent and not self.is_single:
+                        # even while dedentation we will never dedent more than the original parent indentation
+                        # it is wrong syntax so we keep checking this
+                        # for example:
+                        # --------------- ** this can happen
+                        # "   "<parent>\n
+                        # "   "<child>
+                        # -----------
+                        # but not this notice how indentation before <child> is less than that of <parent>
+                        # "    "<parent>\n
+                        # "  "<child>
+
+                        # thus we always ensure that while we dedent the <child> to
+                        #
                         if indent_level > orig_indent - 1:
                             indent_level = self._dedent_handler(dedent, indent_level)
 
+                # we will apply the changes only when the render_tag flag is set to True
+                # NOTE: we should **not add** checks for (pretty and not self.is_inline) here as this is
+                # where we are adding the indentation and new-line **before** child is rendered
+                # for eg:
+                # <parent>\n
+                # "    "<child> // so here '\n' and "    " represents the newline and indentation added
+                # <parent>      // after <parent> this is done below here after checking self_render_tag
                 if self_render_tag:
                     sb, inline = self._new_line_and_inline_handler(
                         sb, indent_level, indent_str, pretty, inline and self.is_inline
@@ -212,18 +242,21 @@ class Tags(dom_tag, dom1core):
                 child._render(sb, indent_level, indent_str, pretty, xhtml)
 
             else:
+                # check if the child is not an empty string '' via any(child)
                 if any(child):
-                    # if any child exists here it must
-                    if not (pretty and not self.is_inline):
+                    # if any child exists maybe its a string or some object here check if the pretty is True
+                    if pretty:
+                        inline = False
+                        if self_render_tag:
+                            sb, inline = self._new_line_and_inline_handler(
+                                sb, indent_level, indent_str, pretty, inline
+                            )
                         sb.append(unicode(child))
                     else:
-                        inline = False
-                        # sb, inline = self._new_line_and_inline_handler(
-                        #     sb, indent_level, indent_str, pretty, inline
-                        # )
                         sb.append(unicode(child))
 
-            # new_line_at_end caters to DOCTYPE Tag as its wrapped in an empty wrapper
+            # new_line_at_end caters to ConcatTag that supports DOCTYPE Tag when
+            # its wrapped inside an empty wrapper like ConcatTag
             new_line_at_child_end = self.attributes.pop(
                 Tags.NEW_LINE_AT_CHILD_END,
                 getattr(self, Tags.NEW_LINE_AT_CHILD_END)
@@ -245,6 +278,19 @@ class Tags(dom_tag, dom1core):
         # prettify only if _render method has pretty=True
         pretty = pretty and self.is_pretty and not self.is_inline
 
+        # take out the 'self_dedent' attribute from the self.attributes if any present else fallback to
+        # class defined 'self_dedent' if any present else fallback to False
+        self_dedent = self.attributes.pop(
+            Tags.SELF_DEDENT,
+            getattr(self, Tags.SELF_DEDENT)
+            if hasattr(self, Tags.SELF_DEDENT)
+            else False,
+        )
+
+        # assignment to self.self_dedent is necessary to ensure that next time
+        # when the self_dedent is popped from attribute it will fallback to the currently assigned value
+        self.self_dedent = self_dedent
+
         # take out the 'child_dedent' attribute from the self.attributes if any present else fallback to
         # class defined 'child_dedent' if any present else fallback to False
         self_child_dedent = self.attributes.pop(
@@ -254,6 +300,11 @@ class Tags(dom_tag, dom1core):
             else False,
         )
 
+        # assignment to self.child_dedent is necessary to ensure that next time
+        # when the child_dedent is popped from attribute it will fallback to the currently assigned value
+        # if the value is popped again
+        self.child_dedent = self_child_dedent
+
         # take out the 'render_tag' attribute from the self.attributes if any present else fallback to
         # class defined 'render_tag' if any present else fallback to True
         self_render_tag = self.attributes.pop(
@@ -261,17 +312,19 @@ class Tags(dom_tag, dom1core):
             getattr(self, Tags.RENDER_TAG) if hasattr(self, Tags.RENDER_TAG) else True,
         )
 
-        # now if "render_tag" is False or child_dedent is True for any reason
-        dedent = not self_render_tag  # or self_child_dedent
+        # now if "render_tag" is False or self_dedent is True for any reason we will reduce the indentation
+        # level but we will not mess with the self dedent here as is_single flag ensures single tags are
+        # dedented by default (see '_render_children' method call below) so what remains is the double tags
+        # but we dedent double tags only when there is a child involved thus child.self_dedent is parsed
+        # under '_render_children' method, thats why commenting
+        dedent = not self_render_tag  # or self_dedent
         if pretty and dedent:
             indent_level = self._dedent_handler(dedent, indent_level)
 
-        # if we have to
+        # if we have to render the self tag
         if self_render_tag:
             name = self._clean_name(getattr(self, "tagname", type(self).__name__))
-            self._render_open_tag(
-                sb, indent_level, indent_str, pretty, xhtml, name, open_tag
-            )
+            self._render_open_tag(sb, xhtml, name, open_tag)
 
         # here lies the important logic
         inline = self._render_children(
@@ -308,9 +361,7 @@ class Tags(dom_tag, dom1core):
             ), "folder_name and current_dir can't be initialised with file_path"
         else:
             folder_name = folder_name or "static"  # passing default folder_name here
-            assert (
-                file_name is not None and folder_name is not None
-            ), "file_name and folder_name both should be initialised"
+            assert folder_name is not None, "folder_name should be initialised"
 
         if self.file_extension is None:
             raise ValueError(
@@ -577,132 +628,3 @@ class StyleTags(Tags):
             attribute = attribute.replace("_", ":", 1)
 
         return attribute
-
-
-# if __name__ == '__main__':
-
-# class TestTag(Tags):
-#     pass
-#
-# class TestSingle(TestTag, SingleTags):
-#     pass
-#
-# class TestDouble(TestTag, DoubleTags):
-#     pass
-#
-# class SelfDedentTestSingle(TestSingle):
-#     self_dedent = True
-#
-# class SelfDedentTestDouble(TestDouble):
-#     self_dedent = True
-#
-# class DoubleSelfDedent(SelfDedentTestDouble):
-#     # is_inline = True
-#     pass
-#
-# class SingleSelfDedent(SelfDedentTestSingle):
-#     pass
-#
-#
-# tags = [
-#     Tags(Tags()),
-#     Tags(DoubleSelfDedent(Tags())),
-#     Tags(SingleSelfDedent(Tags())),
-#     Tags(SingleSelfDedent(SingleSelfDedent(Tags()))),
-#     Tags(DoubleSelfDedent(DoubleSelfDedent(Tags()))),
-#     Tags(SingleSelfDedent(DoubleSelfDedent(Tags()))),
-#     Tags(DoubleSelfDedent(SelfDedentTestDouble(Tags()))),
-#     Tags(SingleSelfDedent(Tags(SingleSelfDedent()))),
-#     Tags(DoubleSelfDedent(Tags(DoubleSelfDedent()))),
-#     Tags(SingleSelfDedent(Tags(DoubleSelfDedent()))),
-#     Tags(DoubleSelfDedent(Tags(SingleSelfDedent()))),
-#  ]
-#
-# for i, tag in enumerate(tags, 1):
-#     print(tag)
-
-# class TestTag(Tags):
-#     pass
-
-
-# class TestSingle(TestTag, SingleTags):
-#     pass
-
-
-# class TestDouble(TestTag, DoubleTags):
-#     pass
-
-
-# class SelfDedentTestSingle(TestSingle):
-#     self_dedent = True
-
-
-# class ChildDedentTestSingle(TestSingle):
-#     child_dedent = True
-
-
-# class SelfDedentTestDouble(TestDouble):
-#     self_dedent = True
-
-
-# class ChildDedentTestDouble(TestDouble):
-#     child_dedent = True
-
-
-# class DoubleSelfChildDedent(SelfDedentTestDouble, ChildDedentTestDouble):
-#     pass
-
-
-# class SingleSelfChildDedent(SelfDedentTestSingle, ChildDedentTestSingle):
-#     pass
-
-
-# class DoubleSelfDedent(SelfDedentTestDouble):
-#     # is_inline = True
-#     pass
-
-
-# class SingleSelfDedent(SelfDedentTestSingle):
-#     pass
-
-
-# class DoubleChildDedent(ChildDedentTestDouble):
-#     # render_tag = False
-#     pass
-
-
-# class SingleChildDedent(ChildDedentTestSingle):
-#     # render_tag = False
-#     pass
-
-
-# tags = [Tags(SingleSelfChildDedent(SingleSelfChildDedent(Tags()))),
-#         Tags(DoubleSelfChildDedent(DoubleSelfChildDedent(Tags()))),
-#         Tags(SingleSelfChildDedent(SingleSelfDedent(Tags()))),
-#         Tags(DoubleSelfChildDedent(DoubleSelfDedent("hb", Tags()))),
-#         Tags(SingleSelfChildDedent(SingleChildDedent(Tags()))),
-#         Tags(DoubleSelfChildDedent(DoubleChildDedent(Tags()))),
-#         Tags(SingleSelfChildDedent(Tags(SingleSelfChildDedent()))),
-#         Tags(DoubleSelfChildDedent(Tags(DoubleSelfChildDedent()))),
-#         Tags(SingleSelfChildDedent(Tags(SingleSelfDedent()))),
-#         Tags(DoubleSelfChildDedent(Tags(DoubleSelfDedent()))),
-#         Tags(SingleSelfChildDedent(Tags(SingleChildDedent()))),
-#         Tags(DoubleSelfChildDedent(Tags(DoubleChildDedent()))),
-#         Tags(SingleSelfDedent(SingleSelfChildDedent(Tags()))),
-#         Tags(DoubleSelfDedent(DoubleSelfChildDedent(Tags()))),
-#         Tags(SingleChildDedent(SingleSelfChildDedent(Tags()))),
-#         Tags(DoubleChildDedent(DoubleSelfChildDedent(Tags()))),
-#         Tags(SingleSelfDedent(SingleSelfDedent(Tags()))),
-#         Tags(DoubleSelfDedent(DoubleSelfDedent(Tags()))),
-#         Tags(SingleChildDedent(SingleChildDedent(Tags()))),
-#         Tags(DoubleChildDedent(DoubleChildDedent(Tags()))),
-#         ]
-
-# for i, tag in enumerate(tags, 1):
-#     print(i, "++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-#     print(tag)
-#     print(i, "++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-
-# x = Tags(Tags(x_bind_name="name"), x_for="name in names")
-# x["class"] = "a"
-# print(x)
