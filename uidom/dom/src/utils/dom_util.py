@@ -1,14 +1,14 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
 
-'''
+"""
 Utility classes for creating dynamic html documents
-'''
+"""
 
-__license__ = '''
+__license__ = """
 This file is part of Dominate.
 
 Dominate is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General
 Public License along with Dominate.  If not, see
 <http://www.gnu.org/licenses/>.
-'''
+"""
 
 import re
 
@@ -38,35 +38,36 @@ except NameError:
 
 
 def include(f):
-    '''
+    """
     includes the contents of a file on disk.
     takes a filename
-    '''
-    fl = open(f, 'r')
+    """
+    fl = open(f, "r")
     data = fl.read()
     fl.close()
     return raw(data)
 
 
 def system(cmd, data=None):
-    '''
+    """
     pipes the output of a program
-    '''
+    """
     import subprocess
+
     s = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     out, err = s.communicate(data)
-    return out.decode('utf8')
+    return out.decode("utf8")
 
 
 def escape(data, quote=True):  # stolen from std lib cgi
-    '''
+    """
     Escapes special characters into their html entities
     Replace special characters "&", "<" and ">" to HTML-safe sequences.
     If the optional flag quote is true, the quotation mark character (")
     is also translated.
 
     This is used to escape content that appears in the body of an HTML document
-    '''
+    """
     data = data.replace("&", "&amp;")  # Must be done first!
     data = data.replace("<", "&lt;")
     data = data.replace(">", "&gt;")
@@ -76,69 +77,68 @@ def escape(data, quote=True):  # stolen from std lib cgi
 
 
 _unescape = {
-    'quot': 34,
-    'amp': 38,
-    'lt': 60,
-    'gt': 62,
-    'nbsp': 32,
+    "quot": 34,
+    "amp": 38,
+    "lt": 60,
+    "gt": 62,
+    "nbsp": 32,
     # more here
     # http://www.w3.org/TR/html4/sgml/entities.html
-    'yuml': 255,
+    "yuml": 255,
 }
 str_escape = escape
 
 
 def unescape(data):
-    '''
+    """
     unescapes html entities. the opposite of escape.
-    '''
-    cc = re.compile(r'&(?:(?:#(\d+))|([^;]+));')
+    """
+    cc = re.compile(r"&(?:(?:#(\d+))|([^;]+));")
 
     result = []
     m = cc.search(data)
     while m:
-        result.append(data[0:m.start()])
+        result.append(data[0 : m.start()])
         d = m.group(1)
         if d:
             d = int(d)
             result.append(unichr(d))
         else:
-            d = _unescape.get(m.group(2), ord('?'))
+            d = _unescape.get(m.group(2), ord("?"))
             result.append(unichr(d))
 
-        data = data[m.end():]
+        data = data[m.end() :]
         m = cc.search(data)
 
     result.append(data)
-    return ''.join(result)
+    return "".join(result)
 
 
 _reserved = ";/?:@&=+$, "
-_replace_map = dict((c, '%%%2X' % ord(c)) for c in _reserved)
+_replace_map = dict((c, "%%%2X" % ord(c)) for c in _reserved)
 
 
 def url_escape(data):
-    return ''.join(_replace_map.get(c, c) for c in data)
+    return "".join(_replace_map.get(c, c) for c in data)
 
 
 def url_unescape(data):
-    return re.sub('%([0-9a-fA-F]{2})',
-                  lambda m: unichr(int(m.group(1), 16)), data)
+    return re.sub("%([0-9a-fA-F]{2})", lambda m: unichr(int(m.group(1), 16)), data)
 
 
 class lazy(dom_tag):
-    '''
+    """
     delays function execution until rendered
-    '''
+    """
 
     def __new__(_cls, *args, **kwargs):
-        '''
+        """
         Need to reset this special method or else
         dom_tag will think it's being used as a dectorator.
 
         This means lazy() can't be used as a dectorator, but
         thinking about when you might want that just confuses me.
-        '''
+        """
         return object.__new__(_cls)
 
     def __init__(self, func, *args, **kwargs):
@@ -152,11 +152,13 @@ class lazy(dom_tag):
         sb.append(str(r))
         return sb
 
+
 # TODO rename this to raw?
 class dom_text(dom_tag):
-    '''
+    """
     Just a string. useful for inside context managers
-    '''
+    """
+
     is_pretty = False
     is_inline = False
 
@@ -173,7 +175,7 @@ class dom_text(dom_tag):
 
 
 def raw(s):
-    '''
+    """
     Inserts a raw string into the DOM. Unsafe.
-    '''
+    """
     return dom_text(s, escape=False)
