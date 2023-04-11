@@ -9,10 +9,12 @@ from .htmldocument import *  # isort: skip
 from .xcomponent_js import *  # isort: skip
 
 from .elements import *  # isort: skip
-from .htmlelement import *  # isort: skip
+
+# from .htmlelement import *  # isort: skip
 from .icons import *  # isort: skip
 from .jinja import *  # isort: skip
-from .links import *  # isort: skip
+
+# from ..examples.links import *  # isort: skip
 from .src import *  # isort: skip
 
 from .src.string_to_element import *  # isort: skip
