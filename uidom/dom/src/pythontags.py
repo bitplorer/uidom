@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -12,7 +12,7 @@ class Python(extension.SingleTemplates):
     enable_left_delimiter_space = True
     enable_space_in_between = False
 
-    def __html__(self, indent="    ", pretty=True, xhtml=False):
+    def __render__(self, indent="    ", pretty=True, xhtml=False):
         data = self._render([], 0, indent, pretty, xhtml)
         return "".join(data)
 
@@ -50,8 +50,11 @@ class Def(Python):
     right_delimiter = ":"
 
     def __init__(self, func_name, *dom_elements, args=""):
-        super(Def, self).__init__(f"{func_name}", f"({', '.join(['self', *args.split(' ')]) if any(args) else 'self'})",
-                                  *dom_elements)
+        super(Def, self).__init__(
+            f"{func_name}",
+            f"({', '.join(['self', *args.split(' ')]) if any(args) else 'self'})",
+            *dom_elements,
+        )
         if func_name == "__init__" and any(args):
             [self.add(SelfAttr(arg)) for arg in args.split(" ")]
 
@@ -62,13 +65,16 @@ class SelfAttr(Python):
     enable_left_delimiter_space = False
 
     def __init__(self, atr_name, *dom_elements):
-        super(SelfAttr, self).__init__(f"self.{atr_name}", '', *dom_elements)
+        super(SelfAttr, self).__init__(f"self.{atr_name}", "", *dom_elements)
 
 
 if __name__ == "__main__":
     import ast
-    person = Class("Person",
-                   # Def("__init__", args="name address"),
-                   Def('__render__', args="*args **kwargs"),
-                   bases="models.Model logging.Logger")
+
+    person = Class(
+        "Person",
+        # Def("__init__", args="name address"),
+        Def("render", args="*args **kwargs"),
+        bases="models.Model logging.Logger",
+    )
     print(person)
