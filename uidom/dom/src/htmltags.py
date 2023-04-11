@@ -123,6 +123,17 @@ class HtmlDoubleTags(extension.DoubleTags):
     pass
 
 
+# class ConcatTag(extension.Tags):
+#     # this is an empty tag with spits out children concatenated with new-line
+#     """
+#     Supporting Concatenation of Tags as siblings with newline at end
+#     """
+#     render_tag = False
+
+#     def __and__(self, other: dom_tag) -> dom_tag:
+#         return ConcatTag(self, other)
+
+
 class DocType(HtmlSingleTemplates):
     left_delimiter = "<!"
     right_delimiter = ">"
@@ -135,9 +146,6 @@ class DocType(HtmlSingleTemplates):
 
         super(DocType, self).__init__("DOCTYPE", template_text, *dom_elements)
 
-    def __and__(self, other: extension.Tags) -> extension.Tags:
-        return ConcatTag(self, other)
-
 
 class html_tag(extension.Tags):
     def __init__(self, *args, **kwargs):
@@ -145,9 +153,6 @@ class html_tag(extension.Tags):
         Creates a new html tag instance.
         """
         super(html_tag, self).__init__(*args, **kwargs)
-
-    def __and__(self, other: extension.Tags) -> extension.Tags:
-        return ConcatTag(self, other)
 
     # def validate(self):
     #   '''
@@ -1359,28 +1364,14 @@ class slot(html_tag):
     pass
 
 
-class ConcatTag(extension.DoubleTags):
-    # this is an empty tag with spits out children concatenated with new-line
-    # TODO make the "get" method get the elements from the childrens
-    """
-    Supporting Concatenation of Tags as siblings with newline at end
-    """
-    render_tag = False
-    new_line_at_child_end = True
-
-    def __and__(self, other: extension.Tags) -> extension.Tags:
-        return ConcatTag(self, other)
-
-
 if __name__ == "__main__":
     from uidom.dom.src.utils.dom_util import dom_text
 
     print(div(div(div(div(script("aa")), __inline=True))))
-    print(ConcatTag(dom_text("h"), dom_text("h")))
-    print(ConcatTag("h", "h"))
+    print(extension.PlaceholderTag(dom_text("h"), dom_text("h")))
+    print(extension.PlaceholderTag("h", "h"))
     print(div(div(img(img(), img(self_dedent=True), div()), img(), div(div()))))
     print(div(div(div(img(div(div(img())))))))
     print(div(div(self_dedent=True), child_dedent=False))
     print(div(div(self_dedent=False), child_dedent=False))
-    print(div() & div())
-    print(div())
+    print((div() & p() & div()))
