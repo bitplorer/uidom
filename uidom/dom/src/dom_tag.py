@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -136,11 +136,11 @@ class dom_tag(object):
         thread_id = _get_thread_context()
         stack = dom_tag._with_contexts[thread_id]
         frame = stack.pop()
-        
+
         for item in frame.items:
             if not hasattr(item, "_entry"):
                 if item in frame.used:
-                        continue
+                    continue
             self.add(item)
         if not stack:
             del dom_tag._with_contexts[thread_id]
@@ -201,7 +201,7 @@ class dom_tag(object):
                     return
                 i.setdocument(doc)
 
-    def add(self, *args):
+    def add(self, *args) -> typing.Union["dom_tag", typing.Iterable[typing.Any]]:
         """
         Add new child tags.
         """
@@ -218,7 +218,7 @@ class dom_tag(object):
                 stack = dom_tag._with_contexts.get(_get_thread_context())
                 if stack:
                     stack[-1].used.add(obj)
-                        
+
                 self.children.append(obj)
                 obj.parent = self
                 obj.setdocument(self.document)
@@ -260,16 +260,13 @@ class dom_tag(object):
         if tag is None:
             tag = dom_tag
 
-        attrs = [
-            (self.clean_attribute(attr), value) for attr, value in kwargs.items()
-        ]
+        attrs = [(self.clean_attribute(attr), value) for attr, value in kwargs.items()]
 
         results = []
         for child in self.children:
             if (isinstance(tag, basestring) and type(child).__name__ == tag) or (
                 not isinstance(tag, basestring) and isinstance(child, tag)
             ):
-
                 if all(
                     child.attributes.get(attribute) == value
                     for attribute, value in attrs
@@ -341,7 +338,7 @@ class dom_tag(object):
         self.add(obj)
         return self
 
-    # String and unicode representations are the same as render()
+    # String and unicode representations are the same as __render__()
     def __unicode__(self):
         return self.__render__()
 
@@ -349,7 +346,7 @@ class dom_tag(object):
 
     def __render__(self, indent="  ", pretty=True, xhtml=False):
         html_tokens = self._render([], 0, indent, pretty, xhtml)
-        return u"".join(html_tokens)
+        return "".join(html_tokens)
 
     async def __async_render__(self, indent="  ", pretty=True, xhtml=False):
         for html_token in self._render([], 0, indent, pretty, xhtml):
