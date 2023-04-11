@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 # from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src import ext, htmltags, jinjatags, svgtags
-from uidom.dom.src.htmltags import ConcatTag, html_tag
+from uidom.dom.src.htmltags import html_tag
 from uidom.dom.src.parse_html import Element, tokenize_html
 from uidom.dom.src.utils import dom_text
 
