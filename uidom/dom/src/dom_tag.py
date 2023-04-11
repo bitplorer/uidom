@@ -201,7 +201,7 @@ class dom_tag(object):
                     return
                 i.setdocument(doc)
 
-    def add(self, *args) -> typing.Union["dom_tag", typing.Iterable[typing.Any]]:
+    def add(self, *args):
         """
         Add new child tags.
         """
