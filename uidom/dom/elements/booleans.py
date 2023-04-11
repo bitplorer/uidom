@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -19,7 +19,7 @@ __all__ = [
     "BooleanInput",
     "CheckboxInput",
     "RadioInput",
-    "BooleanField"
+    "BooleanField",
 ]
 
 
@@ -52,25 +52,22 @@ class BooleanLegend(HTMLElement):
 @dataclass(eq=False)
 class BooleanInput(HTMLElement):
     name: str = StringValidator(logger=False, debug=True)
-    type: str = StringValidator(in_choice=["checkbox", "radio"], logger=False, debug=True, default="checkbox")
-    checked: T.Union[str, bool] = Validator(in_choice=["unchecked", "checked", "null", True, False],
-                                                 logger=False, debug=True, default="checked")
+    type: str = StringValidator(
+        in_choice=["checkbox", "radio"], logger=False, debug=True, default="checkbox"
+    )
+    checked: T.Union[str, bool] = Validator(
+        in_choice=["unchecked", "checked", "null", True, False],
+        logger=False,
+        debug=True,
+        default="checked",
+    )
 
     def __post_init__(self, *args, **kwargs):
-        super(BooleanInput, self).__init__(*args,
-                                           name=self.name,
-                                           type=self.type,
-                                           checked=self.checked,
-                                           **kwargs)
+        super(BooleanInput, self).__init__(
+            *args, name=self.name, type=self.type, checked=self.checked, **kwargs
+        )
 
-    def render(
-            self,
-            *args,
-            name,
-            type,
-            checked,
-            **kwargs
-    ):
+    def render(self, *args, name, type, checked, **kwargs):
 
         return self.html_tags.input_(
             *args,
@@ -88,22 +85,18 @@ class BooleanInputValidator(Validator):
 @dataclass(eq=False)
 class CheckboxInput(BooleanInput):
     name: str = StringValidator(logger=False, debug=True)
-    checked: T.Union[str, bool] = Validator(in_choice=["unchecked", "checked", "null", True, False],
-                                            logger=False, debug=True)
+    checked: T.Union[str, bool] = Validator(
+        in_choice=["unchecked", "checked", "null", True, False],
+        logger=False,
+        debug=True,
+    )
 
     def __post_init__(self, *args, **kwargs):
-        super(BooleanInput, self).__init__(*args,
-                                           name=self.name,
-                                           checked=self.checked,
-                                           **kwargs)
+        super(BooleanInput, self).__init__(
+            *args, name=self.name, checked=self.checked, **kwargs
+        )
 
-    def render(
-            self,
-            *args,
-            name,
-            checked,
-            **kwargs
-    ):
+    def render(self, *args, name, checked, **kwargs):
 
         return super().render(
             *args,
@@ -117,22 +110,19 @@ class CheckboxInput(BooleanInput):
 @dataclass(eq=False)
 class RadioInput(BooleanInput):
     name: str = StringValidator(logger=False, debug=True)
-    checked: T.Union[str, bool] = Validator(in_choice=["unchecked", "checked", "null", True, False],
-                                            logger=False, debug=True, default="checked")
+    checked: T.Union[str, bool] = Validator(
+        in_choice=["unchecked", "checked", "null", True, False],
+        logger=False,
+        debug=True,
+        default="checked",
+    )
 
     def __post_init__(self, *args, **kwargs):
-        super(BooleanInput, self).__init__(*args,
-                                           name=self.name,
-                                           checked=self.checked,
-                                           **kwargs)
+        super(BooleanInput, self).__init__(
+            *args, name=self.name, checked=self.checked, **kwargs
+        )
 
-    def render(
-            self,
-            *args,
-            name,
-            checked,
-            **kwargs
-    ):
+    def render(self, *args, name, checked, **kwargs):
         return super().render(
             *args,
             name=name,
@@ -152,34 +142,33 @@ class BooleanField(HTMLElement):
     checked: T.Union[str, bool]
 
     def __post_init__(self, *args, **kwargs):
-        super(BooleanField, self).__init__(*args,
-                                           label=self.label,
-                                           name=self.name,
-                                           type=self.type,
-                                           checked=self.checked,
-                                           **kwargs
-                                           )
+        super(BooleanField, self).__init__(
+            *args,
+            label=self.label,
+            name=self.name,
+            type=self.type,
+            checked=self.checked,
+            **kwargs,
+        )
 
     def render(self, *args, label, name, type, checked, **kwargs):
         self.labeled = BooleanLabel(label)
         self.input = BooleanInput(
-                  name=name,
-                  type=type,
-                  checked=checked,
-              )
+            name=name,
+            type=type,
+            checked=checked,
+        )
         return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from uidom.dom import form
+
     field = BooleanField(
-        label="Terms and Conditions",
-        checked="null",
-        name="select",
-        type="radio")
+        label="Terms and Conditions", checked="null", name="select", type="radio"
+    )
     button = SubmitButton(label="Agree", value="agree")
     field.labeled["for"] = field.input["id"] = "select"
     button["for"] = field["id"] = "xyz"
     print(form(field, button, method="POST"))
     print(RadioInput(checked="unchecked", name="deliver"))
-
