@@ -78,7 +78,7 @@ class HTMLStringToDom(object):
                 if hasattr(token, "data"):
                     # handle leading and trailing newline with spaces in myst parser Data Token ex: "  \n Hello\n  "
                     if data := token.data.strip("\n").strip(" ").strip("\n"):
-                        with (tag or ConcatTag()) as tag:
+                        with tag or ext.PlaceholderTag() as tag:
                             # handling
                             if tag.__class__.__name__ == "script":
                                 dom_text(data, escape=False)
