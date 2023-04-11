@@ -5,9 +5,12 @@
 
 
 from dataclasses import asdict, dataclass, field
-from typing import Iterable, Union
+from pathlib import Path
+from typing import Iterable, List, Union
 
-from uidom.dom.src import csstags, htmltags, jinjatags, svgtags, vuetifytags
+from uidom.dom.src import csstags, dom_tag, htmltags, jinjatags
+from uidom.dom.src import string_to_element as str2elem
+from uidom.dom.src import svgtags
 from uidom.dom.src.main import extension
 
 __all__ = ["Component", "ReactiveComponent"]
@@ -21,19 +24,40 @@ class Component(extension.Tags):
     svg_tags = svgtags
     html_tags = htmltags
     jinja_tags = jinjatags
-    vuetify_tags = vuetifytags
     file_extension: str = field(init=False, default=".html")
     render_tag: bool = field(init=False, default=False)
     attributes: dict = field(init=False, default_factory=dict)
-    children: list = field(init=False, default_factory=list)
-    parent: Union[extension.Tags, None] = field(init=False, default=None)
-    document: Union[extension.Tags, None] = field(init=False, default=None)
+    children: List[Union[str, html_tags.dom_tag]] = field(
+        init=False, default_factory=list
+    )
+    parent: Union[html_tags.dom_tag, None] = field(init=False, default=None)
+    document: Union[html_tags.dom_tag, None] = field(init=False, default=None)
+    files_directory: Union[str, Path, None] = field(init=False, default=None)
+    escape_html_string: bool = field(init=False, default=False)
 
     def __init__(self, *args, **kwargs):
         super(Component, self).__init__()
-        self._entry: htmltags.html_tag = super(Component, self).add(
-            self.render(*args, **kwargs)
-        )
+        childrens = self.render(*args, **kwargs)
+
+        if childrens in [None, ...]:
+            raise ValueError(f"'{self.render=}' return {childrens}")
+
+        if isinstance(childrens, str):
+            childrens = str2elem.string_to_element(childrens, self.escape_html_string)
+
+        if isinstance(childrens, Path):
+            childrens = self.from_file(childrens)
+            childrens = str2elem.string_to_element(childrens, self.escape_html_string)
+
+        self._entry = super(Component, self).add(childrens)
+
+        if isinstance(self._entry, (tuple, list)) and len(self._entry) > 1:
+            # IMPORTANT: Note if self.render returns a tuple or a list of elements as children,
+            # not just one element, raise error
+            raise ValueError(
+                f"{self.__class__.__qualname__} expects 1 element from {self.render.__qualname__}, it returns {len(self._entry)}"
+            )
+
         # we perform checks on the _entry "after" the dom initialization because .get method
         # looks into children
         self.__checks__(self._entry)
@@ -47,11 +71,30 @@ class Component(extension.Tags):
         """
         Adding tags to a component appends them to the render.
         """
-        return self._entry.add(*args)
+        if hasattr(self, "_entry"):
+            return self._entry.add(*args)
+        return super().add(*args)
 
     def set_attribute(self, key, value):
         if not self.render_tag:
-            self.children[0].set_attribute(key, value)
+            try:
+                # try to set the attribute on the children of the component
+                # self.children[0].set_attribute(key, value)
+                self.children[self.children.index(self._entry)].set_attribute(
+                    key, value
+                )
+            except (IndexError, AttributeError):
+                # if we try to set attribute on the component while 'render_tag = False'
+                # and we reach here it means no children have been added and attribute
+                # is being set on self directly via self.add method. if a child has been
+                # added no error is raised but if we directly add attribute to self like
+                # self.add(kwarg) prior to adding any children and render_tag is False
+                # it will invoke self.set_attribute inside self.add method, this should
+                # raise AttributeError as "_entry" attribute is still not defined as no
+                # children were added.
+                raise AttributeError(
+                    f"'{self.__class__.render.__qualname__}' could not add or delete any attributes on '{self.__class__.__qualname__}' as '{self.__class__.__name__}.render_tag = {self.render_tag}'"
+                )
         else:
             super(Component, self).set_attribute(key, value)
 
@@ -59,7 +102,19 @@ class Component(extension.Tags):
 
     def delete_attribute(self, key):
         if not self.render_tag:
-            self.children[0].delete_attribute(key)
+            try:
+                # try to delete the attribute to the children of the component
+                # self.children[0].delete_attribute(key)
+                self.children[self.children.index(self._entry)].delete_attribute(key)
+            except (IndexError, AttributeError):
+                # if we try to delete attribute of the component while 'render_tag = False'
+                # and if we are here it means no children are added and attribute is being
+                # deleted on self sirectly. if self tag is not being rendered, this should
+                # raise AttributeError as "_entry" attribute is still not defined as no
+                # children were added.
+                raise AttributeError(
+                    f"'{self.__class__.render.__qualname__}' could not add or delete any attributes on '{self.__class__.__qualname__}' as '{self.__class__.__name__}.render_tag = {self.render_tag}'"
+                )
         else:
             super(Component, self).delete_attribute(key)
 
@@ -67,25 +122,48 @@ class Component(extension.Tags):
 
     def get(self, tag=None, **kwargs):
         if not self.render_tag:
-            return self.children[0].get(tag, **kwargs)
+            # try to get the attribute of the children of the component
+            # return self.children[0].get(tag, **kwargs)
+            return self.children[self.children.index(self._entry)].get(tag, **kwargs)
         else:
             return super(Component, self).get(tag, **kwargs)
 
     def __getitem__(self, key):
         if not self.render_tag:
-            if any(object.__getattribute__(self, "children")):
-                return object.__getattribute__(self, "children")[0].__getitem__(key)
+            children = object.__getattribute__(self, "children")
+            if any(children):
+                entry = None
+                try:
+                    entry: htmltags.dom_tag = object.__getattribute__(self, "_entry")
+                except AttributeError:
+                    pass
+                if entry:
+                    return children[children.index(entry)].__getitem__(key)
         return super(Component, self).__getitem__(key)
 
     __getattr__ = __getitem__
 
+    def __len__(self):
+        if not self.render_tag:
+            if hasattr(self, "_entry"):
+                return len(self._entry)
+        return super().__len__()
+
     def __hash__(self) -> int:
-        return hash(self._entry)
+        return hash(self._entry if not self.render_tag else self.children.__iter__())
 
     def __eq__(self, other) -> bool:
-        if isinstance(other, Component):
-            return self._entry == other._entry
-        return self._entry == other
+        if not self.render_tag:
+            # now check if the other isinstance of Component
+            if isinstance(other, Component):
+                if not other.render_tag:
+                    return self._entry == other._entry
+            return self._entry == other
+        else:
+            if isinstance(other, Component):
+                if not other.render_tag:
+                    return self == other._entry
+            return self.children == other.children
 
     def _asdict(self, exclude=None) -> dict:
         exclude = exclude or [
@@ -95,6 +173,8 @@ class Component(extension.Tags):
             "document",
             "parent",
             "attributes",
+            "files_directory",
+            "escape_html_string",
         ]
         return {key: value for key, value in asdict(self).items() if key not in exclude}
 
@@ -106,12 +186,39 @@ class Component(extension.Tags):
             f"{self.__class__.__name__}.{self.render.__name__} method not implemented"
         )
 
+    def from_file(self, file_name: str) -> str:
+        file_location = None
+        if isinstance(self.files_directory, Path):
+            assert (
+                self.files_directory.exists()
+            ), f"file {self.files_directory=} does not exists"
+            assert (
+                self.files_directory.is_dir()
+            ), f"{self.files_directory=} is not a directory"
+            file_location = self.files_directory / file_name
+        elif self.files_directory is not None:
+            assert isinstance(
+                self.files_directory, str
+            ), f"{self.files_directory=} is not str"
+            self.files_directory = Path(self.files_directory)
+            assert (
+                self.files_directory.exists()
+            ), f"file {self.files_directory=} does not exists"
+            assert (
+                self.files_directory.is_dir()
+            ), f"{self.files_directory=} is not a directory"
+            file_location = self.files_directory / file_name
+        else:
+            file_location = Path(file_name)
+        assert file_location.exists(), f"file {file_location} does not exists"
+        return file_location.read_text()
+
     def script(self, *args, **kwargs):
         ...
 
     def call(self, *args, **kwargs):
         """
-        This method is basically placeholder for using websocket communications.
+        This is basically a placeholder for using websocket communications.
         All sorts of fun stuffs can happens here.
         :param args:
         :param kwargs:
@@ -139,7 +246,7 @@ class ReactiveComponent(Component, extension.Tags):
         #
         # as to_dict method of dataclass probably calls for locals that gets mangled with document locals
 
-    def _re_render(self, **kwargs) -> htmltags.html_tag:  # noqa
+    def _re_render(self, **kwargs) -> extension.Tags:  # noqa
         # here is an example below how re_rendering handles function calls like 'increment'
         # changing variables
         # with document(x_toggle) as counters:
@@ -197,7 +304,7 @@ if __name__ == "__main__":
     # using @dataclass(eq=False) to use super class hash function
     @dataclass(eq=False)
     class vue(ReactiveComponent):
-        a: int = IntegerValidator(logger=False, debug=True)
+        a: object  # = IntegerValidator(logger=False, debug=True)
 
         def __post_init__(self):
             super(vue, self).__init__(a=self.a)
@@ -207,7 +314,7 @@ if __name__ == "__main__":
 
     class test(Component):
         def render(self, *args, **kwargs) -> htmltags.html_tag:  # type: ignore[override]
-            return self.html_tags.div(*args, **kwargs)
+            return self.html_tags.p(*args, **kwargs)
 
     v = vue(a=1)
     print(v)
@@ -216,5 +323,10 @@ if __name__ == "__main__":
 
     print(v)
     print(v.to_dict())
-    t = test("1", className="flex w-10")
-    print(t)
+    t = test(
+        "1",
+        className="""\
+            bg-lime-400 dark:hover:text-purple-100/90 hidden prose 
+            break-keep h-fit ring-offset-fuchsia-950""",
+    )
+    print((t & v))
