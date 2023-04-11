@@ -30,13 +30,12 @@ class Tags(dom_tag, dom1core):
     self_dedent = False
     child_dedent = False
     render_tag = True
-    new_line_at_end = False
+    new_line = "\n"
     SELF_DEDENT = "self_dedent"
     CHILD_DEDENT = "child_dedent"
     OPEN_TAG = "open_tag"
     CLOSE_TAG = "close_tag"
     RENDER_TAG = "render_tag"
-    NEW_LINE_AT_CHILD_END = "new_line_at_child_end"
     file_extension = ".html"
 
     def __init__(self, *args, **kwargs):
@@ -93,11 +92,13 @@ class Tags(dom_tag, dom1core):
             sb.append(self.right_delimiter)
         return sb
 
-    @staticmethod
-    def _new_line_and_inline_handler(sb, indent_level, indent_str, pretty, is_inline):
+    # @staticmethod
+    def _new_line_and_inline_handler(
+        self, sb, indent_level, indent_str, pretty, is_inline
+    ):
         if pretty and not is_inline:
             is_inline = False
-            sb.append("\n")
+            sb.append(self.new_line)
             sb.append(indent_str * indent_level)
         return sb, is_inline
 
@@ -136,7 +137,7 @@ class Tags(dom_tag, dom1core):
                 for x in (
                     "data_",  # for data-type="value" support
                     "aria_",  # for aria support
-                    "x_",  # for AlpineJS and x-component
+                    "x_",  # for AlpineJS and x-component support
                     "v_",  # for Vue support
                     "ng_",  # for Angular support
                     "hx_",  # for HTMX support
@@ -179,18 +180,27 @@ class Tags(dom_tag, dom1core):
         return name
 
     def _render_children(self, sb, indent_level, indent_str, pretty, xhtml):
+        # we want to partially inline only childrens so initially we set
+        # inline flag as True here but if child.is_line is False we will
+        # set this flag as False
         inline = True
+
+        # we want to keep track of indentation level so that we dont dedent the child
+        # below original indentation level of the parent
         orig_indent = indent_level
+
         self_render_tag = self.attributes.pop(
             Tags.RENDER_TAG,
             getattr(self, Tags.RENDER_TAG) if hasattr(self, Tags.RENDER_TAG) else True,
         )
         for child in self.children:
             if isinstance(child, dom_tag):
-                # get the dedent status of child from the parent or the child
-
-                # the dedent status of the child from the parent via self.child_dedent is
-                # extracted in the '_render' method already and is already taken care of
+                # Get the dedent status of child from the parent or the child.
+                # The dedent status of the child from the parent via self.child_dedent is
+                # extracted in the '_render' method already and is already taken care of.
+                # we have already **not** incremented the indentation in '__render' method
+                # while calling '_render_childern' method if child_dedent is True. Thus
+                # in effect decrementing the child indentation.
 
                 # the dedent status of the child from the child via child.self_dedent is
                 # extracted here
@@ -222,18 +232,60 @@ class Tags(dom_tag, dom1core):
                         # "    "<parent>\n
                         # "  "<child>
 
-                        # thus we always ensure that while we dedent the <child> to
-                        #
+                        # thus we always ensure that while we dedent the <child> we don't dedent it below
+                        # parent indentation
                         if indent_level > orig_indent - 1:
                             indent_level = self._dedent_handler(dedent, indent_level)
 
+                # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 # we will apply the changes only when the render_tag flag is set to True
-                # NOTE: we should **not add** checks for (pretty and not self.is_inline) here as this is
-                # where we are adding the indentation and new-line **before** child is rendered
+                # NOTE: we should **not add** checks for (pretty and not self.is_inline) here with
+                # 'self_render_tag' as this is where we are adding the indentation and
+                # new-line **before** child is rendered.
+                #
+                # ======================Lets see the reason behind this in details.======================
+                #
+                # variable 'pretty' comes from the parent and if we are rendering tag of parent
                 # for eg:
+                #
+                # =======================================================================================
                 # <parent>\n
                 # "    "<child> // so here '\n' and "    " represents the newline and indentation added
-                # <parent>      // after <parent> this is done below here after checking self_render_tag
+                # <parent>      // after <parent> this is done here after checking 'self_render_tag'
+                # =======================================================================================
+                #
+                # also notice we do (inline and self.is_inline) check inside _new_line_and_inline_handler
+                # method because we want to make only childrens are partially inlined.
+                # if we dont add (inline and self.is_inline) we will get the tree something like this if
+                # parent.is_inline = False
+                #
+                # =======================================================================================
+                # <parent><child></child> // notice how the <child></child> tag is inlined but its mangling
+                # </parent>               // the indentation after opening of the <parent> tag
+                # =======================================================================================
+                #
+                # this is happening because when self.is_inline is False for parent we should add indentation
+                # and '\n' before the child, if 'child.is_inline' is True but not the 'parent.is_inline' then
+                # we need to make inline False in _new_line_and_inline_handler below to ensure that '\n' and
+                # indentation is added after opening of parent tag, but we have already overwritten inline = True
+                # in the starting and child.is_inline is True so in effect (pretty and not child.is_inline)
+                # condition is False so we didn't override value of inline which is still True.
+                #
+                # Thus if we only pass 'inline' inside _new_line_and_inline_handler it will not add any "\n"
+                # or indentation. Only way to do this is by adding "and" operator between inline and self.is_inline.
+                # Thus we make sure even if the child is inlined the parent adds the "\n" and indentation before
+                # child if parent self.is_inline is False.
+                #
+                # This can be quickly and easily checked by removing self.is_inline inside _new_line_and_inline_handler
+                # below and running div(div(div(div(script("aa")), __inline=True)))
+                # what we actually want is:
+                # -----------------------
+                # <parent>\n
+                # "    "<child></child>
+                # </parent>
+                # and we get this only by adding (inline and self.is_inline) inside _new_line_and_inline_handler
+                # method below so don't remove or edit it in future.
+                # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 if self_render_tag:
                     sb, inline = self._new_line_and_inline_handler(
                         sb, indent_level, indent_str, pretty, inline and self.is_inline
@@ -244,32 +296,33 @@ class Tags(dom_tag, dom1core):
             else:
                 # check if the child is not an empty string '' via any(child)
                 if any(child):
-                    # if any child exists maybe its a string or some object here check if the pretty is True
+                    # if any child exists maybe its a string or some object, here we check if the pretty is True.
+                    # Notice here the child is only string or we force it to act like string by casting it into unicode and
+                    # we can't check child.is_inline so we fallback on 'pretty' flag. if its True we set the inline flag as
+                    # False. The logic of adding (inline and self.is_inline) inside _new_line_and_inline_handler is same as
+                    # given above. Ideally we should check for both (pretty and not self.is_inline) but due to the fact that
+                    # 'pretty' has included that condition when its defined we skip it.
+
                     if pretty:
                         inline = False
                         if self_render_tag:
                             sb, inline = self._new_line_and_inline_handler(
-                                sb, indent_level, indent_str, pretty, inline
+                                sb,
+                                indent_level,
+                                indent_str,
+                                pretty,
+                                inline and self.is_inline,
                             )
                         sb.append(unicode(child))
                     else:
                         sb.append(unicode(child))
 
-            # new_line_at_end caters to ConcatTag that supports DOCTYPE Tag when
-            # its wrapped inside an empty wrapper like ConcatTag
-            new_line_at_child_end = self.attributes.pop(
-                Tags.NEW_LINE_AT_CHILD_END,
-                getattr(self, Tags.NEW_LINE_AT_CHILD_END)
-                if hasattr(self, Tags.NEW_LINE_AT_CHILD_END)
-                else False,
-            )
+            if any(child):
+                if not self_render_tag and pretty and self.children[-1] != child:
+                    sb, inline = self._new_line_and_inline_handler(
+                        sb, indent_level, indent_str, pretty, inline and self.is_inline
+                    )
 
-            # new_line_at_child_end caters to ConcatTag as its an empty wrapper and children needs
-            # '\n' new line support except the last one
-            if new_line_at_child_end and self.children[-1] != child:
-                sb, _ = self._new_line_and_inline_handler(
-                    sb, indent_level, indent_str, pretty, inline and self.is_inline
-                )
         return inline
 
     def _render(self, sb, indent_level=1, indent_str="  ", pretty=True, xhtml=False):
@@ -313,20 +366,24 @@ class Tags(dom_tag, dom1core):
         )
 
         # now if "render_tag" is False or self_dedent is True for any reason we will reduce the indentation
-        # level but we will not mess with the self dedent here as is_single flag ensures single tags are
+        # level but we will not mess with the self_dedent here as is_single flag ensures single tags are
         # dedented by default (see '_render_children' method call below) so what remains is the double tags
         # but we dedent double tags only when there is a child involved thus child.self_dedent is parsed
-        # under '_render_children' method, thats why commenting
+        # inside '_render_children' method, thats why commenting.
         dedent = not self_render_tag  # or self_dedent
         if pretty and dedent:
+            # A **Potential BUG** that we can introduce here is if we dedent to the level below parent element.
+            # Baically we are assuming that the parent has sent the indent level to us after incrementing it
+            # and when we are not rendering self-tag, we are decrementing it. And thats the actual case.
+            # Personally I dont think there will be any bug here as we can be sure that "_render" method is run
+            # inside "_render_children", and when it happes, child takes care of its indentation and all,
+            # so leave it while it works. Don't remove the line below it breaks indentation in the code. :)
             indent_level = self._dedent_handler(dedent, indent_level)
 
-        # if we have to render the self tag
         if self_render_tag:
             name = self._clean_name(getattr(self, "tagname", type(self).__name__))
             self._render_open_tag(sb, xhtml, name, open_tag)
 
-        # here lies the important logic
         inline = self._render_children(
             sb,
             indent_level + 1
@@ -347,6 +404,9 @@ class Tags(dom_tag, dom1core):
 
         return sb
 
+    def __and__(self, other: dom_tag) -> "Tags":
+        return PlaceholderTag() & self & other
+
     def save(
         self,
         file_name: str = None,
@@ -354,7 +414,6 @@ class Tags(dom_tag, dom1core):
         current_dir=False,
         file_path=None,
     ):
-
         if file_path is not None:
             assert (
                 folder_name is None and current_dir is False
@@ -404,6 +463,13 @@ class Tags(dom_tag, dom1core):
                     with open(file_path, "w") as f:
                         f.write(html_string)
         return file_name
+
+
+class PlaceholderTag(Tags):
+    render_tag = False
+
+    def __and__(self, other: dom_tag) -> Tags:
+        return PlaceholderTag(self, other)
 
 
 class SingleTags(Tags):
