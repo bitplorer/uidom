@@ -20,7 +20,6 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 # defining webassets
 webassets = WebAssets(FileSettings(BASE_DIR=BASE_DIR, SUB_DIR="assets"))
 
-webassets.
 if DEBUG:
     from uidom import reloader
 
