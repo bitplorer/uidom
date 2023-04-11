@@ -9,18 +9,25 @@ python = "^3.10"
 Jinja2 = "^3.0.1"
 aiofiles = "^0.7.0"
 python-multipart = "^0.0.5"
-pytailwindcss = "^0.1.4"
 valio = "^0.1.0-beta.5"
-starlette = "0.19.1"
+pyparsing = "^3.0.9"
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
+[tool.poetry.group.dev.dependencies]
 black = "^21.6b0"
 mypy = "^0.942"
+uvicorn = {extras = ["standard"], version = "^0.18.2"}
+starlette = "0.19.1"
+fastapi = "^0.79.0"
+watchgod = "^0.8.2"
+pytailwindcss = "^0.1.4"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.2.2"
 toml = "^0.10.2"
 types-toml = "^0.10.8"
-uvicorn = {extras = ["standard"], version = "^0.18.2"}
-fastapi = "^0.79.0"
+
+[tool.poetry.scripts]
+demosite = "demosite.server:run"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
