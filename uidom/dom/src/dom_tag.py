@@ -269,6 +269,12 @@ class dom_tag(object):
             ):
                 if all(
                     child.attributes.get(attribute) == value
+                    if value is not None
+                    else child.attributes.get(attribute)
+                    # this is to handle cases where we want to check mere
+                    # presence of attributes like x-data or x-component so
+                    # we use element.get(x_data=None) as a work around as
+                    # we aren't sure whats the actual value.
                     for attribute, value in attrs
                 ):
                     # If the child is of correct type and has all attributes and values
