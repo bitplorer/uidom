@@ -15,7 +15,7 @@ from warnings import warn
 
 from starlette.websockets import Message, WebSocket, WebSocketDisconnect
 
-DATA = Optional[Union[Dict[str, Any], str]]
+DATA = Optional[Union[Message, str]]
 CALLABLE = Callable[..., Any]
 
 
@@ -337,7 +337,6 @@ class WebSocketAdapter(GenericAdapter):
         """
 
         if isinstance(data, dict):
-
             if "data" in data and not "event" in data:
                 raise KeyError(
                     f"{{'data': {data['data']}}} provided without any 'event'"
@@ -386,7 +385,6 @@ class WebSocketAdapter(GenericAdapter):
         await self.sleep()
 
     async def __call__(self, *args, **kwargs):
-
         # Instantiate the data object based on whether a data fetcher object is provided.
         if self.class_instance is None:
             # to make sure that even if the socket keeps reconnecting database connections are
