@@ -240,7 +240,7 @@ class TestJinja(unittest.TestCase):
     <p>
       ksf
     </p>
-  {% else  %}
+  {% else %}
     <section>
       <p>
         ok
