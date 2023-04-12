@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -10,27 +10,23 @@ from uidom.dom import htmlelement as htm
 from uidom.dom.src import dom_tag
 from uidom.dom.src.main import extension
 
-__all__ = [
-    "HtmlDocument"
-]
+__all__ = ["HtmlDocument"]
 
 
 class Meta(htm.HTMLElement):
-
     def render(self, **kwargs):
         return self.html_tags.meta(**kwargs)
 
 
 class Head(htm.HTMLElement):
-
     def render(self, *args, **kwargs):
         return self.html_tags.head(*args, **kwargs)
 
 
 class Body(htm.HTMLElement):
-
     def render(self, *args, **kwargs):
         return self.html_tags.body(*args, **kwargs)
+
 
 @dataclass(eq=False)
 class HtmlDocument(htm.HTMLElement):
@@ -41,24 +37,34 @@ class HtmlDocument(htm.HTMLElement):
         self.document = self
         super(HtmlDocument, self).__init__(*args, **kwargs)
         self._entry = self.body
-        
+
     def __enter__(self):
         super().__enter__()
         self._entry = self._entry_with_context
-        return self 
-    
+        return self
+
     def __checks__(self, element: extension.Tags) -> extension.Tags:
         if self.ensure_csrf_token_in_meta:
             token_element = element.get(name=self.csrf_field)
             if not token_element:
-                raise AttributeError(f"{self.__class__.__qualname__} {self.csrf_field} must be set")
+                raise AttributeError(
+                    f"{self.__class__.__qualname__} {self.csrf_field} must be set"
+                )
             if len(token_element) > 1:
-                raise AssertionError(f"{self.__class__.__qualname__} {self.csrf_field} set at multiple places")
+                raise AssertionError(
+                    f"{self.__class__.__qualname__} {self.csrf_field} set at multiple places"
+                )
         return element
 
-    def render(self, *args, head=None, body=None, common_head=None, common_body=None, **kwargs):
-        common_head = [common_head] if not isinstance(common_head, list) else common_head
-        common_body = [common_body] if not isinstance(common_body, list) else common_body
+    def render(
+        self, *args, head=None, body=None, common_head=None, common_body=None, **kwargs
+    ):
+        common_head = (
+            [common_head] if not isinstance(common_head, list) else common_head
+        )
+        common_body = (
+            [common_body] if not isinstance(common_body, list) else common_body
+        )
         head = [head] if not isinstance(head, list) else head
         body = [body] if not isinstance(body, list) else body
 
@@ -85,7 +91,7 @@ class HtmlDocument(htm.HTMLElement):
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
         # ^Body Section
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-        self._entry_with_context = self.html_tags.ConcatTag()
+        self._entry_with_context = extension.PlaceholderTag()
         self.body = Body(self._entry_with_context, *args, **kwargs)
 
         if any(body):
@@ -105,7 +111,7 @@ class HtmlDocument(htm.HTMLElement):
         if not self.head.get("meta", name="viewport"):
             viewport_meta = Meta(
                 name="viewport",
-                content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
+                content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui",
             )
             self.head.add(viewport_meta)
 
@@ -116,4 +122,3 @@ class HtmlDocument(htm.HTMLElement):
         self.html = self.html_tags.html(self.head, self.body)
         doc = self.html_tags.DocType("html")
         return doc & self.html
-
