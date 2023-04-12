@@ -164,7 +164,10 @@ class CustomElement(XComponent):
         return element
 
     def render(self, tag_name):
-        return self.html_tags.template(self.html_tags.div(x_component=tag_name))
+        # smallest example of custom elements
+        with self.html_tags.template(x_component=tag_name) as cus_elem:
+            self.html_tags.div()
+        return cus_elem
 
 
 @dataclass(eq=False)
@@ -186,9 +189,11 @@ class WebComponent(XComponent):
 
     def render(self, tag_name):
         # smallest example of a web component
-        return self.html_tags.template(
-            self.html_tags.div(x_component=tag_name, shadowroot="true")
-        )
+        with self.html_tags.template(
+            x_component=tag_name, shadowroot="true"
+        ) as web_comp:
+            self.html_tags.slot()
+        return web_comp
 
 
 @dataclass(eq=False)
