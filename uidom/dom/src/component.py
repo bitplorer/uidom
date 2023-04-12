@@ -314,7 +314,8 @@ if __name__ == "__main__":
     # using @dataclass(eq=False) to use super class hash function
     @dataclass(eq=False)
     class vue(ReactiveComponent):
-        a: object  # = IntegerValidator(logger=False, debug=True)
+        # is_inline = True
+        a: int  # = IntegerValidator(logger=False, debug=True)
 
         def __post_init__(self):
             super(vue, self).__init__(a=self.a)
@@ -323,6 +324,8 @@ if __name__ == "__main__":
             return self.html_tags.p(a=a)
 
     class test(Component):
+        is_inline = True
+
         def render(self, *args, **kwargs) -> htmltags.html_tag:  # type: ignore[override]
             return self.html_tags.p(*args, **kwargs)
 
