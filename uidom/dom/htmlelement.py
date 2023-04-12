@@ -176,11 +176,7 @@ class WebComponent(XComponent):
         return self.__web_component_checks(element)
 
     def __web_component_checks(self, element):  # noqa
-        shadow_root_attr = None
-        try:
-            shadow_root_attr = element["shadowroot"]
-        except AttributeError:
-            pass
+        shadow_root_attr = element.get(shadowroot=None)
 
         if not shadow_root_attr:
             raise AttributeError(
@@ -198,15 +194,12 @@ class WebComponent(XComponent):
 @dataclass(eq=False)
 class AlpineElement(component.Component):
     def __checks__(self, element):
-        HTMLElement.__checks__(self, element)
         return self.__alpine_js_checks(element)
 
     def __alpine_js_checks(self, element):
-        x_data_attr = None
-        try:
-            x_data_attr = element["x-data"]
-        except AttributeError:
-            pass
+        # we look for x_data=None because we exactly don't know if its value is present,
+        # so we get x_data for any value by making x_data=None.
+        x_data_attr = element.get(x_data=None)
 
         if not x_data_attr:
             raise AttributeError(
