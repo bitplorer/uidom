@@ -93,6 +93,7 @@ class Elif(JinjaSingleTags):
 class Else(JinjaSingleTags):
     self_dedent = True
     child_dedent = False
+    enable_right_delimiter_space = False
 
     def __init__(self, *dom_elements):
         """
