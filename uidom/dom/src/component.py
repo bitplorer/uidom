@@ -191,7 +191,7 @@ class Component(extension.Tags):
 
         if isinstance(self.files_directory, Path):
             if not self.files_directory.exists():
-                raise ValueError(f"file {self.files_directory=} does not exists")
+                raise FileNotFoundError(f"file {self.files_directory=} does not exists")
 
             if not self.files_directory.is_dir():
                 raise ValueError(f"{self.files_directory=} is not a directory")
@@ -205,7 +205,7 @@ class Component(extension.Tags):
             self.files_directory = Path(self.files_directory)
 
             if not self.files_directory.exists():
-                raise ValueError(f"file {self.files_directory=} does not exists")
+                raise FileNotFoundError(f"file {self.files_directory=} does not exists")
 
             if not self.files_directory.is_dir():
                 raise ValueError(f"{self.files_directory=} is not a directory")
@@ -216,7 +216,7 @@ class Component(extension.Tags):
             file_location = Path(file_name) if isinstance(file_name, str) else file_name
 
         if not file_location.exists():
-            raise ValueError(f"{file_location} does not exists")
+            raise FileNotFoundError(f"{file_location} does not exists")
 
         if not file_location.is_file():
             raise ValueError(f"{file_location} is not a file")
