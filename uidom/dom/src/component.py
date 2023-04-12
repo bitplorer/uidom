@@ -186,31 +186,41 @@ class Component(extension.Tags):
             f"{self.__class__.__name__}.{self.render.__name__} method not implemented"
         )
 
-    def from_file(self, file_name: str) -> str:
+    def from_file(self, file_name: Union[str, Path]) -> str:
         file_location = None
+
         if isinstance(self.files_directory, Path):
-            assert (
-                self.files_directory.exists()
-            ), f"file {self.files_directory=} does not exists"
-            assert (
-                self.files_directory.is_dir()
-            ), f"{self.files_directory=} is not a directory"
+            if not self.files_directory.exists():
+                raise ValueError(f"file {self.files_directory=} does not exists")
+
+            if not self.files_directory.is_dir():
+                raise ValueError(f"{self.files_directory=} is not a directory")
+
             file_location = self.files_directory / file_name
-        elif self.files_directory is not None:
-            assert isinstance(
-                self.files_directory, str
-            ), f"{self.files_directory=} is not str"
+
+        elif self.files_directory:
+            if not isinstance(self.files_directory, str):
+                raise ValueError(f"{self.files_directory=} is not str")
+
             self.files_directory = Path(self.files_directory)
-            assert (
-                self.files_directory.exists()
-            ), f"file {self.files_directory=} does not exists"
-            assert (
-                self.files_directory.is_dir()
-            ), f"{self.files_directory=} is not a directory"
+
+            if not self.files_directory.exists():
+                raise ValueError(f"file {self.files_directory=} does not exists")
+
+            if not self.files_directory.is_dir():
+                raise ValueError(f"{self.files_directory=} is not a directory")
+
             file_location = self.files_directory / file_name
+
         else:
-            file_location = Path(file_name)
-        assert file_location.exists(), f"file {file_location} does not exists"
+            file_location = Path(file_name) if isinstance(file_name, str) else file_name
+
+        if not file_location.exists():
+            raise ValueError(f"{file_location} does not exists")
+
+        if not file_location.is_file():
+            raise ValueError(f"{file_location} is not a file")
+
         return file_location.read_text()
 
     def script(self, *args, **kwargs):
