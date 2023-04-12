@@ -6,8 +6,8 @@
 from demosite import settings
 from demosite.tailwindcss import tailwind
 from uidom import UiDOM
-from uidom.dom import link, raw, script, string_to_element
-from uidom.scripts import x_component_js_text
+from uidom.dom import link, raw, script
+from uidom.scripts import x_component_js
 
 __all__ = ["document"]
 
@@ -79,9 +79,9 @@ document = UiDOM(
             src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/mobilefriendly.js",
         ),
         # custom-elements and web component support
-        # script(x_component())
+        # script(x_component_js())
         script(
-            src=f"/js/{string_to_element(x_component_js_text, escape=False).save(file_path=settings.webassets.static.js)}"
+            src=f"/js/{x_component_js().save(file_or_dir=settings.webassets.STATIC_JS_DIR / 'component.js')}"
         ),
         # Chart JS
         script(
