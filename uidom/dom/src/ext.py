@@ -8,6 +8,7 @@ import os
 import re
 import textwrap
 import typing
+from pathlib import Path
 
 from jinja2.utils import htmlsafe_json_dumps
 
@@ -405,62 +406,72 @@ class Tags(dom_tag, dom1core):
         return sb
 
     def __and__(self, other: dom_tag) -> "Tags":
-        return PlaceholderTag() & self & other
+        return (
+            PlaceholderTag(__inline=self.is_inline, __pretty=self.is_pretty)
+            & self
+            & other
+        )
 
     def save(
         self,
-        file_name: str = None,
-        folder_name: str = None,
-        current_dir=False,
-        file_path=None,
+        file_name: typing.Union[str, Path, None] = None,
+        folder_name: typing.Union[str, Path, None] = None,
+        current_dir: bool = False,
+        file_or_dir: typing.Union[str, Path, None] = None,
     ):
-        if file_path is not None:
+        if file_or_dir is not None:
             assert (
                 folder_name is None and current_dir is False
             ), "folder_name and current_dir can't be initialised with file_path"
+            file_or_dir = Path(file_or_dir)
         else:
-            folder_name = folder_name or "static"  # passing default folder_name here
+            folder_name = Path(folder_name or "static")
             assert folder_name is not None, "folder_name should be initialised"
 
         if self.file_extension is None:
             raise ValueError(
-                f"can not save file with {self.file_extension!r} type extension"
+                f"can not save file with {self.file_extension=} type extension"
             )
 
-        file_name = file_name or str(self.__class__.__name__)
-        file_name = (
-            file_name
-            if file_name.endswith(self.file_extension)
-            else ".".join([file_name, self.file_extension[1:]])
-        )
+        def _filename() -> Path:
+            nonlocal file_name
+            file_name = Path(file_name or str(self.__class__.__name__))
+
+            if file_name.suffix:
+                if not file_name.suffix == self.file_extension:
+                    raise ValueError(
+                        f"{file_name.suffix=} and {self.file_extension=} did not match"
+                    )
+            else:
+                file_name = file_name.with_suffix(self.file_extension)
+            return file_name
 
         if folder_name is not None:
-            current_work_dir = os.getcwd()
-            dirname = (
-                current_work_dir if current_dir else os.path.dirname(current_work_dir)
-            )
-            folder_name = os.path.join(dirname, folder_name)
+            current_work_dir = Path.cwd()
+            dir_name = current_work_dir if current_dir else current_work_dir.parent
+            dir_folder = dir_name / folder_name
 
-            if not os.path.exists(folder_name):
-                os.makedirs(folder_name)
-            file_path = os.path.join(folder_name, file_name)
-        else:
-            file_path = (
-                os.path.join(file_path, file_name)
-                if not os.path.isfile(file_path)
-                else file_path
-            )
+            if not dir_folder.exists():
+                dir_folder.mkdir()
+
+            file_name = _filename()
+
+            file_path = dir_folder / file_name
+
+        elif file_or_dir is not None:
+            file_name = _filename()
+            file_path = file_or_dir / file_name if file_or_dir.is_dir() else file_or_dir
 
         html_string = self.__render__()
 
-        if not os.path.exists(file_path):
-            with open(file_path, "w+") as f:
+        if not file_path.exists():
+            with file_path.open(mode="w+") as f:
                 f.write(html_string)
         else:
-            with open(file_path, "r") as temp:
+            with file_path.open(mode="r") as temp:
                 old_html = temp.read()
                 if old_html != html_string:
-                    with open(file_path, "w") as f:
+                    with file_path.open(mode="w") as f:
                         f.write(html_string)
         return file_name
 
@@ -469,7 +480,9 @@ class PlaceholderTag(Tags):
     render_tag = False
 
     def __and__(self, other: dom_tag) -> Tags:
-        return PlaceholderTag(self, other)
+        return PlaceholderTag(
+            self, other, __inline=self.is_inline, __pretty=self.is_pretty
+        )
 
 
 class SingleTags(Tags):
