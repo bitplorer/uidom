@@ -9,10 +9,10 @@ from pathlib import Path
 from uidom.dom import raw
 from uidom.dom.src.component import Component
 
-__all__ = ["x_component_js_text"]
+__all__ = ["x_component_js_text", "x_component_js"]
 
 
-@lru_cache
+# @lru_cache
 def x_component_js_text():
     X_COMPONENT_SCRIPT_FILE = Path(__file__).parent / "xcomponent.js"
     if not X_COMPONENT_SCRIPT_FILE.exists():
