@@ -454,13 +454,12 @@ class Tags(dom_tag, dom1core):
             if not dir_folder.exists():
                 dir_folder.mkdir()
 
-            file_name = _filename()
-
-            file_path = dir_folder / file_name
+            file_path = dir_folder / _filename()
 
         elif file_or_dir is not None:
-            file_name = _filename()
-            file_path = file_or_dir / file_name if file_or_dir.is_dir() else file_or_dir
+            file_path = (
+                file_or_dir / _filename() if file_or_dir.is_dir() else file_or_dir
+            )
 
         html_string = self.__render__()
 
@@ -473,7 +472,7 @@ class Tags(dom_tag, dom1core):
                 if old_html != html_string:
                     with file_path.open(mode="w") as f:
                         f.write(html_string)
-        return file_name
+        return file_path.name
 
 
 class PlaceholderTag(Tags):
