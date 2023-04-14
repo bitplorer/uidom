@@ -36,11 +36,19 @@ class Component(extension.Tags):
     escape_html_string: bool = field(init=False, default=False)
 
     def __init__(self, *args, **kwargs):
-        super(Component, self).__init__()
+        # first we get the childrens from the render method and sanitize it.
         childrens = self.render(*args, **kwargs)
 
         if childrens in [None, ...]:
             raise ValueError(f"'{self.render=}' return {childrens}")
+
+        if isinstance(childrens, (tuple, list)) and len(childrens) > 1:
+            # IMPORTANT: Note if self.render returns a tuple or a list of elements as children,
+            # not just one element, raise error
+            raise ValueError(
+                f"{self.__class__.__qualname__} expects 1 element from {self.render.__qualname__}, it returned {len(childrens)} elements"
+            )
+        super(Component, self).__init__()
 
         if isinstance(childrens, str):
             childrens = str2elem.string_to_element(childrens, self.escape_html_string)
@@ -50,13 +58,6 @@ class Component(extension.Tags):
             childrens = str2elem.string_to_element(childrens, self.escape_html_string)
 
         self._entry = super(Component, self).add(childrens)
-
-        if isinstance(self._entry, (tuple, list)) and len(self._entry) > 1:
-            # IMPORTANT: Note if self.render returns a tuple or a list of elements as children,
-            # not just one element, raise error
-            raise ValueError(
-                f"{self.__class__.__qualname__} expects 1 element from {self.render.__qualname__}, it returns {len(self._entry)}"
-            )
 
         # we perform checks on the _entry "after" the dom initialization because .get method
         # looks into children
