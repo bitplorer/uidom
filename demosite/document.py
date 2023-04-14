@@ -3,6 +3,7 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
+
 from demosite import settings
 from demosite.tailwindcss import tailwind
 from uidom import UiDOM
@@ -49,14 +50,15 @@ document = UiDOM(
         ),
         # ALpinejs
         script(
+            defer=None,
+            src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js",
+        ),
+        script(
             src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js",
             defer=None,
             rel="prefetch",
         ),
-        script(
-            defer=None,
-            src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js",
-        ),
+        # script(src=settings.alpine_js, defer=None),
     ],
     body=[
         # Htmx and Hyperscript
@@ -65,6 +67,7 @@ document = UiDOM(
             crossorigin="anonymous",
             rel="prefetch",
         ),
+        # script(src=settings.htmx_js),
         script(src="https://unpkg.com/hyperscript.org@0.8.1"),
         script(src="https://unpkg.com/htmx.org/dist/ext/preload.js"),
         # livewire
