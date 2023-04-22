@@ -6,6 +6,7 @@
 
 from jinja2.environment import Template
 
+from uidom.dom.src.dom_tag import dom_tag
 from uidom.dom.src.main import extension
 
 __all__ = [
@@ -190,7 +191,7 @@ class Var(JinjaSingleTags):
 def render(template, **options):
     return raw(
         Template(
-            template.__render__() if isinstance(template, extension.Tags) else template,
+            template.__render__() if isinstance(template, dom_tag) else template,
             lstrip_blocks=True,
             trim_blocks=True,
             enable_async=True,
