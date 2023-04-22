@@ -224,28 +224,3 @@ class AlpineComponent(AlpineElement, XComponent):
     def __checks__(self, element):
         XComponent.__checks__(self, element)
         return AlpineElement.__checks__(self, element)
-
-
-# if __name__ == '__main__':
-# image = CustomElement(tag_name="img")
-# print(image)
-# x = image(image(image("hello")), src="http://....", alt="some image", className="h-32 w-32")
-# print(x)
-# # print(signature(image))
-# def story(*args, **kwargs):
-#     return AMPElement(tag_name="story-page")(
-#         AMPElement(tag_name="story-grid-layer")(
-#             AMPElement(tag_name="video")(*args, **kwargs),
-#     template="fill"),
-#     id="cover"
-# )
-
-# print(
-#     story(
-#         layout="fill",
-#         src="background.mp4",
-#         poster="https://images.unsplash.com/photo-1605100804763-247f67b3557e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80",
-#         muted=None,
-#         autoplay=None
-#         )
-#       )
