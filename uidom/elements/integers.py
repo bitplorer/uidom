@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -22,6 +22,7 @@ __all__ = [
     "IntegerField",
 ]
 
+
 @Validator.register
 @dataclass(eq=False)
 class IntegerLabel(HTMLElement):
@@ -32,7 +33,6 @@ class IntegerLabel(HTMLElement):
 
     def render(self, label, *args, **kwargs):
         return self.html_tags.label(label, *args, **kwargs)
-
 
 
 class IntegerLabelValidator(Validator):
@@ -49,12 +49,13 @@ class IntegerLegend(HTMLElement):
     def render(self, label, *args, **kwargs):
         return self.html_tags.legend(label, *args, **kwargs)
 
+
 min_field = StringValidator(logger=False, debug=True, name="min")
 max_field = StringValidator(logger=False, debug=True, name="max")
 
+
 @dataclass(eq=False)
 class IntegerInput(HTMLElement):
-
     @max_field.add_validator
     @min_field.add_validator
     def cast2int(self, value):
@@ -66,35 +67,26 @@ class IntegerInput(HTMLElement):
 
     name: str = StringValidator(logger=False, debug=True)
     placeholder: str = StringValidator(logger=False, debug=True)
-    type: str = StringValidator(in_choice=["number", "range", "tel"],
-                                logger=False, debug=True, default="number")
+    type: str = StringValidator(
+        in_choice=["number", "range", "tel"], logger=False, debug=True, default="number"
+    )
     min: str = min_field
     max: str = max_field
     pattern: str = StringValidator(logger=False, debug=True, default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerInput, self).__init__(*args,
-                                           name=self.name,
-                                           placeholder=self.placeholder,
-                                           type=self.type,
-                                           min=self.min,
-                                           max=self.max,
-                                           pattern=self.pattern,
-                                           **kwargs
-                                           )
-
-    def render(
-            self,
+        super(IntegerInput, self).__init__(
             *args,
-            name,
-            placeholder="",
-            type,
-            min,
-            max,
-            pattern,
-            **kwargs
-    ):
+            name=self.name,
+            placeholder=self.placeholder,
+            type=self.type,
+            min=self.min,
+            max=self.max,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
+    def render(self, *args, name, placeholder="", type, min, max, pattern, **kwargs):
         return self.html_tags.input_(
             *args,
             name=name,
@@ -116,7 +108,6 @@ class IntegerInputValidator(Validator):
 
 @dataclass(eq=False)
 class IntegerNumberInput(HTMLElement):
-
     name: str
     placeholder: str
     min: T.Union[str, None] = field(default=None)
@@ -124,25 +115,17 @@ class IntegerNumberInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerNumberInput, self).__init__(*args,
-                                                 name=self.name,
-                                                 placeholder=self.placeholder,
-                                                 min=self.min,
-                                                 max=self.max,
-                                                 pattern=self.pattern,
-                                                 **kwargs
-                                                 )
-
-    def render(
-            self,
+        super(IntegerNumberInput, self).__init__(
             *args,
-            name,
-            placeholder="",
-            min,
-            max,
-            pattern="null",
-            **kwargs
-    ):
+            name=self.name,
+            placeholder=self.placeholder,
+            min=self.min,
+            max=self.max,
+            pattern=self.pattern,
+            **kwargs,
+        )
+
+    def render(self, *args, name, placeholder="", min, max, pattern="null", **kwargs):
         return IntegerInput(
             name=name,
             placeholder=placeholder,
@@ -162,7 +145,6 @@ class IntegerNumberInputValidator(Validator):
 
 @dataclass(eq=False)
 class IntegerRangeInput(HTMLElement):
-
     name: str
     placeholder: str
     min: T.Union[str, None] = field(default=None)
@@ -170,24 +152,25 @@ class IntegerRangeInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerRangeInput, self).__init__(*args,
-                                                name=self.name,
-                                                placeholder=self.placeholder,
-                                                min=self.min,
-                                                max=self.max,
-                                                pattern=self.pattern,
-                                                **kwargs
-                                                )
+        super(IntegerRangeInput, self).__init__(
+            *args,
+            name=self.name,
+            placeholder=self.placeholder,
+            min=self.min,
+            max=self.max,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
     def render(
-            self,
-            *args,
-            name,
-            placeholder="",
-            min="null",
-            max="null",
-            pattern="null",
-            **kwargs
+        self,
+        *args,
+        name,
+        placeholder="",
+        min="null",
+        max="null",
+        pattern="null",
+        **kwargs,
     ):
         return IntegerInput(
             type="range",
@@ -195,7 +178,7 @@ class IntegerRangeInput(HTMLElement):
             placeholder=placeholder,
             min=min,
             max=max,
-            pattern=pattern
+            pattern=pattern,
         )
 
 
@@ -208,7 +191,6 @@ class IntegerRangeInputValidator(Validator):
 
 @dataclass(eq=False)
 class TelephoneInput(HTMLElement):
-
     name: str
     placeholder: str
     min: T.Union[str, None] = field(default=None)
@@ -216,25 +198,17 @@ class TelephoneInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(TelephoneInput, self).__init__(*args,
-                                             name=self.name,
-                                             placeholder=self.placeholder,
-                                             min=self.min,
-                                             max=self.max,
-                                             pattern=self.pattern,
-                                             **kwargs
-                                             )
-
-    def render(
-            self,
+        super(TelephoneInput, self).__init__(
             *args,
-            name,
-            placeholder="",
-            min,
-            max,
-            pattern,
-            **kwargs
-    ):
+            name=self.name,
+            placeholder=self.placeholder,
+            min=self.min,
+            max=self.max,
+            pattern=self.pattern,
+            **kwargs,
+        )
+
+    def render(self, *args, name, placeholder="", min, max, pattern, **kwargs):
         return IntegerInput(
             type="tel",
             name=name,
@@ -256,13 +230,14 @@ class IntegerField(HTMLElement):
     type: str
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerField, self).__init__(*args,
-                                           label=self.label,
-                                           name=self.name,
-                                           placeholder=self.placeholder,
-                                           type=self.type,
-                                           **kwargs
-                                           )
+        super(IntegerField, self).__init__(
+            *args,
+            label=self.label,
+            name=self.name,
+            placeholder=self.placeholder,
+            type=self.type,
+            **kwargs,
+        )
 
     def render(self, *args, label, name, placeholder, type, **kwargs):
         self.labeled = IntegerLabel(label=label)
@@ -280,12 +255,13 @@ class IntegerNumberField(HTMLElement):
     placeholder: str
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerNumberField, self).__init__(*args,
-                                                 label=self.label,
-                                                 name=self.name,
-                                                 placeholder=self.placeholder,
-                                                 **kwargs
-                                                 )
+        super(IntegerNumberField, self).__init__(
+            *args,
+            label=self.label,
+            name=self.name,
+            placeholder=self.placeholder,
+            **kwargs,
+        )
 
     def render(self, *args, label, name, placeholder, **kwargs):
         self.labeled = IntegerLabel(label=label)
@@ -303,12 +279,13 @@ class IntegerRangeField(HTMLElement):
     placeholder: str
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerRangeField, self).__init__(*args,
-                                                label=self.label,
-                                                name=self.name,
-                                                placeholder=self.placeholder,
-                                                **kwargs
-                                                )
+        super(IntegerRangeField, self).__init__(
+            *args,
+            label=self.label,
+            name=self.name,
+            placeholder=self.placeholder,
+            **kwargs,
+        )
 
     def render(self, *args, label, name, placeholder, **kwargs):
         self.labeled = IntegerLabel(label=label)
@@ -316,9 +293,13 @@ class IntegerRangeField(HTMLElement):
         return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
 
 
-if __name__ == '__main__':
-    from uidom.dom import SubmitButton, form
-    quantity = IntegerNumberField(label="Quantity", name="quantity", placeholder="quantity")
+if __name__ == "__main__":
+    from uidom.dom import form
+    from uidom.elements import SubmitButton
+
+    quantity = IntegerNumberField(
+        label="Quantity", name="quantity", placeholder="quantity"
+    )
     quantity.input["id"] = quantity.labeled["for"] = "quantity-id"
     price = IntegerNumberField(label="Price", name="price", placeholder="price")
     price.input["id"] = price.labeled["for"] = "price-id"
