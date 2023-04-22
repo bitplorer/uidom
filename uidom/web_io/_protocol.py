@@ -7,7 +7,7 @@ from typing import Any, AsyncIterator, Optional, Protocol
 
 from uidom.web_io._types import MESSAGE, Receive, Scope, Send
 
-__all__ = ["WebSocketProtocol", "WebSocketPlaceHolder"]
+__all__ = ["WebSocketProtocol"]
 
 
 class WebSocketProtocol(Protocol):
@@ -57,7 +57,3 @@ class WebSocketProtocol(Protocol):
 
     # async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
     #     ...
-
-
-class WebSocketPlaceHolder(WebSocketProtocol):
-    pass
