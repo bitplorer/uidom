@@ -37,13 +37,19 @@ class HtmlDocument(htm.HTMLElement):
         self.document = self
         super(HtmlDocument, self).__init__(*args, **kwargs)
         self._entry = self.body
+        self._old_entry = None
 
     def __enter__(self):
         super().__enter__()
+        self._old_entry = self._entry
         self._entry = self._entry_with_context
         return self
 
-    def __checks__(self, element: extension.Tags) -> extension.Tags:
+    def __exit__(self, type, value, traceback):
+        super().__exit__(type, value, traceback)
+        self._entry = self._old_entry
+
+    def __checks__(self, element):
         if self.ensure_csrf_token_in_meta:
             token_element = element.get(name=self.csrf_field)
             if not token_element:
