@@ -39,22 +39,18 @@ api = FastAPI()
 
 class ToggleMe(HTMLElement):
 
-    def __render__(self):
-        return div(
-            div(
+    def render(self):
+        with div(x_data={'open': 'true'}) as toggle:
+            with div(x_on_click='open = !open'):
                 div("Opened", x_show="open"), 
                 div("Closed", x_show="!open"), 
-                x_on_click='open = !open'
-            ), 
-            x_data={'open': 'true'}
-        )
+                
 
-
-@doc_response
 class App(HTMLElement):
 
-    def __render__(self, *args, **kwargs):
+    def render(self, *args, **kwargs):
         return document(*args, **kwargs, , head=title('App Page'))
+
 
 @api.get('/')
 def index():
@@ -66,30 +62,41 @@ def index():
 
 ```python
 from uidom.dom import HTMLElement, nav, ul, For, li, a, Var
-from jinja2.environment import Template
 from collections import namedtuple as nt
 
 
-class MenuTemplate(HTMLElement):
-
-    def __render__(self):
-        return nav(
+nav_bar = nav(
             ul(
                 For(
                     "item in menu_items",
                     li(a(Var("item.name"), href=Var("item.link"))),
+                    )
                 )
             )
-        )
 
-# now we can use MenuTemplate just like we use jinja templates and render it 
+# it generates jinja template as internal representation as follows 
+
+<nav>
+  <ul>
+    {% for item in menu_items %}
+      <li>
+        <a href="{{ item.link }}">
+          {{ item.name }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</nav>
+
+# now we can use nav_bar just like we use jinja templates and render it 
 
 menu_url = nt("menu_url", "name link")
-Template(MenuTemplate.render()).render(menu_items=[
-            menu_url("Home", "home.html"),
-            menu_url("About", "about.html"),
-            menu_url("Contact Us", "contact_us.html")
-        ])
+nav_bar(
+    menu_items=[
+        menu_url("Home", "home.html"),
+        menu_url("About", "about.html"),
+        menu_url("Contact Us", "contact_us.html")
+    ])
 ```
 
 ## using raw html with uidom elements
@@ -100,8 +107,8 @@ from uidom.dom import *
 
 class Modal(HTMLElement):
 
-    def __render__(self, *args, **kwargs):
-        return HTMLStringToElement('''
+    def render(self, *args, **kwargs):
+        return '''
 <div x-data="{ open: false }">
     <!-- Button -->
     <button x-on:click="open = true" type="button"
@@ -148,7 +155,7 @@ class Modal(HTMLElement):
             </div>
         </div>
     </div>
-</div>''')
+</div>'''
 
 ```
 
