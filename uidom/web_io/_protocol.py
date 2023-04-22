@@ -55,8 +55,8 @@ class WebSocketProtocol(Protocol):
     def iter_json(self) -> AsyncIterator[Any]:
         ...
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        ...
+    # async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    #     ...
 
 
 class WebSocketPlaceHolder(WebSocketProtocol):
