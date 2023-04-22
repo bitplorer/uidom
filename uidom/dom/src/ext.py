@@ -327,8 +327,14 @@ class Tags(dom_tag, dom1core):
         return inline
 
     def _render(self, sb, indent_level=1, indent_str="  ", pretty=True, xhtml=False):
-        open_tag = self.attributes.pop(Tags.OPEN_TAG, False)
-        close_tag = self.attributes.pop(Tags.CLOSE_TAG, False)
+        self.open_tag = self.attributes.pop(
+            Tags.OPEN_TAG,
+            getattr(self, Tags.OPEN_TAG) if hasattr(self, Tags.OPEN_TAG) else False,
+        )
+        self.close_tag = self.attributes.pop(
+            Tags.CLOSE_TAG,
+            getattr(self, Tags.CLOSE_TAG) if hasattr(self, Tags.CLOSE_TAG) else False,
+        )
         # prettify only if _render method has pretty=True
         pretty = pretty and self.is_pretty and not self.is_inline
 
@@ -383,7 +389,7 @@ class Tags(dom_tag, dom1core):
 
         if self_render_tag:
             name = self._clean_name(getattr(self, "tagname", type(self).__name__))
-            self._render_open_tag(sb, xhtml, name, open_tag)
+            self._render_open_tag(sb, xhtml, name, self.open_tag)
 
         inline = self._render_children(
             sb,
@@ -401,7 +407,7 @@ class Tags(dom_tag, dom1core):
                     sb, indent_level, indent_str, pretty, inline
                 )
                 name = self._clean_name(getattr(self, "tagname", type(self).__name__))
-                self._render_close_tag(sb, name, close_tag)
+                self._render_close_tag(sb, name, self.close_tag)
 
         return sb
 
