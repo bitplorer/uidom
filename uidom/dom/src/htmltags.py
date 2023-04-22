@@ -123,17 +123,6 @@ class HtmlDoubleTags(extension.DoubleTags):
     pass
 
 
-# class ConcatTag(extension.Tags):
-#     # this is an empty tag with spits out children concatenated with new-line
-#     """
-#     Supporting Concatenation of Tags as siblings with newline at end
-#     """
-#     render_tag = False
-
-#     def __and__(self, other: dom_tag) -> dom_tag:
-#         return ConcatTag(self, other)
-
-
 class DocType(HtmlSingleTemplates):
     left_delimiter = "<!"
     right_delimiter = ">"
@@ -1295,63 +1284,19 @@ class font(html_tag):
     pass
 
 
-# Additional markup
-class comment(html_tag):
-    is_inline = True
+class comment(extension.SingleTemplates):
+    left_delimiter = "<!--"
+    right_delimiter = "-->"
+    self_dedent = True
+    enable_left_delimiter_space = True
+    enable_right_delimiter_space = True
+
     """
-    Normal, one-line comment:
-      >>> print comment("Hello, comments!")
-      <!--Hello, comments!-->
-
-    For IE's "if" statement comments:
-      >>> print comment(p("Upgrade your browser."), condition='lt IE6')
-      <!--[if lt IE6]><p>Upgrade your browser.</p><![endif]-->
-
-    Downlevel conditional comments:
-      >>> print comment(p("You are using a ", em("downlevel"), " browser."),
-              condition='false', downlevel='revealed')
-      <![if false]><p>You are using a <em>downlevel</em> browser.</p><![endif]>
-
-    For more on conditional comments see:
-      http://msdn.microsoft.com/en-us/library/ms537512(VS.85).aspx
+    <-- comments -->
     """
 
-    ATTRIBUTE_CONDITION = "condition"
-
-    # Valid values are 'hidden', 'downlevel' or 'revealed'
-    ATTRIBUTE_DOWNLEVEL = "downlevel"
-
-    def _render(self, sb, indent_level=1, indent_str="  ", pretty=True, xhtml=False):
-        has_condition = comment.ATTRIBUTE_CONDITION in self.attributes
-        is_revealed = (
-            comment.ATTRIBUTE_DOWNLEVEL in self.attributes
-            and self.attributes[comment.ATTRIBUTE_DOWNLEVEL] == "revealed"
-        )
-
-        sb.append("<!")
-        if not is_revealed:
-            sb.append("--")
-        if has_condition:
-            sb.append("[if %s]>" % self.attributes[comment.ATTRIBUTE_CONDITION])
-
-        pretty = self._render_children(sb, indent_level + 1, indent_str, pretty, xhtml)
-
-        # if len(self.children) > 1:
-        if any(isinstance(child, dom_tag) for child in self):
-            sb.append("\n")
-            sb.append(indent_str * indent_level)
-
-        if has_condition:
-            sb.append("<![endif]")
-        if not is_revealed:
-            if pretty:
-                sb, _ = self._new_line_and_inline_handler(
-                    sb, indent_level, indent_str, pretty, self.is_inline
-                )
-            sb.append("--")
-        sb.append(">")
-
-        return sb
+    def __init__(self, comments):
+        super().__init__("", comments)
 
 
 class template(html_tag):
@@ -1367,9 +1312,10 @@ class slot(html_tag):
 if __name__ == "__main__":
     from uidom.dom.src.utils.dom_util import dom_text
 
+    print(comment("sjskdj"))
     print(div(div(div(div(script("aa")), __inline=True))))
-    print(extension.PlaceholderTag(dom_text("h"), dom_text("h")))
-    print(extension.PlaceholderTag("h", "h"))
+    print(extension.PlaceholderTag(dom_text("h"), dom_text("h"), dom_text("h")))
+    print(extension.PlaceholderTag("h", "h", "h"))
     print(div(div(img(img(), img(self_dedent=True), div()), img(), div(div()))))
     print(div(div(div(img(div(div(img())))))))
     print(div(div(self_dedent=True), child_dedent=False))
