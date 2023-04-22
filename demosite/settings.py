@@ -7,6 +7,7 @@ from functools import partial
 from pathlib import Path
 
 from starlette.config import Config
+from starlette.websockets import WebSocket
 
 from uidom import FileSettings, WebAssets
 
@@ -49,6 +50,7 @@ if DEBUG:
         await tailwind.async_run()
 
     hot_reload_route = reloader.HotReloadWebSocketRoute(
+        websocket_type=WebSocket,
         watch_paths=[
             reloader.WatchPath("./demosite", on_reload=[tailwind_watcher]),
             reloader.WatchPath("./uidom"),
