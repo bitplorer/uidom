@@ -1,3 +1,3 @@
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable, MutableMapping
 
 ReloadFunc = Callable[[], Awaitable[None]]

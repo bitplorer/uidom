@@ -3,18 +3,19 @@ import logging
 import pathlib
 import string
 from functools import lru_cache
-from typing import List, Sequence
+from typing import Callable, Coroutine, List, Sequence, Tuple, Type
 
-from starlette.concurrency import run_until_first_complete
-from starlette.types import Receive, Scope, Send
-from starlette.websockets import WebSocket
+import anyio
+
+from uidom.web_io import Receive, Scope, Send
+from uidom.web_io import WebSocketPlaceHolder as WebSocket
 
 from ._models import WatchPath
 from ._notify import Notify
 from ._types import ReloadFunc
 from ._watch import ChangeSet, FileWatcher
 
-SCRIPT_TEMPLATE_PATH = pathlib.Path(__file__).parent / "data" / "reloader.js"
+SCRIPT_TEMPLATE_PATH = pathlib.Path(__file__).parent / "script" / "reloader.js"
 assert SCRIPT_TEMPLATE_PATH.exists()
 
 logger = logging.getLogger(__name__)
@@ -24,14 +25,27 @@ class _Template(string.Template):
     delimiter = "$reloader::"
 
 
+async def run_until_first_complete(*args: Tuple[Callable, dict]) -> None:
+    async with anyio.create_task_group() as task_group:
+
+        async def run(func: Callable[[], Coroutine]) -> None:
+            await func()
+            task_group.cancel_scope.cancel()
+
+        for func, kwargs in args:
+            task_group.start_soon(run, functools.partial(func, **kwargs))
+
+
 class HotReloadWebSocketRoute:
     def __init__(
         self,
+        websocket: Type[WebSocket],
         watch_paths: Sequence[WatchPath],
         url_path: str,
         url_name: str,
         reconnect_interval: float = 0.50,
     ) -> None:
+        self.websocket: Type[WebSocket] = websocket
         self.notify = Notify()
         self.watchers = [
             FileWatcher(
@@ -104,7 +118,7 @@ class HotReloadWebSocketRoute:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         assert scope["type"] == "websocket"
-        ws = WebSocket(scope, receive, send)
+        ws = self.websocket(scope, receive, send)
         await ws.accept()
         await run_until_first_complete(
             (self._watch_reloads, {"ws": ws}),
