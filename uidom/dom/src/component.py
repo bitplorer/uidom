@@ -8,9 +8,10 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Iterable, List, Union
 
-from uidom.dom.src import csstags, dom_tag, htmltags, jinjatags
+from uidom.dom.src import csstags, htmltags, jinjatags
 from uidom.dom.src import string_to_element as str2elem
 from uidom.dom.src import svgtags
+from uidom.dom.src.dom_tag import dom_tag
 from uidom.dom.src.main import extension
 
 __all__ = ["Component", "ReactiveComponent"]
@@ -36,6 +37,7 @@ class Component(extension.Tags):
     escape_html_string: bool = field(init=False, default=False)
 
     def __init__(self, *args, **kwargs):
+        super(Component, self).__init__()
         # first we get the childrens from the render method and sanitize it.
         childrens = self.render(*args, **kwargs)
 
@@ -48,7 +50,6 @@ class Component(extension.Tags):
             raise ValueError(
                 f"{self.__class__.__qualname__} expects 1 element from {self.render.__qualname__}, it returned {len(childrens)} elements"
             )
-        super(Component, self).__init__()
 
         if isinstance(childrens, str):
             childrens = str2elem.string_to_element(childrens, self.escape_html_string)
@@ -63,7 +64,9 @@ class Component(extension.Tags):
         # looks into children
         self.__checks__(self._entry)
 
-    def __checks__(self, element: extension.Tags) -> extension.Tags:  # noqa
+    def __checks__(
+        self, element: Union[dom_tag, extension.Tags]
+    ) -> Union[dom_tag, extension.Tags]:  # noqa
         if self.render_tag:
             raise ValueError(f"{self.render_tag} can not be true for Components")
         return element
@@ -135,11 +138,13 @@ class Component(extension.Tags):
             if any(children):
                 entry = None
                 try:
-                    entry: htmltags.dom_tag = object.__getattribute__(self, "_entry")
+                    entry: Union[dom_tag, extension.Tags] = object.__getattribute__(
+                        self, "_entry"
+                    )
                 except AttributeError:
                     pass
                 if entry:
-                    return children[children.index(entry)].__getitem__(key)
+                    return entry.__getitem__(key)
         return super(Component, self).__getitem__(key)
 
     __getattr__ = __getitem__
@@ -182,7 +187,7 @@ class Component(extension.Tags):
     def to_dict(self, exclude=None) -> dict:
         return self._asdict(exclude=exclude)
 
-    def render(self, *args, **kwargs) -> htmltags.html_tag:  # noqa
+    def render(self, *args, **kwargs) -> Union[dom_tag, extension.Tags, str]:  # noqa
         raise NotImplementedError(
             f"{self.__class__.__name__}.{self.render.__name__} method not implemented"
         )
@@ -249,7 +254,7 @@ class ReactiveComponent(Component, extension.Tags):
         self._states: dict = kwargs
 
     def __post_init__(self, *args, **kwargs):
-        self._states = self._states | self._asdict()  # ** <-- Mark this line
+        self._states = self._states | self.to_dict()  # ** <-- Mark this line
         # ** this line of code creates infinite recursive loop of deepcopy if used as follows
         # class App(HTMLElement):
         #   def render(self, *args, **kwargs):
@@ -299,48 +304,6 @@ class ReactiveComponent(Component, extension.Tags):
             # self._re_render(**current_states)
             self._re_render(**self._states)
 
-    def __render__(self, indent="  ", pretty=True, xhtml=False):
+    def _render(self, sb, indent_level, indent_str, pretty, xhtml):
         self._check_states_and_update()
-        return super().__render__(indent, pretty, xhtml)
-
-    async def __async_render__(self, indent="  ", pretty=True, xhtml=False):
-        self._check_states_and_update()
-        async for html_token in super().__async_render__(indent, pretty, xhtml):
-            yield html_token
-
-
-if __name__ == "__main__":
-    from valio import IntegerValidator
-
-    # using @dataclass(eq=False) to use super class hash function
-    @dataclass(eq=False)
-    class vue(ReactiveComponent):
-        # is_inline = True
-        a: int  # = IntegerValidator(logger=False, debug=True)
-
-        def __post_init__(self):
-            super(vue, self).__init__(a=self.a)
-
-        def render(self, a) -> htmltags.html_tag:  # type: ignore[override]
-            return self.html_tags.p(a=a)
-
-    class test(Component):
-        is_inline = True
-
-        def render(self, *args, **kwargs) -> htmltags.html_tag:  # type: ignore[override]
-            return self.html_tags.p(*args, **kwargs)
-
-    v = vue(a=1)
-    print(v)
-    print(v.to_dict())
-    v.a += 6
-
-    print(v)
-    print(v.to_dict())
-    t = test(
-        "1",
-        className="""\
-            bg-lime-400 dark:hover:text-purple-100/90 hidden prose 
-            break-keep h-fit ring-offset-fuchsia-950""",
-    )
-    print((t & v))
+        return super()._render(sb, indent_level, indent_str, pretty, xhtml)
