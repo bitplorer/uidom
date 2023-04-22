@@ -8,7 +8,7 @@ from typing import Callable, Coroutine, List, Sequence, Tuple, Type
 import anyio
 
 from uidom.web_io import Receive, Scope, Send
-from uidom.web_io import WebSocketPlaceHolder as WebSocket
+from uidom.web_io import WebSocketProtocol as WebSocket
 
 from ._models import WatchPath
 from ._notify import Notify
@@ -26,6 +26,7 @@ class _Template(string.Template):
 
 
 async def run_until_first_complete(*args: Tuple[Callable, dict]) -> None:
+    # this method is taken from starlette
     async with anyio.create_task_group() as task_group:
 
         async def run(func: Callable[[], Coroutine]) -> None:
@@ -39,13 +40,13 @@ async def run_until_first_complete(*args: Tuple[Callable, dict]) -> None:
 class HotReloadWebSocketRoute:
     def __init__(
         self,
-        websocket: Type[WebSocket],
+        websocket_type: Type[WebSocket],
         watch_paths: Sequence[WatchPath],
         url_path: str,
         url_name: str,
         reconnect_interval: float = 0.50,
     ) -> None:
-        self.websocket: Type[WebSocket] = websocket
+        self.websocket_type: Type[WebSocket] = websocket_type
         self.notify = Notify()
         self.watchers = [
             FileWatcher(
@@ -118,7 +119,7 @@ class HotReloadWebSocketRoute:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         assert scope["type"] == "websocket"
-        ws = self.websocket(scope, receive, send)
+        ws = self.websocket_type(scope, receive, send)
         await ws.accept()
         await run_until_first_complete(
             (self._watch_reloads, {"ws": ws}),
