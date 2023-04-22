@@ -61,7 +61,7 @@ def index():
 ## A Jinja template example
 
 ```python
-from uidom.dom import HTMLElement, nav, ul, For, li, a, Var
+from uidom.dom import nav, ul, For, li, a, Var
 from collections import namedtuple as nt
 
 
