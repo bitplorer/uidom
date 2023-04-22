@@ -10,24 +10,24 @@ from fastapi.websockets import WebSocket
 
 from demosite.document import document
 from uidom.dom import *
-from uidom.dom.src.socket_adapter import (
+from uidom.routing.fastapi import StreamingRoute
+from uidom.slots import x_slot
+from uidom.web_io import (
     EdgeDBFetcher,
     EventsManager,
     WebSocketAdapter,
     WebSocketClientHandler,
 )
-from uidom.routing.fastapi import StreamingRoute
-from uidom.slots import x_slot
 
 __all__ = ["x_chart", "chart_router"]
 
 chart_router = APIRouter(route_class=StreamingRoute, tags=["Charts"])
 
-chart_event = EventsManager(registered_events=["price_change", "update_data"])
+chart_event = EventsManager()
 
 
 class PriceChartTemplate(XComponent):
-    @chart_event.on_receive("price_change")
+    @chart_event.on_receive
     def price_change(self):
         print("price changed event checked")
 

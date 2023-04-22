@@ -37,21 +37,27 @@ class Header(XComponent):
         with template(x_component=tag_name) as _header:
             with div(
                 x_data="{open:false, isMed: '', ...$el.parentElement.data()}",
-                className="flex md:flex-row flex-col grow mx-auto items-center justify-between px-2 "
-                " shadow-sm shadow-stone-800/40 hover:shadow-md hover:shadow-stone-400/40 "
-                " bg-gray-100 dark:bg-gradient-to-l dark:from-stone-900/90 dark:to-stone-400/80 "
-                " overflow-hidden relative transform transition-all duration-400 p-1 min-w-sm",
+                className="""
+                flex md:flex-row flex-col grow mx-auto items-center justify-between px-2 
+                shadow-sm shadow-stone-800/40 hover:shadow-md hover:shadow-stone-400/40 
+                bg-gray-100 dark:bg-gradient-to-l dark:from-stone-900/90 dark:to-stone-400/80 
+                overflow-hidden relative transform transition-all duration-400 p-1 min-w-sm
+                """,
             ):
                 div(
                     div(
                         x_text="brand",
-                        className="flex grow md:grow-0 font-slim text-2xl items-center justify-center text-center "
-                        "font-cinzel text-stone-800 dark:text-rose-900/90 overflow-hidden "
-                        "transition-all duration-400 drop-shadow-lg md:dark:drop-shadow-xl ",
+                        className="""
+                        flex grow md:grow-0 font-slim text-2xl items-center justify-center text-center 
+                        font-cinzel text-stone-800 dark:text-rose-900/90 overflow-hidden 
+                        transition-all duration-400 drop-shadow-lg md:dark:drop-shadow-xl
+                        """,
                     ),
                     x_toggle_nav(
-                        className="md:hidden flex justify-center items-center rounded-full "
-                        "text-stone-800 rounded-full dark:text-stone-100/90 ",
+                        className="""
+                        md:hidden flex justify-center items-center rounded-full
+                        text-stone-800 dark:text-stone-100/90
+                        """,
                         x_on_click="open = !open",
                         x_on_keydown_dot_escape_dot_window="clicked = true",
                         x_cloak=None,
@@ -60,15 +66,17 @@ class Header(XComponent):
                 ),
                 div(
                     x_nav(
-                        className="flex flex-row "
-                        "text-md text-stone-800 dark:text-stone-100/90  "
-                        " overflow-hidden bg-inherit backdrop-blur-xs w-full "
-                        "origin-top top-13 left-0 h-full font-teko ",
+                        className="""
+                        flex flex-row 
+                        text-md text-stone-800 dark:text-stone-100/90 
+                        overflow-hidden bg-inherit backdrop-blur-xs w-full 
+                        origin-top top-13 left-0 h-full font-teko
+                        """,
                         x_show="open || isMed",
                         x_init="() => isMed = window.innerWidth > 768;",
                         # x_on_keydown_dot_escape_dot_window="open = false",
                         x_on_resize_dot_window="isMed = window.innerWidth > 768",
-                        x_data="{...$el.parentElement.$data}",
+                        # x_data="{...$el.parentElement.$data}",
                     ),
                     className="flex grow md:grow-0 w-full md:w-auto ",
                 ),
@@ -105,4 +113,4 @@ async def _header():
             ],
             darkmode="true",
         ),
-        return head_bar
+    return head_bar

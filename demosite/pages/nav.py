@@ -51,7 +51,7 @@ class ToggleIconsWithoutClickAway(XComponent):
 
 
 x_toggle_dark_mode = ToggleIconsWithoutClickAway(
-    tag_name="toggle-dark_mode",
+    tag_name="toggle-dark-mode",
     default_icon=div(
         span(className="iconify", data_icon="teenyicons:bulb-off-solid"),
         # span(data_icon="ic:baseline-light-mode", className="iconify"),
@@ -84,7 +84,7 @@ class DarkModeButton(XComponent):
                             document.documentElement.classList.add('dark');
                         }
                     },
-                    ...$el.parentElement.$data
+                    //...$el.parentElement.$data
                 }""",
                     x_on_click="toggle",
                     x_init="() => localStorage.theme = 'light'",
@@ -105,7 +105,7 @@ class Navigation(XComponent):
     def render(self, tag_name):
         with template(x_component=tag_name) as navigation:
             with ul(
-                x_data="{...$el.parentElement.data()}",
+                # x_data="{...$el.parentElement.data()}",
                 className="flex grow overflow-hidden w-full h-full self-stretch bg-inherit",
             ):
                 with template(x_for="item in menu"):
@@ -118,18 +118,13 @@ class Navigation(XComponent):
                             className="flex flex-row grow md:grow-0 items-center justify-center overflow-hidden",
                             x_bind_href="item.href",
                         ):
-                            with div(
-                                className="flex items-center justify-center text-center ",
-                            ):
+                            with div(className="flex items-center justify-center text-center "):
                                 with div(
                                     # wrapped menu icon paddings
                                     className="flex md:hidden text-center items-center justify-center px-1 pt-1 sm:pt-0",
                                 ):
                                     # Menu Icon
-                                    span(
-                                        className="iconify",
-                                        x_bind_data_icon="item.icon",
-                                    ),
+                                    span(className="iconify", x_bind_data_icon="item.icon")
 
                                 with div(
                                     # wrapped menu text paddings

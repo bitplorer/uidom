@@ -13,7 +13,6 @@ class Modal(HTMLElement):
             x_cloak=None,
             className="w-full h-screen border bg-stone-300 border-gray-400",
         ) as modal:
-
             comment("Button"),
             with div(x_on_click="open = true", className="m-2"):
                 button(

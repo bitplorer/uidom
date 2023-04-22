@@ -15,13 +15,13 @@ from demosite.api import api
 from demosite.document import document
 from uidom import UiDOM
 from uidom.dom import *
-from uidom.dom.src.socket_adapter import (
+from uidom.dom.src.ws_rpc import ws_rpc
+from uidom.web_io import (
     EdgeDBFetcher,
     EventsManager,
     WebSocketAdapter,
     WebSocketClientHandler,
 )
-from uidom.dom.src.ws_rpc import ws_rpc
 
 
 class ToggleInset(XComponent):
@@ -43,7 +43,7 @@ class ToggleInset(XComponent):
         )
 
 
-counter_event = EventsManager(registered_events=[])
+counter_event = EventsManager()
 
 
 @dataclass(eq=False)
@@ -88,7 +88,6 @@ class Counter(ReactiveComponent):
                     preload="mousedown",
                 )
             with div(className="inline-flex h-6 w-full my-2 px-2 font-montserrat"):
-
                 button(
                     "remove",
                     hx_get=f"/remove/{count}",
@@ -119,12 +118,10 @@ class Counter(ReactiveComponent):
             self.count -= 1
         return self
 
-    counter_event.register_event("increment_count")
-
     @counter_event.on_receive("increment_count")
-    def increment_count(self, socket, data):
+    def increment_count(self, socket, message):
         self.count += 1
-        print("data", data)
+        print("message", message)
         return socket.send(
             str(
                 div(
