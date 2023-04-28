@@ -5,9 +5,10 @@
 
 
 from dataclasses import dataclass, field, make_dataclass
-from typing import Optional, Union
+from typing import Optional
 
 from uidom.dom.src import DoubleTags, component
+from uidom.dom.src.jinjatags import render
 from uidom.dom.src.main import extension
 
 __all__ = [
@@ -18,6 +19,8 @@ __all__ = [
     "WebComponent",
     "AlpineElement",
     "AlpineComponent",
+    "JinjaElement",
+    "MarkdownElement",
 ]
 
 
@@ -36,8 +39,8 @@ class HTMLElement(component.Component):
     def __post_init__(self, *args, **kwargs):
         super(HTMLElement, self).__post_init__(*args, **kwargs)
 
-    def __repr__(self):
-        return str(self)
+    # def __repr__(self):
+    #     return str(self)
 
     def __and__(self, other):
         return super().__and__(other)
@@ -224,3 +227,21 @@ class AlpineComponent(AlpineElement, XComponent):
     def __checks__(self, element):
         XComponent.__checks__(self, element)
         return AlpineElement.__checks__(self, element)
+
+
+class JinjaElement(component.Component):
+    escape_string = False
+
+    def render(self, elem_or_str_or_path):
+        return elem_or_str_or_path
+
+    def __call__(self, **options):
+        return render(self, **options)
+
+
+class MarkdownElement(component.Component):
+    escape_string = False
+    string_is_markdown = True
+
+    def render(self, md_str_or_path):
+        return md_str_or_path
