@@ -5,14 +5,18 @@
 
 
 from dataclasses import asdict, dataclass, field
+from html import unescape
 from pathlib import Path
 from typing import Iterable, List, Union
+
+from marko import convert as markdown
 
 from uidom.dom.src import csstags, htmltags, jinjatags
 from uidom.dom.src import string_to_element as str2elem
 from uidom.dom.src import svgtags
 from uidom.dom.src.dom_tag import dom_tag
 from uidom.dom.src.main import extension
+from uidom.dom.utils.parameters import Parameters
 
 __all__ = ["Component", "ReactiveComponent"]
 
@@ -34,31 +38,43 @@ class Component(extension.Tags):
     parent: Union[html_tags.dom_tag, None] = field(init=False, default=None)
     document: Union[html_tags.dom_tag, None] = field(init=False, default=None)
     files_directory: Union[str, Path, None] = field(init=False, default=None)
-    escape_html_string: bool = field(init=False, default=False)
+    escape_string: bool = field(init=False, default=True)
+    string_is_markdown: bool = field(init=False, default=False)
 
     def __init__(self, *args, **kwargs):
         super(Component, self).__init__()
-        # first we get the childrens from the render method and sanitize it.
-        childrens = self.render(*args, **kwargs)
+        # first we get the child from the render method and sanitize it.
+        child = self.render(*args, **kwargs)
 
-        if childrens in [None, ...]:
-            raise ValueError(f"'{self.render=}' return {childrens}")
+        if isinstance(child, str):
+            if self.string_is_markdown:
+                child = (
+                    markdown(child) if self.escape_string else unescape(markdown(child))
+                )
+            child = str2elem.string_to_element(child, escape=self.escape_string)
+            child_added = super(Component, self).add(child)
+            # string_to_element always returns a list thats why we parse a bit below
+            child_added = child_added[0] if len(child_added) == 1 else child_added
 
-        if isinstance(childrens, (tuple, list)) and len(childrens) > 1:
-            # IMPORTANT: Note if self.render returns a tuple or a list of elements as children,
-            # not just one element, raise error
-            raise ValueError(
-                f"{self.__class__.__qualname__} expects 1 element from {self.render.__qualname__}, it returned {len(childrens)} elements"
+        elif isinstance(child, Path):
+            string_is_markdown = child.suffix == ".md"
+            child = self.from_file(child)
+            if string_is_markdown:
+                child = (
+                    markdown(child) if self.escape_string else unescape(markdown(child))
+                )
+            child = str2elem.string_to_element(child, escape=self.escape_string)
+            child_added = super(Component, self).add(child)
+            # string_to_element always returns a list thats why we parse a bit below
+            child_added = child_added[0] if len(child_added) == 1 else child_added
+        else:
+            if isinstance(child, (list, tuple)) and len(child) == 1:
+                child = child[0]
+            child_added = (
+                super(Component, self).add(child) if child is not self else self
             )
 
-        if isinstance(childrens, str):
-            childrens = str2elem.string_to_element(childrens, self.escape_html_string)
-
-        if isinstance(childrens, Path):
-            childrens = self.from_file(childrens)
-            childrens = str2elem.string_to_element(childrens, self.escape_html_string)
-
-        self._entry = super(Component, self).add(childrens)
+        self._entry = self if isinstance(child_added, (list, tuple)) else child_added
 
         # we perform checks on the _entry "after" the dom initialization because .get method
         # looks into children
@@ -75,101 +91,79 @@ class Component(extension.Tags):
         """
         Adding tags to a component appends them to the render.
         """
-        if hasattr(self, "_entry"):
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
             return self._entry.add(*args)
         return super().add(*args)
 
     def set_attribute(self, key, value):
-        if not self.render_tag:
-            try:
-                # try to set the attribute on the children of the component
-                # self.children[0].set_attribute(key, value)
-                self.children[self.children.index(self._entry)].set_attribute(
-                    key, value
-                )
-            except (IndexError, AttributeError):
-                # if we try to set attribute on the component while 'render_tag = False'
-                # and we reach here it means no children have been added and attribute
-                # is being set on self directly via self.add method. if a child has been
-                # added no error is raised but if we directly add attribute to self like
-                # self.add(kwarg) prior to adding any children and render_tag is False
-                # it will invoke self.set_attribute inside self.add method, this should
-                # raise AttributeError as "_entry" attribute is still not defined as no
-                # children were added.
-                raise AttributeError(
-                    f"'{self.__class__.render.__qualname__}' could not add or delete any attributes on '{self.__class__.__qualname__}' as '{self.__class__.__name__}.render_tag = {self.render_tag}'"
-                )
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
+            self._entry.set_attribute(key, value)
         else:
             super(Component, self).set_attribute(key, value)
 
     __setitem__ = set_attribute
 
     def delete_attribute(self, key):
-        if not self.render_tag:
-            try:
-                # try to delete the attribute to the children of the component
-                # self.children[0].delete_attribute(key)
-                self.children[self.children.index(self._entry)].delete_attribute(key)
-            except (IndexError, AttributeError):
-                # if we try to delete attribute of the component while 'render_tag = False'
-                # and if we are here it means no children are added and attribute is being
-                # deleted on self sirectly. if self tag is not being rendered, this should
-                # raise AttributeError as "_entry" attribute is still not defined as no
-                # children were added.
-                raise AttributeError(
-                    f"'{self.__class__.render.__qualname__}' could not add or delete any attributes on '{self.__class__.__qualname__}' as '{self.__class__.__name__}.render_tag = {self.render_tag}'"
-                )
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
+            self._entry.delete_attribute(key)
         else:
             super(Component, self).delete_attribute(key)
 
     __delitem__ = delete_attribute
 
     def get(self, tag=None, **kwargs):
-        if not self.render_tag:
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
             # try to get the attribute of the children of the component
-            # return self.children[0].get(tag, **kwargs)
-            return self.children[self.children.index(self._entry)].get(tag, **kwargs)
+            return self._entry.get(tag, **kwargs)
         else:
             return super(Component, self).get(tag, **kwargs)
 
     def __getitem__(self, key):
         if not self.render_tag:
-            children = object.__getattribute__(self, "children")
-            if any(children):
-                entry = None
-                try:
-                    entry: Union[dom_tag, extension.Tags] = object.__getattribute__(
-                        self, "_entry"
-                    )
-                except AttributeError:
-                    pass
-                if entry:
-                    return entry.__getitem__(key)
+            entry = None
+            try:
+                entry: Union[dom_tag, extension.Tags] = object.__getattribute__(
+                    self, "_entry"
+                )
+            except AttributeError:
+                pass
+            if entry and entry is not self:
+                return entry.__getitem__(key)
+
         return super(Component, self).__getitem__(key)
 
     __getattr__ = __getitem__
 
     def __len__(self):
-        if not self.render_tag:
-            if hasattr(self, "_entry"):
-                return len(self._entry)
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
+            return len(self._entry)
         return super().__len__()
 
     def __hash__(self) -> int:
-        return hash(self._entry if not self.render_tag else self.children.__iter__())
+        if hasattr(self, "_entry") and self._entry is not self:
+            return hash(self._entry)
+        return super().__hash__()
 
     def __eq__(self, other) -> bool:
-        if not self.render_tag:
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
             # now check if the other isinstance of Component
-            if isinstance(other, Component):
-                if not other.render_tag:
-                    return self._entry == other._entry
-            return self._entry == other
+            if (
+                isinstance(other, Component)
+                and not other.render_tag
+                and hasattr(other, "_entry")
+                and other._entry is not other
+            ):
+                return self._entry is other._entry
+            return self._entry is other
         else:
-            if isinstance(other, Component):
-                if not other.render_tag:
-                    return self == other._entry
-            return self.children == other.children
+            if (
+                isinstance(other, Component)
+                and not other.render_tag
+                and hasattr(other, "_entry")
+                and other._entry is not other
+            ):
+                return self is other._entry
+            return self is other
 
     def _asdict(self, exclude=None) -> dict:
         exclude = exclude or [
@@ -180,7 +174,8 @@ class Component(extension.Tags):
             "parent",
             "attributes",
             "files_directory",
-            "escape_html_string",
+            "escape_string",
+            "string_is_markdown",
         ]
         return {key: value for key, value in asdict(self).items() if key not in exclude}
 
@@ -248,41 +243,73 @@ class Component(extension.Tags):
 
 
 @dataclass(eq=False)
-class ReactiveComponent(Component, extension.Tags):
+class ReactiveComponent(Component):
     def __init__(self, *args, **kwargs):
         super(ReactiveComponent, self).__init__(*args, **kwargs)
-        self._states: dict = kwargs
+        self.__states: dict = kwargs
 
     def __post_init__(self, *args, **kwargs):
-        self._states = self._states | self.to_dict()  # ** <-- Mark this line
+        self.__states: dict = self.__states | self.to_dict()  # ** <-- Mark this line
         # ** this line of code creates infinite recursive loop of deepcopy if used as follows
-        # class App(HTMLElement):
+        # class App(ReactiveComponent):
         #   def render(self, *args, **kwargs):
         #       return document(*args, **kwargs)
-        #
+        # where document is also an instance of the ReactiveComponent.
         # as to_dict method of dataclass probably calls for locals that gets mangled with document locals
 
-    def _re_render(self, **kwargs) -> extension.Tags:  # noqa
+    def get_param(self, function, new_kwargs):
+        func = Parameters(function, in_single_kwargs=False)
+        sig_params = func.signature.parameters
+        _arg_dict, _kwarg_dict = func.parameters
+        arg_dict = {k: new_kwargs.get(k, v) for k, v in _arg_dict.items()}
+        kwargs = {k: new_kwargs.get(k, v) for k, v in _kwarg_dict.items()}
+        args = []
+        for arg_name in arg_dict:
+            if sig_params[arg_name].default is not None:
+                if arg_name not in new_kwargs and arg_dict[arg_name] is None:
+                    # So when we land here in this block of code, arg_name is not in new_kwargs
+                    # so we haven't updated arg_dict from new_kwargs for sure, also we are sure
+                    # that sign_params[arg_name].default is not None here in this block of code.
+                    # But arg_dict[arg_name] is None, so it means Parameters class replaced
+                    # default=_empty with default=None, so we should raise error
+                    raise ValueError(
+                        f"{arg_name} is a required parameter for {function.__name__}"
+                    )
+                else:
+                    args.append(arg_dict[arg_name])
+
+        return args, kwargs
+
+    def _re_render(self, **states) -> extension.Tags:  # noqa
         # here is an example below how re_rendering handles function calls like 'increment'
         # changing variables
         # with document(x_toggle) as counters:
-        # with div(className="relative flex w-full h-screen"):
-        #    Counter(),
-        #    with Counter(count=2) as counter_2:
-        #        div("kml")
-        #        div("lakd")
+        #     with div(className="relative flex w-full h-screen"):
+        #         Counter(),
+        #         with Counter(count=2) as counter_2:
+        #             div("kml")
+        #             div("lakd")
         # counter_2.increment() <- running the method re renders and updates counter_2 states
         # counter_2.increment()
         # return counters
-        old_parent = self.parent
+        # old_parent = self.parent
         old_entry_children = self._entry.children
 
-        if old_parent is not None:
-            index_of_entry = old_parent.children.index(self._entry)
+        # if old_parent is not None:
+        #     index_of_entry = old_parent.children.index(self)
 
         self.clear()
+        args, kwargs = self.get_param(self.render, states)
+        if args and kwargs:
+            elements = self.render(*args, **kwargs)
+        elif args:
+            elements = self.render(*args)
+        elif kwargs:
+            elements = self.render(**kwargs)
+        else:
+            elements = self.render()
         self._entry = extension.Tags.add(
-            self, self.render(**kwargs)
+            self, elements
         )  ## <--- important to call Tags .add method
         new_entry_children = self._entry.children
 
@@ -290,19 +317,23 @@ class ReactiveComponent(Component, extension.Tags):
             unadded_old_entry_children = old_entry_children[len(new_entry_children) :]
             self._entry.add(unadded_old_entry_children)
 
-        if old_parent is not None:
-            old_parent.set_attribute(index_of_entry, self._entry)
+        # if old_parent is not None:
+        #     old_parent.set_attribute(index_of_entry, self)
 
         return self._entry
 
     def _check_states_and_update(self) -> None:
         current_states = self.to_dict()
-        original_states = self._states
+        original_states = self.__states
 
-        self._states = original_states | current_states
-        if original_states != self._states:
-            # self._re_render(**current_states)
-            self._re_render(**self._states)
+        self.__states = original_states | current_states
+        if original_states != self.__states:
+            # IMPORTANT: There is a reason we are not setting self._re_render(**current_states).
+            # When dataclass creates dictionary it only creates dictionary of the declared fields
+            # but kwargs that are passed in the above can contain key=value pairs such as tailwind
+            # classes for example class = someclass, so we have to always remember that we take care
+            # of those values and pass them while we re_render the Component.
+            self._re_render(**self.__states)
 
     def _render(self, sb, indent_level, indent_str, pretty, xhtml):
         self._check_states_and_update()
