@@ -63,6 +63,7 @@ class dom_tag(object):
     # otherwise, text will be escaped() and whitespace may be
     # modified
     is_inline = False
+    escape_string = True
 
     def __new__(_cls, *args, **kwargs):
         """
@@ -105,6 +106,7 @@ class dom_tag(object):
         # Does not insert newlines on all children if True (recursive attribute)
         self.is_inline = kwargs.pop("__inline", self.is_inline)
         self.is_pretty = kwargs.pop("__pretty", self.is_pretty)
+        self.escape_string = kwargs.pop("__escape_string", self.escape_string)
 
         # Add child elements
         if args:
@@ -211,7 +213,13 @@ class dom_tag(object):
                 obj = str(obj)
 
             if isinstance(obj, basestring):
-                obj = escape(obj)
+                # we are going to add the support for escaping only those strings whoes parents
+                # have explicit variable "escape_string" set to True
+                if hasattr(self, "escape_string"):
+                    if self.escape_string:
+                        obj = escape(obj)
+                else:
+                    obj = escape(obj)
                 self.children.append(obj)
 
             elif isinstance(obj, dom_tag):
@@ -264,22 +272,27 @@ class dom_tag(object):
 
         results = []
         for child in self.children:
-            if (isinstance(tag, basestring) and type(child).__name__ == tag) or (
-                not isinstance(tag, basestring) and isinstance(child, tag)
-            ):
-                if all(
-                    child.attributes.get(attribute) == value
-                    if value is not None
-                    else child.attributes.get(attribute)
-                    # this is to handle cases where we want to check mere
-                    # presence of attributes like x-data or x-component so
-                    # we use element.get(x_data=None) as a work around as
-                    # we aren't sure whats the actual value.
-                    for attribute, value in attrs
+            if isinstance(tag, (basestring, type)):
+                if (isinstance(tag, basestring) and type(child).__name__ == tag) or (
+                    not isinstance(tag, basestring) and isinstance(child, tag)
                 ):
-                    # If the child is of correct type and has all attributes and values
-                    # in kwargs add as a result
+                    if all(
+                        child.attributes.get(attribute) == value
+                        if value is not None
+                        else child.attributes.get(attribute)
+                        # this is to handle cases where we want to check mere
+                        # presence of attributes like x-data or x-component so
+                        # we use element.get(x_data=None) as a work around as
+                        # we aren't sure whats the actual value.
+                        for attribute, value in attrs
+                    ):
+                        # If the child is of correct type and has all attributes and values
+                        # in kwargs add as a result
+                        results.append(child)
+            elif isinstance(tag, dom_tag):
+                if child is tag:
                     results.append(child)
+
             if isinstance(child, dom_tag):
                 # If the child is a dom_tag extend the search down through its children
                 results.extend(child.get(tag, **kwargs))
@@ -367,6 +380,8 @@ class dom_tag(object):
         # (del, object, input)
         if name[-1] == "_":
             name = name[:-1]
+        if name[0] == "_":
+            name = name[1:]
 
         # open tag
         sb.append("<")
@@ -423,8 +438,8 @@ class dom_tag(object):
 
         return "<%s at %x: %s, %s>" % (name, id(self), attributes, children)
 
-    @staticmethod
-    def clean_attribute(attribute):
+    @classmethod
+    def clean_attribute(cls, attribute):
         """
         Normalize attribute names for shorthand and work arounds for limitations
         in Python's syntax
