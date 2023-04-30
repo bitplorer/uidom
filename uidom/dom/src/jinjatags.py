@@ -24,10 +24,17 @@ __all__ = [
     "Block",
     "Var",
     "render",
+    "JinjaSingleTags",
+    "JinjaDoubleTags",
+    "JinjaBaseTag",
 ]
 
 
-class JinjaDoubleTags(extension.DoubleTemplates):
+class JinjaBaseTag(object):
+    pass
+
+
+class JinjaDoubleTags(JinjaBaseTag, extension.DoubleTemplates):
     self_dedent = False
     child_dedent = False
     enable_left_delimiter_space = True
@@ -37,7 +44,7 @@ class JinjaDoubleTags(extension.DoubleTemplates):
         return render(self, **options)
 
 
-class JinjaSingleTags(extension.SingleTemplates):
+class JinjaSingleTags(JinjaBaseTag, extension.SingleTemplates):
     self_dedent = False
     child_dedent = True
     enable_left_delimiter_space = True
