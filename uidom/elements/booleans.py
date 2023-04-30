@@ -149,6 +149,14 @@ class BooleanField(HTMLElement):
             **kwargs,
         )
 
+    @property
+    def input_id(self):
+        return self.input["id"]
+
+    @input_id.setter
+    def input_id(self, id):
+        self.labeled["for"] = self.input["id"] = id
+
     def render(self, *args, label, name, type, checked, **kwargs):
         self.labeled = BooleanLabel(label)
         self.input = BooleanInput(
@@ -166,7 +174,7 @@ if __name__ == "__main__":
         label="Terms and Conditions", checked="null", name="select", type="radio"
     )
     button = SubmitButton(label="Agree", value="agree")
-    field.labeled["for"] = field.input["id"] = "select"
+    field.input_id = "select"
     button["for"] = field["id"] = "xyz"
     print(form(field, button, method="POST"))
     print(RadioInput(checked="unchecked", name="deliver"))
