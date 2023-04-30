@@ -3,8 +3,6 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-
-import os
 import re
 import textwrap
 import typing
@@ -14,7 +12,7 @@ from jinja2.utils import htmlsafe_json_dumps
 
 from uidom.dom.src.dom1core import dom1core
 from uidom.dom.src.dom_tag import dom_tag, unicode
-from uidom.dom.src.utils.dom_util import escape
+from uidom.dom.src.utils.dom_util import dom_text, escape
 
 __all__ = [
     "SingleTemplates",
@@ -22,6 +20,7 @@ __all__ = [
     "DoubleTags",
     "SingleTags",
     "StyleTags",
+    "PlaceholderTag",
 ]
 
 
@@ -38,6 +37,7 @@ class Tags(dom_tag, dom1core):
     CLOSE_TAG = "close_tag"
     RENDER_TAG = "render_tag"
     file_extension = ".html"
+    attribute_prefix_map: dict = {}
 
     def __init__(self, *args, **kwargs):
         if any(args):
@@ -46,7 +46,17 @@ class Tags(dom_tag, dom1core):
                 raise TypeError(msg)
         super(Tags, self).__init__(*args, **kwargs)
 
-    def _render_open_tag(self, sb, xhtml, name, open_tag):
+    def _render_open_tag(
+        self,
+        /,
+        sb,
+        name,
+        open_tag,
+        xhtml,
+        indent_level=None,
+        indent_str=None,
+        pretty=None,
+    ):
         if open_tag:
             sb.append("%s" % open_tag)
         else:
@@ -79,12 +89,14 @@ class Tags(dom_tag, dom1core):
                     sb.append(' %s="%s"' % (attribute, escape(unicode(value), True)))
                 else:
                     value = htmlsafe_json_dumps(value)
-                    sb.append(" %s='%s'" % (attribute, escape(unicode(value), True)))
+                    sb.append(
+                        " %s='%s'" % (attribute, escape(unicode(value), quote=False))
+                    )
             if value in [None]:  # minified xhtml attributes are added
                 sb.append(" %s" % attribute)
         return sb
 
-    def _render_close_tag(self, sb, name, close_tag):
+    def _render_close_tag(self, /, sb, name, close_tag):
         if close_tag:
             sb.append("%s" % close_tag)
         else:
@@ -109,8 +121,8 @@ class Tags(dom_tag, dom1core):
             indent_level -= 1
         return indent_level
 
-    @staticmethod
-    def clean_attribute(attribute):
+    @classmethod
+    def clean_attribute(cls, attribute):
         """
         Normalize attribute names for shorthand and work arounds for limitations
         in Python's syntax. Extended it to support VueJS, HTMX and AngularJS.
@@ -146,6 +158,7 @@ class Tags(dom_tag, dom1core):
                     "ws__",  #
                     "up_",  # for Unpoly JS support
                     "remove_me",  # for HTMX remove extension support
+                    *cls.attribute_prefix_map.keys(),
                 )
             ]
         )
@@ -165,6 +178,10 @@ class Tags(dom_tag, dom1core):
             attribute = attribute.replace("x-on:", "@")
             attribute = attribute.replace("x-on-", "@")
             attribute = attribute.replace("-dot-", ".")
+            if attribute in cls.attribute_prefix_map:
+                attribute = attribute.replace(
+                    attribute, cls.attribute_prefix_map[attribute]
+                )
 
         # Workaround for colon
         if attribute.split("_")[0] in ("xlink", "xml", "xmlns"):
@@ -178,6 +195,8 @@ class Tags(dom_tag, dom1core):
         if any(name):  # to handle the case when tagname = ""
             if name[-1] == "_":
                 name = name[:-1]
+            if name[0] == "_":
+                name = name[1:]
         return name
 
     def _render_children(self, sb, indent_level, indent_str, pretty, xhtml):
@@ -195,7 +214,7 @@ class Tags(dom_tag, dom1core):
             getattr(self, Tags.RENDER_TAG) if hasattr(self, Tags.RENDER_TAG) else True,
         )
         for child in self.children:
-            if isinstance(child, dom_tag):
+            if isinstance(child, dom_tag) and not isinstance(child, dom_text):
                 # Get the dedent status of child from the parent or the child.
                 # The dedent status of the child from the parent via self.child_dedent is
                 # extracted in the '_render' method already and is already taken care of.
@@ -295,8 +314,10 @@ class Tags(dom_tag, dom1core):
                 child._render(sb, indent_level, indent_str, pretty, xhtml)
 
             else:
-                # check if the child is not an empty string '' via any(child)
-                if any(child):
+                # check if the child is not an empty string '' via if child:
+                if child or any(child):
+                    if isinstance(child, dom_text):
+                        child = child.__render__()
                     # if any child exists maybe its a string or some object, here we check if the pretty is True.
                     # Notice here the child is only string or we force it to act like string by casting it into unicode and
                     # we can't check child.is_inline so we fallback on 'pretty' flag. if its True we set the inline flag as
@@ -314,11 +335,23 @@ class Tags(dom_tag, dom1core):
                                 pretty,
                                 inline and self.is_inline,
                             )
-                        sb.append(unicode(child))
+                        lines = child.splitlines()
+                        for line in lines:
+                            sb.append(unicode(line))
+                            if line != lines[-1]:
+                                sb, inline = self._new_line_and_inline_handler(
+                                    sb,
+                                    indent_level,
+                                    indent_str,
+                                    pretty,
+                                    inline and self.is_inline,
+                                )
                     else:
                         sb.append(unicode(child))
 
-            if any(child):
+            if child or any(child):
+                # don't use any(child) alone as condition above because it will check
+                # __iter__ method and it will depend on its children solely so will not work as expected
                 if not self_render_tag and pretty and self.children[-1] != child:
                     sb, inline = self._new_line_and_inline_handler(
                         sb, indent_level, indent_str, pretty, inline and self.is_inline
@@ -389,7 +422,15 @@ class Tags(dom_tag, dom1core):
 
         if self_render_tag:
             name = self._clean_name(getattr(self, "tagname", type(self).__name__))
-            self._render_open_tag(sb, xhtml, name, self.open_tag)
+            self._render_open_tag(
+                sb=sb,
+                name=name,
+                open_tag=self.open_tag,
+                xhtml=xhtml,
+                indent_level=indent_level,
+                indent_str=indent_str,
+                pretty=pretty,
+            )
 
         inline = self._render_children(
             sb,
@@ -401,13 +442,12 @@ class Tags(dom_tag, dom1core):
             xhtml,
         )
         inline = self.is_inline and inline
-        if self_render_tag:
-            if not self.is_single:
-                sb, inline = self._new_line_and_inline_handler(
-                    sb, indent_level, indent_str, pretty, inline
-                )
-                name = self._clean_name(getattr(self, "tagname", type(self).__name__))
-                self._render_close_tag(sb, name, self.close_tag)
+        if self_render_tag and not self.is_single:
+            sb, inline = self._new_line_and_inline_handler(
+                sb, indent_level, indent_str, pretty, inline
+            )
+            name = self._clean_name(getattr(self, "tagname", type(self).__name__))
+            self._render_close_tag(sb=sb, name=name, close_tag=self.close_tag)
 
         return sb
 
@@ -431,7 +471,7 @@ class Tags(dom_tag, dom1core):
             ), "folder_name and current_dir can't be initialised with file_path"
             file_or_dir = Path(file_or_dir)
         else:
-            folder_name = Path(folder_name or "static")
+            folder_name = Path(folder_name or Path(__file__).parent / "static")
             assert folder_name is not None, "folder_name should be initialised"
 
         if self.file_extension is None:
@@ -614,7 +654,15 @@ class StyleTags(Tags):
     is_apply = False
 
     def _render_open_tag(
-        self, sb, indent_level, indent_str, pretty, xhtml, name, open_tag
+        self,
+        /,
+        sb,
+        name,
+        open_tag,
+        xhtml,
+        indent_level,
+        indent_str,
+        pretty,
     ):
         sb.append(name)
         if pretty:
@@ -623,21 +671,32 @@ class StyleTags(Tags):
         if pretty:
             sb.append("\n")
             sb.append(indent_str * indent_level)
-        sb = self._render_attribute(sb, indent_level, indent_str, pretty, xhtml)
+        sb = self._render_attribute(
+            sb=sb,
+            indent_level=indent_level,
+            indent_str=indent_str,
+            pretty=pretty,
+            xhtml=xhtml,
+        )
         # sb.append(''.join(["/", self.right_delimiter]) if self.is_single and xhtml else self.right_delimiter)
         return sb
 
-    def _render_attribute(self, sb, indent_level, indent_str, pretty, xhtml):
-        attribute_joiner = (
-            "%s:%s;"
-            if not pretty
-            else "    %s: %s;\n" + (indent_str * indent_level)
-            if not self.is_apply
-            else "@%s %s;"
-            if not pretty
-            else "    @%s %s;\n" + (indent_str * indent_level)
-        )
-        for attribute, value in sorted(self.attributes.items()):
+    def _render_attribute(self, /, sb, indent_level, indent_str, pretty, xhtml):
+        if not self.is_apply:
+            attribute_joiner = (
+                "%s:%s;"
+                if not pretty
+                else f"{indent_str}%s: %s;\n" + (indent_str * indent_level)
+            )
+        else:
+            attribute_joiner = (
+                "@%s %s;"
+                if not pretty
+                else f"{indent_str}@%s %s;\n" + (indent_str * indent_level)
+            )
+        attribute_items = sorted(self.attributes.items())
+
+        for attribute, value in attribute_items:
             if (
                 value is not False and value is not None
             ):  # False values must be omitted completely
@@ -647,7 +706,7 @@ class StyleTags(Tags):
                 sb.append(" %s" % attribute)
         return sb
 
-    def _render_close_tag(self, sb, name, close_tag):
+    def _render_close_tag(self, /, sb, name, close_tag):
         sb.append(self.right_delimiter)
         return sb
 
@@ -657,6 +716,8 @@ class StyleTags(Tags):
         if any(name):  # to handle the case when tagname = ""
             if name[-1] == "_":
                 name = name[:-1]
+            if name[0] == "_":
+                name = name[1:]
 
         if all([self.is_class, self.is_id]):
             raise AttributeError(f"{name} can not have both is_class and is_id as True")
@@ -684,8 +745,8 @@ class StyleTags(Tags):
                 r.append(" %s" % attribute)
         return "".join(r)
 
-    @staticmethod
-    def clean_attribute(attribute):
+    @classmethod
+    def clean_attribute(cls, attribute):
         """
         Normalize attribute names for shorthand and work around for limitations
         in Python's syntax.
