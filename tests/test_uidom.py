@@ -2,9 +2,10 @@ import asyncio
 import unittest
 from dataclasses import dataclass
 
+import marko
 import toml
 
-from uidom import __version__
+from uidom import UiDOM, __version__
 from uidom.dom import *
 from uidom.web_io._events import EventsManager
 
@@ -212,7 +213,7 @@ class TestComponentRenderReturns(unittest.TestCase):
                 return ...
 
         class RenderReturnsMoreThanOneElement(Component):
-            render_tag = True
+            render_tag = False
 
             def __checks__(self, element):
                 ...
@@ -220,9 +221,52 @@ class TestComponentRenderReturns(unittest.TestCase):
             def render(self, *args, **kwargs):
                 return div(), div()
 
+        class ChildAsEntryWithoutRenderTag(Component):
+            render_tag = False
+
+            def render(self, *args, **kwargs):
+                # when only one html-element is returned then it becomes the entry
+                # point and we can set attributes and add element to it like normal
+                return "<div></div>"
+
+        class SelfAsEntryWithoutRenderTag(Component):
+            render_tag = False
+
+            def render(self, *args, **kwargs):
+                # when more than one html-element is returned then it **DOESN'T** become
+                # the entry point and we CAN'T set attributes and add element to it like normal
+                # we can only append element to it.
+                return "<p></p><a></a>"
+
+        class SelfAsEntryWithRenderTagMoreElement(Component):
+            render_tag = True
+            tagname = "self-entry"
+
+            def __checks__(self, element):
+                ...
+
+            def render(self, *args, **kwargs):
+                return "<p></p><a></a>"
+
+        class SelfAsEntryWithRenderTagReturnsOneElement(Component):
+            render_tag = True
+            tagname = "self-entry"
+
+            def __checks__(self, element):
+                ...
+
+            def render(self, *args, **kwargs):
+                return "<div></div>"
+
         self.RenderReturnsNone = RenderReturnsNone
         self.RenderReturnsEllipses = RenderReturnsEllipses
         self.RenderReturnsMoreThanOneElement = RenderReturnsMoreThanOneElement
+        self.ChildAsEntryWithoutRenderTag = ChildAsEntryWithoutRenderTag
+        self.SelfAsEntryWithoutRenderTag = SelfAsEntryWithoutRenderTag
+        self.SelfAsEntryWithRenderTagReturnsOneElement = (
+            SelfAsEntryWithRenderTagReturnsOneElement
+        )
+        self.SelfAsEntryWithRenderTagMoreElement = SelfAsEntryWithRenderTagMoreElement
 
     def test_render_returns_fails(self):
         with self.assertRaises(ValueError):
@@ -231,8 +275,67 @@ class TestComponentRenderReturns(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.RenderReturnsEllipses()
 
-        with self.assertRaises(ValueError):
-            self.RenderReturnsMoreThanOneElement()
+        returns_more_than_one_element = self.RenderReturnsMoreThanOneElement()
+        self.assertEqual(
+            returns_more_than_one_element.__render__(), "<div>\n</div>\n<div>\n</div>"
+        )
+        child_entry_without_render_tag = self.ChildAsEntryWithoutRenderTag()
+        child_entry_without_render_tag.add(div())
+        child_entry_without_render_tag["class"] = "xyz"
+        self.assertEqual(
+            child_entry_without_render_tag.__render__(),
+            """\
+<div class="xyz">
+  <div>
+  </div>
+</div>""",
+        )
+        self_entry_without_render_tag = self.SelfAsEntryWithoutRenderTag()
+        self_entry_without_render_tag.add(p())
+        self_entry_without_render_tag["class"] = "xyz"  # this will have no effect
+        self.assertEqual(
+            self_entry_without_render_tag.__render__(),
+            """\
+<p>
+</p>
+<a>
+</a>
+<p>
+</p>""",
+        )
+
+        self_entry_with_render_tag_returns_one_element = (
+            self.SelfAsEntryWithRenderTagReturnsOneElement()
+        )
+        self_entry_with_render_tag_returns_one_element.add(div())
+        self_entry_with_render_tag_returns_one_element["class"] = "xyz"
+        self.assertEqual(
+            self_entry_with_render_tag_returns_one_element.__render__(),
+            """\
+<self-entry class="xyz">
+  <div>
+  </div>
+  <div>
+  </div>
+</self-entry>""",
+        )
+        self_entry_with_render_tag_returns_more_element = (
+            self.SelfAsEntryWithRenderTagMoreElement()
+        )
+        self_entry_with_render_tag_returns_more_element["class"] = "xyz"
+        self_entry_with_render_tag_returns_more_element.add(div())
+        self.assertEqual(
+            self_entry_with_render_tag_returns_more_element.__render__(),
+            """\
+<self-entry class="xyz">
+  <p>
+  </p>
+  <a>
+  </a>
+  <div>
+  </div>
+</self-entry>""",
+        )
 
 
 class TestStates(unittest.TestCase):
@@ -247,6 +350,7 @@ class TestStates(unittest.TestCase):
             def render(self, a):  # type: ignore[override]
                 return p(a=a)
 
+        self.document = UiDOM()
         self.StateElement = StateElement
 
     def test_states_mutation_updates_dictionary(self):
@@ -261,13 +365,45 @@ class TestStates(unittest.TestCase):
         state_elem.a += 1
         self.assertEqual(str(state_elem), """<p a="3">\n</p>""")
 
+    def test_state_with_document(self):
+        with self.document() as doc:
+            with div():
+                state_elem = self.StateElement(1)
+        state_elem.a += 1
+        state_elem += "Hello Mom"
+        state_elem += MarkdownElement("*Hello World*")
+        result = """
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" name="viewport">
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <div>
+      <p a="2">
+        Hello Mom
+        <p>
+          <em>
+            Hello World
+          </em>
+        </p>
+      </p>
+    </div>
+  </body>
+</html>"""
+        self.assertEqual(doc.__render__(), result)
+
     def test_states_mutation_with_parent_child(self):
         with div("state parent") as parent:
             with self.StateElement(a=2) as state_elem:
                 child = div("state child")
 
         self.assertEqual(state_elem.parent, parent)
+        self.assertIn(state_elem, parent)
         self.assertEqual(child.parent, state_elem)
+        self.assertIn(child, state_elem)
+        self.assertNotIn(div("state child"), state_elem)
 
         self.assertEqual(
             parent.__render__(),
@@ -294,7 +430,10 @@ class TestStates(unittest.TestCase):
 
         state_elem.a += 1
         self.assertEqual(state_elem.parent, parent)
+        self.assertIn(state_elem, parent)
         self.assertEqual(child.parent, state_elem)
+        self.assertIn(child, state_elem)
+        self.assertNotIn(div("state child"), state_elem)
 
         self.assertEqual(
             parent.__render__(),
@@ -370,6 +509,50 @@ class TestAlpine(unittest.TestCase):
     def test_alpine_component(self):
         self.assertEqual(
             self.alpine_component.__render__(), self.alpine_component_result
+        )
+
+
+class TestMarkdown(unittest.TestCase):
+    def setUp(self):
+        md_string = """\
+# Last year’s snowfall
+```python
+    def main(): pass
+```
+```shell 
+pip install uidom
+```
+
+## The snowfall was above average.
+It was followed by a warm spring which caused
+flood conditions in many of the nearby rivers.
+"""
+        parsed_md_string = """\
+<h1>
+  Last year’s snowfall
+</h1>
+<pre><code class="language-python">def main(): pass</code></pre>
+<pre><code class="language-shell">pip install uidom</code></pre>
+<h2>
+  The snowfall was above average.
+</h2>
+<p>
+  It was followed by a warm spring which caused
+  flood conditions in many of the nearby rivers.
+</p>"""
+
+        class MarkdownCheck(MarkdownElement):
+            def render(self):
+                return md_string
+
+        self.MarkdownCheck = MarkdownCheck
+        self.md_string = md_string
+        self.parsed_md_string = parsed_md_string
+
+    def test_markdown(self):
+        self.assertEqual(self.MarkdownCheck().__render__(), self.parsed_md_string)
+        self.assertEqual(
+            MarkdownElement(self.md_string).__render__(), self.parsed_md_string
         )
 
 
@@ -452,6 +635,7 @@ class TestJinja(unittest.TestCase):
         self.assertEqual(
             self.jinja_for_loop_template.__render__(), self.jinja_for_loop_result
         )
+        self.assertIn(JinjaBaseTag, nav(ul(self.jinja_for_loop_template)))
 
 
 class TestEventManager(unittest.TestCase):
@@ -481,8 +665,13 @@ class TestEventManager(unittest.TestCase):
                 await callback(self.counter, count=3)
                 self.assertEqual(self.counter.clicks, 3)
 
-            for calbk in self.click_events["increment"]:
-                print(calbk)
+        # here only one method is added thats why both list can be equal
+        # but its not necessary as any activity in EventManager can add
+        #
+        self.assertEqual(
+            self.click_events.receive_events["increment"],
+            self.click_events["increment"],
+        )
 
         asyncio.run(main())
 
