@@ -1,5 +1,5 @@
 # Copyright (c) 2023 UiDOM
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 from uidom.dom import *
@@ -10,10 +10,10 @@ from ..document import document
 
 class LitePicker(HTMLElement):
     # https://litepicker.com/docs/examples#show-nights-in-tooltip
+    escape_html_string = False
 
     def render(self, *args, **kwargs):
-        return raw(
-            """
+        return """
         <div
     x-data
     x-init="
@@ -44,7 +44,7 @@ class LitePicker(HTMLElement):
     />
 </div>
         """
-        )
+
 
 @api.get("/litepicker")
 def filepond():

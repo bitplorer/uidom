@@ -67,7 +67,7 @@ class BusinessCard(HTMLElement):
 @card_router.get("/card")
 def business_card():
     with document(
-        cls="flex justify-center items-center h-screen w-full bg-gray-600 p-2",
+        className="flex justify-center items-center h-screen w-full bg-gray-600 p-2",
     ) as card:
         for detail in [
             {"city": "Delhi", "house_name": "Raj Bhavan"},

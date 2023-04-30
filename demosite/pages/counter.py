@@ -31,6 +31,12 @@ class ToggleInset(XComponent):
         <template x-component="{tag_name}" >
             <label for="Toggle1" x-data="$el.parentElement.data()" class="inline-flex items-center space-x-4 cursor-pointer dark:text-gray-100">
                 <span>Left</span>
+                <p>
+                    we will apply the changes only when the render_tag flag is set to True
+                    NOTE: we should **not add** checks for (pretty and not self.is_inline) here with
+                    'self_render_tag' as this is where we are adding the indentation and
+                    new-line **before** child is rendered.
+                </p>
                 <span class="relative">
                     <input _id="Toggle1" type="checkbox" class="hidden peer">
                     <div class="w-10 h-6 rounded-full shadow-inner dark:bg-gray-400 peer-checked:dark:bg-violet-400"></div>
@@ -118,7 +124,7 @@ class Counter(ReactiveComponent):
             self.count -= 1
         return self
 
-    @counter_event.on_receive("increment_count")
+    @counter_event.on_receive("increment")
     def increment_count(self, socket, message):
         self.count += 1
         print("message", message)
@@ -230,4 +236,13 @@ async def sockets(websocket: WebSocket, adapter_name: str):
 
 
 if __name__ == "__main__":
-    print(Counter(count=3))
+    strn = """we will apply the changes only when the render_tag flag is set to True
+NOTE: we should **not add** "checks" for (pretty and not self.is_inline) here with
+'self_render_tag' as this is where we are adding the indentation and
+new-line **before** child is rendered."""
+
+    class xxx(Component):
+        def render(self):
+            return strn
+
+    print(p(p(strn, x_data={"a": True})))
