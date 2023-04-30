@@ -28,7 +28,6 @@ This library is inspired from dominate html library and takes it further. It sup
 from fastapi import FastAPI
 from uidom import UiDOM
 from uidom.dom import HTMLElement, script, title, div
-from uidom.response import doc_response
 
 
 document = UiDOM(body=[
@@ -44,7 +43,7 @@ class ToggleMe(HTMLElement):
             with div(x_on_click='open = !open'):
                 div("Opened", x_show="open"), 
                 div("Closed", x_show="!open"), 
-                
+        return toggle
 
 class App(HTMLElement):
 
@@ -61,21 +60,29 @@ def index():
 ## A Jinja template example
 
 ```python
-from uidom.dom import nav, ul, For, li, a, Var
+from uidom.dom import nav, ul, For, li, a, Var, JinjaElement
 from collections import namedtuple as nt
 
 
-nav_bar = nav(
+class Nav(JinjaElement):
+    def render(self):
+        return nav(
             ul(
                 For(
                     "item in menu_items",
                     li(a(Var("item.name"), href=Var("item.link"))),
-                    )
                 )
             )
+        )
 
-# it generates jinja template as internal representation as follows 
 
+nav_bar = Nav()
+menu_url = nt("menu_url", "name link")
+
+# nav_bar element is a jinja template and has an internal representation as follows 
+```
+
+```html
 <nav>
   <ul>
     {% for item in menu_items %}
@@ -87,16 +94,83 @@ nav_bar = nav(
     {% endfor %}
   </ul>
 </nav>
+```
 
-# now we can use nav_bar just like we use jinja templates and render it 
+```python
+# now we can use nav_bar just like we use jinja templates and render it as follows
 
-menu_url = nt("menu_url", "name link")
 nav_bar(
     menu_items=[
-        menu_url("Home", "home.html"),
-        menu_url("About", "about.html"),
-        menu_url("Contact Us", "contact_us.html")
-    ])
+        menu_url("Home", r"\home.html"),
+        menu_url("About", r"\about.html"),
+        menu_url("Contact Us", r"\contact_us.html"),
+    ]
+)
+
+# it creates an element as follows
+```
+
+```html
+<nav>
+  <ul>
+      <li>
+        <a href="\home.html">
+          Home
+        </a>
+      </li>
+      <li>
+        <a href="\about.html">
+          About
+        </a>
+      </li>
+      <li>
+        <a href="\contact_us.html">
+          Contact Us
+        </a>
+      </li>
+  </ul>
+</nav>
+```
+
+## using markdown with uidom elements
+
+```python
+from uidom.dom import MarkdownElement
+
+em_text = MarkdownElement("*hello world*")
+
+print(em_text)
+# it returns following string
+```
+
+```shell
+<p>
+  <em>
+    hello world
+  </em>
+</p>
+```
+
+```python
+# MarkdownElement can be used as follows too 
+
+class HelloWorld(MarkdownElement):
+    
+    def render(self):
+        return "*hellow world*"
+
+# now HelloWorld instance gives the same 
+# output
+print(HelloWorld())
+```
+
+
+```shell
+<p>
+  <em>
+    hello world
+  </em>
+</p>
 ```
 
 ## using raw html with uidom elements
