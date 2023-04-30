@@ -89,7 +89,7 @@ class HTMLStringToDom(object):
                                         dom_text(data, escape=False)
                                     else:
                                         # normal text is here
-                                        dom_text(data, escape=self.escape or True)
+                                        dom_text(data, escape=self.escape)
                                 else:
                                     # this is a comment section
                                     htmltags.comment(data)
@@ -116,24 +116,34 @@ class HTMLStringToDom(object):
                 if tag is not None:
                     with tag:
                         with element(**token.attrs) as child_tag:
-                            HTMLStringToDom(token.children, modules=self.modules).parse(
-                                tag=child_tag
-                            )
+                            HTMLStringToDom(
+                                token.children, modules=self.modules, escape=self.escape
+                            ).parse(tag=child_tag)
                 else:
                     with element(**token.attrs) as tag:
-                        HTMLStringToDom(token.children, modules=self.modules).parse(
-                            tag=tag
-                        )
+                        HTMLStringToDom(
+                            token.children, modules=self.modules, escape=self.escape
+                        ).parse(tag=tag)
         return tag
 
     def __repr__(self):
         return str(self.parse())
 
 
-def string_to_element(raw_string, escape=True) -> ext.Tags:  # noqa
-    element = HTMLStringToDom(raw_string, escape=escape).parse()
-    assert isinstance(element, ext.Tags), f"{element=} is not instance of {ext.Tags}"
-    return element
+def string_to_element(raw_string, escape=True) -> T.List[ext.Tags]:  # noqa
+    tokens = tokenize_html(raw_string).children
+    elements = []
+    for token in tokens:
+        element = HTMLStringToDom([token], escape=escape).parse()
+        if element:
+            assert isinstance(
+                element, ext.Tags
+            ), f"{element=} is not instance of {ext.Tags}"
+            elements.append(element)
+    return elements
+    # element = HTMLStringToDom(raw_string, escape=escape).parse()
+    # assert isinstance(element, ext.Tags), f"{element=} is not instance of {ext.Tags}"
+    # return element
 
 
 # if __name__ == '__main__':
