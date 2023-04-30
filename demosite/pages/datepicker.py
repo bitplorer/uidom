@@ -10,7 +10,7 @@ from ..document import document
 
 class LitePicker(HTMLElement):
     # https://litepicker.com/docs/examples#show-nights-in-tooltip
-    escape_html_string = False
+    escape_string = False
 
     def render(self, *args, **kwargs):
         return """
