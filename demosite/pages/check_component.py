@@ -3,8 +3,10 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
+from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import List, Optional, Union
 
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
@@ -13,6 +15,8 @@ from demosite.settings import DEBUG, hot_reload_route
 from demosite.tailwindcss import tailwind
 from uidom import UiDOM
 from uidom.dom import *
+from uidom.dom.src.dom_tag import dom_tag
+from uidom.dom.src.main import extension
 from uidom.routing.fastapi import StreamingRoute
 from uidom.scripts import x_component_js_text
 
@@ -64,7 +68,7 @@ class ToggleIconsWithoutClickAway(CustomElement):
 
 
 x_toggle_dark_mode = ToggleIconsWithoutClickAway(
-    tag_name="toggle-dark_mode",
+    tag_name="toggle-dark-mode",
     default_icon=div(
         span(className="iconify", data_icon="teenyicons:bulb-off-solid"),
         # span(data_icon="ic:baseline-light-mode", className="iconify"),
@@ -342,55 +346,72 @@ document = UiDOM(
 # how to cache a function python ?
 
 if __name__ == "__main__":
-    from dataclasses import field, make_dataclass
+    from dataclasses import dataclass, field, make_dataclass
     from typing import Any, Dict, List, Optional
 
-    def default_dict_field() -> Dict[Any, Any]:
-        return dict()
+    @dataclass(eq=False)
+    class ComponentTags(Component):
+        file_extension: str = field(init=False, default=".html")
+        render_tag: bool = field(init=False, default=True)
+        attributes: dict = field(init=False, default_factory=dict)
+        children: List[Union[str, dom_tag]] = field(init=False, default_factory=list)
+        parent: Union[dom_tag, None] = field(init=False, default=None)
+        document: Union[dom_tag, None] = field(init=False, default=None)
 
-    def default_list_field() -> List[Any]:
-        return list()
+        def __init__(self, *args, **kwargs):
+            super(ComponentTags, self).__init__(*args, **kwargs)
+
+        def __checks__(self, element):
+            return ...
+
+        def render(self, *args, **kwargs):
+            self.add(kwargs)
+            self.add(*args)
+            return self
 
     tag_name = "hmm"
-    fields = [("name", str), ("age", int)]
     x_tag = make_dataclass(
-        cls_name="".join(map(lambda x: x.capitalize(), tag_name.split("-"))),
+        cls_name="".join(
+            map(
+                lambda x: x.capitalize(),
+                tag_name.split("-")[1:]
+                if tag_name.startswith("x")
+                else tag_name.split("-"),
+            )
+        ),
         fields=[
-            *fields,
-            ("tagname", str, field(init=False, default=f"x-{tag_name}")),
+            ("name", str),
+            ("age", int),
             (
-                "attributes",
-                dict,
-                field(init=False, default_factory=default_dict_field),
-            ),
-            (
-                "children",
-                list,
-                field(init=False, default_factory=default_list_field),
-            ),
-            (
-                "document",
-                Optional[extension.Tags],
-                field(init=False, default=None),
+                "tagname",
+                str,
+                field(
+                    init=False,
+                    default=f"x-{tag_name}"
+                    if not tag_name.startswith("x")
+                    else tag_name,
+                ),
             ),
         ],
-        bases=(DoubleTags,),
+        bases=(ComponentTags,),
     )
 
     class x_tag_2(DoubleTags):
-        tagname = "x-tag2"
+        tagname = f"x-{tag_name}"
 
     class chek(HTMLElement):
         render_tag = True
 
-        def __checks__(self, element: extension.Tags) -> extension.Tags:
+        def __checks__(self, element):
             ...
 
         def render(self, *args, **kwargs):
             self.add(kwargs)
             return args
 
-    print(div(chek(div("helloooooo"), div("hahah")).__render__(pretty=False)))
-    # print(chek(div("helloooooo"), haha=1) & div("12"))
-
-    # print(x_tag(name="hmm", age=12))
+    # print(
+    #     chek(div("helloooooo"), div("hahah"), hmmmm=2)
+    #     & chek(div("helloooooo"), div("hahah"), hmmmm=2)
+    # )
+    # print(ComponentTags(div("helloooooo"), haha=1))
+    print(x_tag_2(name="bbbb", age=12))
