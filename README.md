@@ -157,7 +157,7 @@ print(em_text)
 class HelloWorld(MarkdownElement):
     
     def render(self):
-        return "*hellow world*"
+        return "*hello world*"
 
 # now HelloWorld instance gives the same 
 # output
