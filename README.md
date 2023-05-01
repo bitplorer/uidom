@@ -143,7 +143,7 @@ print(em_text)
 # it returns following string
 ```
 
-```shell
+```html
 <p>
   <em>
     hello world
@@ -164,8 +164,7 @@ class HelloWorld(MarkdownElement):
 print(HelloWorld())
 ```
 
-
-```shell
+```html
 <p>
   <em>
     hello world
