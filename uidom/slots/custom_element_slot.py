@@ -14,14 +14,6 @@ __all__ = ["SlotElement", "x_slot"]
 
 @dataclass
 class SlotElement(CustomElement):
-    # fields = [
-    #     ("slotnames", list[str], field(default_factory=lambda: [''])),
-    #     ("classes", dict[str, str], field(default_factory=lambda:{})),
-    #     ("css", list[str], field(default_factory=lambda:[''])),
-    #     ("container_part", str, field(default='')),
-    #     ("exportparts", str, field(default=''))
-    # ]
-
     def render(self, tag_name):
         """
         :param tag_name:

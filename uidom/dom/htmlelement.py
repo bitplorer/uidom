@@ -4,12 +4,10 @@
 # https://opensource.org/licenses/MIT
 
 
-from dataclasses import dataclass, field, make_dataclass
-from typing import Optional
+from dataclasses import dataclass
 
 from uidom.dom.src import DoubleTags, component
 from uidom.dom.src.jinjatags import render
-from uidom.dom.src.main import extension
 
 __all__ = [
     "HTMLElement",
@@ -39,9 +37,6 @@ class HTMLElement(component.Component):
     def __post_init__(self, *args, **kwargs):
         super(HTMLElement, self).__post_init__(*args, **kwargs)
 
-    # def __repr__(self):
-    #     return str(self)
-
     def __and__(self, other):
         return super().__and__(other)
 
@@ -56,14 +51,10 @@ class AMPElement(component.Component):
         class Element(DoubleTags):
             tagname = f"amp-{self.tag_name}"  # noqa
 
-        element = Element
-
-        self.Element = element
+        self.Element = Element
         self.Element.is_inline = self.is_inline
         self.Element.is_single = self.is_single
         self.Element.is_pretty = self.is_pretty
-
-        # super(AMPElement, self).__post_init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         return self.Element(*args, **kwargs)
@@ -74,50 +65,18 @@ class AMPElement(component.Component):
 
 @dataclass(eq=False)
 class XComponent(component.Component):
-    fields: Optional[list[tuple]] = field(default=None, init=False)
     tag_name: str
 
     def __post_init__(self, *args, **kwargs):
         super(XComponent, self).__init__(*args, tag_name=self.tag_name, **kwargs)
-        if self.fields is not None:
-            element = make_dataclass(
-                cls_name="".join(
-                    map(lambda x: x.capitalize(), self.tag_name.split("-"))
-                ),
-                fields=[
-                    *self.fields,
-                    ("tagname", str, field(init=False, default=f"x-{self.tag_name}")),
-                    (
-                        "attributes",
-                        dict,
-                        field(init=False, default_factory=dict),
-                    ),
-                    (
-                        "children",
-                        list,
-                        field(init=False, default_factory=list),
-                    ),
-                    (
-                        "document",
-                        Optional[extension.Tags],
-                        field(init=False, default=None),
-                    ),
-                ],
-                bases=(DoubleTags,),
-            )
-        else:
 
-            class Element(DoubleTags):
-                tagname = f"x-{self.tag_name}"  # noqa
+        class Element(DoubleTags):
+            tagname = f"x-{self.tag_name}"  # noqa
 
-            element = Element
-
-        self.Element = element
+        self.Element = Element
         self.Element.is_inline = self.is_inline
         self.Element.is_single = self.is_single
         self.Element.is_pretty = self.is_pretty
-        # self.__call__.__signature__ = inspect.signature(self.Element)
-        # super(XComponent, self).__post_init__(*args, **kwargs)
 
     def __checks__(self, element):
         component.Component.__checks__(self, element)
