@@ -28,13 +28,14 @@ This library is inspired from dominate html library and takes it further. It sup
 from fastapi import FastAPI
 from uidom import UiDOM
 from uidom.dom import HTMLElement, script, title, div
-
+from uidom.routing.fastapi import StreamingRoute
 
 document = UiDOM(body=[
     script(src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js", defer=None, rel="prefetch")
     ])
-api = FastAPI() 
 
+api = FastAPI() 
+api.router.route_class = StreamingRoute
 
 class ToggleMe(HTMLElement):
 
