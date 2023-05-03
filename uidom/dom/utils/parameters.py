@@ -3,7 +3,7 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 import inspect
-from typing import Type
+from typing import Callable, Type
 
 # from collections import OrderedDict as Odict
 
@@ -87,7 +87,13 @@ def _parameters(func_signature):
 
 
 class Parameters(object):
-    def __init__(self, func, args=True, kwargs=True, in_single_kwargs=True):
+    def __init__(
+        self,
+        func: Callable,
+        args: bool = True,
+        kwargs: bool = True,
+        in_single_kwargs: bool = True,
+    ):
         self._func_signature = inspect.signature(func)
         self._in_single_kwargs = in_single_kwargs
         self._args, self._kwargs = _parameters(self._func_signature)(
