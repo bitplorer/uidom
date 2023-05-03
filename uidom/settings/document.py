@@ -16,8 +16,8 @@ from uidom.settings.paths import make_paths
 
 __all__ = ["UiDOM", "WebAssets", "FileSettings"]
 
-file_logger = logging.getLogger(__name__)
-file_logger.addHandler(logging.StreamHandler())
+
+# file_logger.addHandler(logging.StreamHandler())
 
 
 @dataclass
@@ -75,6 +75,7 @@ class FileSettings(object):
 
 class DirConfig(object):
     def __init__(self, file_settings: FileSettings):
+        assert sys.modules["__main__"].__file__ is not None
         subdir = (
             file_settings.SUB_DIR
             if not os.path.isfile(file_settings.SUB_DIR)
@@ -278,11 +279,14 @@ class WebAssets(DirConfig):
         self.upload = UploadedFile(dir_config=self)
         self.static = StaticFile(dir_config=self)
         self.database = DatabaseFile(dir_config=self)
-        files_created = make_paths(self)
+        files_created: list[T.Union[str, Path]] = make_paths(self)
+        file_logger = logging.getLogger(str(self.dir.parent.name))
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         if files_created:
-            file_logger.info("files created :: ")
-            for file in files_created:
-                file_logger.info("\n\tfile: ", file)
+            file_logger.info(f"(DIR):{self.dir.parent}")
+            for file in sorted(files_created):
+                if file:
+                    file_logger.info(Path(file).relative_to(self.dir.parent))
 
     def __dir__(self) -> T.Iterable[str]:
         return sorted(
