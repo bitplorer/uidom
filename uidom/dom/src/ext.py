@@ -307,9 +307,16 @@ class Tags(dom_tag, dom1core):
                 # method below so don't remove or edit it in future.
                 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 if self_render_tag:
-                    sb, inline = self._new_line_and_inline_handler(
-                        sb, indent_level, indent_str, pretty, inline and self.is_inline
-                    )
+                    if not isinstance(child, PlaceholderTag) or (
+                        isinstance(child, PlaceholderTag) and any(child)
+                    ):
+                        sb, inline = self._new_line_and_inline_handler(
+                            sb,
+                            indent_level,
+                            indent_str,
+                            pretty,
+                            inline and self.is_inline,
+                        )
 
                 child._render(sb, indent_level, indent_str, pretty, xhtml)
 
@@ -352,10 +359,17 @@ class Tags(dom_tag, dom1core):
             if child or any(child):
                 # don't use any(child) alone as condition above because it will check
                 # __iter__ method and it will depend on its children solely so will not work as expected
-                if not self_render_tag and pretty and self.children[-1] != child:
-                    sb, inline = self._new_line_and_inline_handler(
-                        sb, indent_level, indent_str, pretty, inline and self.is_inline
-                    )
+                if not isinstance(child, PlaceholderTag) or (
+                    isinstance(child, PlaceholderTag) and any(child)
+                ):
+                    if not self_render_tag and pretty and self.children[-1] != child:
+                        sb, inline = self._new_line_and_inline_handler(
+                            sb,
+                            indent_level,
+                            indent_str,
+                            pretty,
+                            inline and self.is_inline,
+                        )
 
         return inline
 
