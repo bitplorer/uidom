@@ -1,9 +1,9 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-import collections
+import types
 import typing
 
 __all__ = ["map_recursive", "apply_to_list", "apply_to_dict", "apply_to_tuple"]
@@ -11,7 +11,8 @@ __all__ = ["map_recursive", "apply_to_list", "apply_to_dict", "apply_to_tuple"]
 iter_types = typing.Iterable, typing.Iterator, typing.Mapping
 
 
-def f(value, key=None): return value if key is None else key, value
+def f(value, key=None):
+    return value if key is None else key, value
 
 
 def apply_to_list(elem_func, iterable, obj_func=None):
@@ -116,8 +117,9 @@ def map_recursive(elem_func, iterable, obj_func=None):
         return apply_to_set(elem_func, iterable, obj_func)
     if isinstance(iterable, frozenset):
         return apply_to_frozenset(elem_func, iterable, obj_func)
-    if isinstance(iterable, collections.Generator):
+    if isinstance(iterable, types.GeneratorType):
         return (map_recursive(elem_func, item, obj_func) for item in iterable)
+    return elem_func(iterable)
 
 
 def map_r(func, iterables):
@@ -127,6 +129,7 @@ def map_r(func, iterables):
 def zip_recursive(iterables):
     # TODO make this function
     pass
+
 
 #
 # def _test_dict_map():
