@@ -11,8 +11,8 @@ import types
 import typing as T
 from copy import deepcopy
 from dataclasses import dataclass, field
+from functools import lru_cache
 
-# from uidom.dom.htmlelement import HTMLElement
 from uidom.dom.src import ext, htmltags, jinjatags, svgtags
 from uidom.dom.src.htmltags import html_tag
 from uidom.dom.src.parse_html import Element, tokenize_html
@@ -130,6 +130,7 @@ class HTMLStringToDom(object):
         return str(self.parse())
 
 
+@lru_cache
 def string_to_element(raw_string, escape=True) -> T.List[ext.Tags]:  # noqa
     tokens = tokenize_html(raw_string).children
     elements = []
