@@ -11,7 +11,7 @@ from collections import defaultdict
 from json.decoder import JSONDecodeError
 from typing import Any, Optional, Type
 
-from uidom.web_io._events import EventsManager
+from uidom.web_io._events import WebSocketEvents
 from uidom.web_io._protocol import WebSocketProtocol as WebSocket
 from uidom.web_io._types import MESSAGE
 
@@ -89,11 +89,11 @@ class WebSocketAdapter(GenericAdapter):
     def __init__(
         self,
         data_class: type,
-        events: EventsManager,
+        events: WebSocketEvents,
         data_fetcher: Optional[DataFetcher] = None,
     ):
         self.data_class: Type = data_class
-        self.events: EventsManager = events
+        self.events: WebSocketEvents = events
         self.data_fetcher: Optional[DataFetcher] = data_fetcher
         self.class_instance: Any = None
         self.connections: set = set()

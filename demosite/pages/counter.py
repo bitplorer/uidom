@@ -18,9 +18,9 @@ from uidom.dom import *
 from uidom.dom.src.ws_rpc import ws_rpc
 from uidom.web_io import (
     EdgeDBFetcher,
-    EventsManager,
     WebSocketAdapter,
     WebSocketClientHandler,
+    WebSocketEvents,
 )
 
 
@@ -31,12 +31,6 @@ class ToggleInset(XComponent):
         <template x-component="{tag_name}" >
             <label for="Toggle1" x-data="$el.parentElement.data()" class="inline-flex items-center space-x-4 cursor-pointer dark:text-gray-100">
                 <span>Left</span>
-                <p>
-                    we will apply the changes only when the render_tag flag is set to True
-                    NOTE: we should **not add** checks for (pretty and not self.is_inline) here with
-                    'self_render_tag' as this is where we are adding the indentation and
-                    new-line **before** child is rendered.
-                </p>
                 <span class="relative">
                     <input _id="Toggle1" type="checkbox" class="hidden peer">
                     <div class="w-10 h-6 rounded-full shadow-inner dark:bg-gray-400 peer-checked:dark:bg-violet-400"></div>
@@ -49,7 +43,7 @@ class ToggleInset(XComponent):
         )
 
 
-counter_event = EventsManager()
+counter_event = WebSocketEvents()
 
 
 @dataclass(eq=False)

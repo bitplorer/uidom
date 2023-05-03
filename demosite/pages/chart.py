@@ -14,16 +14,16 @@ from uidom.routing.fastapi import StreamingRoute
 from uidom.slots import x_slot
 from uidom.web_io import (
     EdgeDBFetcher,
-    EventsManager,
     WebSocketAdapter,
     WebSocketClientHandler,
+    WebSocketEvents,
 )
 
 __all__ = ["x_chart", "chart_router"]
 
 chart_router = APIRouter(route_class=StreamingRoute, tags=["Charts"])
 
-chart_event = EventsManager()
+chart_event = WebSocketEvents()
 
 
 class PriceChartTemplate(XComponent):
