@@ -683,7 +683,6 @@ class TestEventManager(unittest.TestCase):
                 }
 
         self.counter = ClickCounter()
-        print(self.counter.events.click_events)
 
     def test_click_events(self):
         async def main():
@@ -702,12 +701,12 @@ class TestEventManager(unittest.TestCase):
         # here only one method is added thats why both list can be equal
         # but its not necessary as any activity in EventManager can add
         #
-        # self.assertEqual(
-        #     self.counter.events.click_events["increment"],
-        #     self.counter.events["increment"],
-        # )
+        self.assertEqual(
+            self.counter.events.click_events["increment"],
+            self.counter.events["increment"],
+        )
 
-        # asyncio.run(main())
+        asyncio.run(main())
 
 
 if __name__ == "__main__":
