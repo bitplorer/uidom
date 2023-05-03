@@ -4,6 +4,6 @@
 # https://opensource.org/licenses/MIT
 
 from ._adapter import EdgeDBFetcher, WebSocketAdapter, WebSocketClientHandler
-from ._events import EventsManager
+from ._events import HtmxEvents, WebSocketEvents
 from ._protocol import WebSocketProtocol
 from ._types import MESSAGE, Receive, Scope, Send
