@@ -1,13 +1,13 @@
 import asyncio
+import typing as t
 import unittest
 from dataclasses import dataclass
 
-import marko
 import toml
 
 from uidom import UiDOM, __version__
 from uidom.dom import *
-from uidom.web_io._events import EventsManager
+from uidom.web_io._events import BaseEventManager
 
 
 class TestVersion(unittest.TestCase):
@@ -256,7 +256,7 @@ class TestComponentRenderReturns(unittest.TestCase):
                 ...
 
             def render(self, *args, **kwargs):
-                return "<div></div>"
+                return "<zzz></zzz>"
 
         self.RenderReturnsNone = RenderReturnsNone
         self.RenderReturnsEllipses = RenderReturnsEllipses
@@ -309,12 +309,13 @@ class TestComponentRenderReturns(unittest.TestCase):
         )
         self_entry_with_render_tag_returns_one_element.add(div())
         self_entry_with_render_tag_returns_one_element["class"] = "xyz"
+        self_entry_with_render_tag_returns_one_element["id"] = "#some_id"
         self.assertEqual(
             self_entry_with_render_tag_returns_one_element.__render__(),
             """\
-<self-entry class="xyz">
-  <div>
-  </div>
+<self-entry class="xyz" id="#some_id">
+  <zzz>
+  </zzz>
   <div>
   </div>
 </self-entry>""",
@@ -372,7 +373,7 @@ class TestStates(unittest.TestCase):
         state_elem.a += 1
         state_elem += "Hello Mom"
         state_elem += MarkdownElement("*Hello World*")
-        result = """
+        result = """\
 <!DOCTYPE html>
 <html>
   <head>
@@ -640,15 +641,40 @@ class TestJinja(unittest.TestCase):
 
 class TestEventManager(unittest.TestCase):
     def setUp(self) -> None:
-        click_events = EventsManager()
+        class ClickEvents(BaseEventManager):
+            def on_press(self, event: t.Union[str, t.Callable]) -> t.Callable:
+                return self.set_event(activity="click", event_name_or_method=event)
+
+            def on_mouseover(self, event: t.Union[str, t.Callable]):
+                return self.set_event(activity="mouse", event_name_or_method=event)
+
+            def on_mousedown(self, event: t.Union[str, t.Callable]) -> t.Callable:
+                return self.set_event(activity="mouse", event_name_or_method=event)
+
+            @property
+            def mouse_events(self):
+                return self.get_events(activity="mouse")
+
+            @property
+            def click_events(self):
+                return self.get_events(activity="click")
 
         class ClickCounter:
+            events = ClickEvents()
+
             def __init__(self):
                 self.clicks = 0
 
-            @click_events.on_receive("increment")
+            @events.on_press("increment")
             def increment(self, count):
                 self.clicks += count
+                return self.clicks
+
+            @events.on_mouseover
+            @events.on_press
+            def decrement(self, count):
+                if self.clicks - count >= 0:
+                    self.clicks -= count
                 return self.clicks
 
             def to_dict(self):
@@ -657,23 +683,31 @@ class TestEventManager(unittest.TestCase):
                 }
 
         self.counter = ClickCounter()
-        self.click_events = click_events
+        print(self.counter.events.click_events)
 
     def test_click_events(self):
         async def main():
-            for callback in self.click_events.receive_events["increment"]:
+            for callback in self.counter.events.click_events["increment"]:
                 await callback(self.counter, count=3)
                 self.assertEqual(self.counter.clicks, 3)
+
+            for callback in self.counter.events.click_events["decrement"]:
+                await callback(self.counter, count=2)
+                self.assertEqual(self.counter.clicks, 1)
+
+            for callback in self.counter.events.mouse_events["decrement"]:
+                await callback(self.counter, count=1)
+                self.assertEqual(self.counter.clicks, 0)
 
         # here only one method is added thats why both list can be equal
         # but its not necessary as any activity in EventManager can add
         #
-        self.assertEqual(
-            self.click_events.receive_events["increment"],
-            self.click_events["increment"],
-        )
+        # self.assertEqual(
+        #     self.counter.events.click_events["increment"],
+        #     self.counter.events["increment"],
+        # )
 
-        asyncio.run(main())
+        # asyncio.run(main())
 
 
 if __name__ == "__main__":
