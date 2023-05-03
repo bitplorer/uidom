@@ -257,27 +257,38 @@ class ReactiveComponent(Component):
         # where document is also an instance of the ReactiveComponent.
         # as to_dict method of dataclass probably calls for locals that gets mangled with document locals
 
-    def get_param(self, function, new_kwargs):
+    def _get_param(self, function, new_kwargs):
         func = Parameters(function, in_single_kwargs=False)
         sig_params = func.signature.parameters
         _arg_dict, _kwarg_dict = func.parameters
+        _, var_arg = func.args
+        if var_arg is not None:
+            (var_arg,) = var_arg
+            var_arg = var_arg[0]
+        var_arg_name = var_arg or ""
         arg_dict = {k: new_kwargs.get(k, v) for k, v in _arg_dict.items()}
         kwargs = {k: new_kwargs.get(k, v) for k, v in _kwarg_dict.items()}
         args = []
         for arg_name in arg_dict:
-            if sig_params[arg_name].default is not None:
-                if arg_name not in new_kwargs and arg_dict[arg_name] is None:
-                    # So when we land here in this block of code, arg_name is not in new_kwargs
-                    # so we haven't updated arg_dict from new_kwargs for sure, also we are sure
-                    # that sign_params[arg_name].default is not None here in this block of code.
-                    # But arg_dict[arg_name] is None, so it means Parameters class replaced
-                    # default=_empty with default=None, so we should raise error
-                    raise ValueError(
-                        f"{arg_name} is a required parameter for {function.__name__}"
-                    )
+            arg_val = arg_dict[arg_name]
+            if (
+                sig_params[arg_name].default is not None
+                and arg_name not in new_kwargs
+                and arg_val is None
+            ):
+                # So when we land here in this block of code, arg_name is not in new_kwargs
+                # so we haven't updated arg_dict from new_kwargs for sure, also we are sure
+                # that sign_params[arg_name].default is not None here in this block of code.
+                # But arg_dict[arg_name] is None, so it means Parameters class replaced
+                # default=_empty with default=None, so we should raise error
+                raise ValueError(
+                    f"{arg_name} is a required parameter for {function.__name__}"
+                )
+            else:
+                if isinstance(arg_val, tuple) and arg_name == var_arg_name:
+                    args.extend(arg_val)
                 else:
-                    args.append(arg_dict[arg_name])
-
+                    args.append(arg_val)
         return args, kwargs
 
     def _re_render(self, **states) -> extension.Tags:  # noqa
@@ -299,7 +310,7 @@ class ReactiveComponent(Component):
         #     index_of_entry = old_parent.children.index(self)
 
         self.clear()
-        args, kwargs = self.get_param(self.render, states)
+        args, kwargs = self._get_param(self.render, states)
         if args and kwargs:
             elements = self.render(*args, **kwargs)
         elif args:
