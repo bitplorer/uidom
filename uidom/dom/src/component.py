@@ -262,10 +262,12 @@ class ReactiveComponent(Component):
         sig_params = func.signature.parameters
         _arg_dict, _kwarg_dict = func.parameters
         _, var_arg = func.args
+        var_arg_name = ""
+
         if var_arg is not None:
             (var_arg,) = var_arg
-            var_arg = var_arg[0]
-        var_arg_name = var_arg or ""
+            var_arg_name = var_arg[0]
+
         arg_dict = {k: new_kwargs.get(k, v) for k, v in _arg_dict.items()}
         kwargs = {k: new_kwargs.get(k, v) for k, v in _kwarg_dict.items()}
         args = []
