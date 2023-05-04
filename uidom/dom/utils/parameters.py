@@ -36,8 +36,8 @@ def _parameters(func_signature):
 
         _args_only = list(tup for tup in _args if tup[1].kind is PARAM_KINDS["ARGS"][0])
         args_only = list(
-            (k, v._default)
-            if v._default is not inspect.Parameter.empty
+            (k, v.default)
+            if v.default is not inspect.Parameter.empty
             else (k, None)
             if k not in ("self", "mcs", "cls")
             else (k, k)
@@ -46,8 +46,8 @@ def _parameters(func_signature):
 
         _args_p = list(tup for tup in _args if tup[1].kind is PARAM_KINDS["ARGS"][1])
         args_p = list(
-            (k, v._default)
-            if v._default is not inspect.Parameter.empty
+            (k, v.default)
+            if v.default is not inspect.Parameter.empty
             else (k, None)
             if k not in ("self", "mcs", "cls")
             else (k, k)
@@ -61,8 +61,8 @@ def _parameters(func_signature):
 
         kw_only = (tup for tup in _kwargs if tup[1].kind is PARAM_KINDS["KWARGS"][0])
         kw_only: dict = Odict(
-            (k, v._default)
-            if v._default is not inspect.Parameter.empty
+            (k, v.default)
+            if v.default is not inspect.Parameter.empty
             else (k, None)
             if k not in ("self", "mcs", "cls")
             else (k, k)
@@ -119,13 +119,22 @@ class Parameters(object):
         )
 
     @property
+    def var_arg_name(self):
+        var_arg_name = ""
+        _, var_arg = self.args
+        if any(var_arg):
+            (var_arg,) = var_arg
+            var_arg_name = var_arg[0]
+        return var_arg_name
+
+    @property
     def args(self):
         if len(self._args) > 1:
             self._p_args = self._args[0]
             self._v_args = self._args[1]
             return self._p_args, [self._v_args]
         (_args,) = self._args if any(self._args) else ((),)
-        return _args, None
+        return _args, ()
 
     @property
     def kwargs(self):
@@ -135,7 +144,7 @@ class Parameters(object):
             return Odict(self._p_kwargs), Odict([self._v_kwargs])
 
         (_kwargs,) = self._kwargs if any(self._kwargs) else ({},)
-        return Odict(**_kwargs), None
+        return Odict(**_kwargs), {}
 
     @property
     def parameters(self):
@@ -164,12 +173,12 @@ class Parameters(object):
                 **Odict(**Odict(p_arg), **Odict(v_arg)), **Odict(**p_kwarg, **v_kwarg)
             )
 
-        elif v_arg is None and v_kwarg:
+        elif any(v_arg) and v_kwarg:
             if not in_single_kwarg:
                 return Odict(**Odict(p_arg)), Odict(**p_kwarg, **v_kwarg)
             return Odict(**Odict(**Odict(p_arg)), **Odict(**p_kwarg, **v_kwarg))
 
-        elif v_kwarg is None and v_arg:
+        elif any(v_kwarg) and v_arg:
             if not in_single_kwarg:
                 return Odict(**Odict(p_arg), **Odict(v_arg)), Odict(**p_kwarg)
             return Odict(**Odict(**Odict(p_arg), **Odict(v_arg)), **Odict(**p_kwarg))

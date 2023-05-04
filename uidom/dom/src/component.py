@@ -4,6 +4,7 @@
 # https://opensource.org/licenses/MIT
 
 
+import inspect
 from dataclasses import asdict, dataclass, field
 from html import unescape
 from pathlib import Path
@@ -261,22 +262,16 @@ class ReactiveComponent(Component):
         func = Parameters(function, in_single_kwargs=False)
         sig_params = func.signature.parameters
         _arg_dict, _kwarg_dict = func.parameters
-        _, var_arg = func.args
-        var_arg_name = ""
-
-        if var_arg is not None:
-            (var_arg,) = var_arg
-            var_arg_name = var_arg[0]
-
+        var_arg_name = func.var_arg_name
         arg_dict = {k: new_kwargs.get(k, v) for k, v in _arg_dict.items()}
         kwargs = {k: new_kwargs.get(k, v) for k, v in _kwarg_dict.items()}
         args = []
         for arg_name in arg_dict:
             arg_val = arg_dict[arg_name]
             if (
-                sig_params[arg_name].default is not None
+                sig_params[arg_name].default is inspect.Parameter.empty
                 and arg_name not in new_kwargs
-                and arg_val is None
+                and not any(arg_val)
             ):
                 # So when we land here in this block of code, arg_name is not in new_kwargs
                 # so we haven't updated arg_dict from new_kwargs for sure, also we are sure
