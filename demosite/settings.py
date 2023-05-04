@@ -9,7 +9,7 @@ from pathlib import Path
 from starlette.config import Config
 from starlette.websockets import WebSocket
 
-from uidom import FileSettings, WebAssets
+from uidom import WebAssets
 
 # from uidom.scripts import cdn
 
@@ -22,7 +22,7 @@ config = Config(BASE_DIR / ".env")
 DEBUG = config("DEBUG", cast=bool, default=False)
 
 # defining webassets
-webassets = WebAssets(FileSettings(BASE_DIR=BASE_DIR, SUB_DIR="assets"))
+webassets = WebAssets(base_dir=BASE_DIR, sub_dir="assets")
 
 # cdn2static = partial(
 #     cdn.CDNToStatic,

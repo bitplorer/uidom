@@ -84,7 +84,7 @@ document = UiDOM(
         # custom-elements and web component support
         # script(x_component_js())
         script(
-            src=f"/js/{x_component_js().save(file_or_dir=settings.webassets.STATIC_JS_DIR / 'component.js')}"
+            src=f"/js/{x_component_js().save(file_or_dir=settings.webassets.static.dir / 'component.js')}"
         ),
         # Chart JS
         script(

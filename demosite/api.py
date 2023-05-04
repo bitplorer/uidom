@@ -38,17 +38,17 @@ if settings.DEBUG:
     api.add_event_handler("shutdown", settings.hot_reload_route.shutdown)
 
 api.mount(
-    str(settings.webassets.url.STATIC_CSS_URL),
-    StaticFiles(directory=settings.webassets.STATIC_CSS_DIR, check_dir=False),
+    "/css",
+    StaticFiles(directory=settings.webassets.static.dir, check_dir=False),
     name="css",
 )
 api.mount(
-    str(settings.webassets.url.STATIC_JS_URL),
-    StaticFiles(directory=settings.webassets.STATIC_JS_DIR, check_dir=False),
+    "/js",
+    StaticFiles(directory=settings.webassets.static.js, check_dir=False),
     name="js",
 )
 api.mount(
-    str(settings.webassets.url.STATIC_IMAGE_URL),
-    StaticFiles(directory=settings.webassets.STATIC_IMAGE_DIR, check_dir=False),
+    "/image",
+    StaticFiles(directory=settings.webassets.static.image, check_dir=False),
     name="image",
 )
