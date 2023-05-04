@@ -4,7 +4,7 @@
 # https://opensource.org/licenses/MIT
 
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from uidom.dom import htmlelement as htm
 from uidom.dom.src import dom_tag
@@ -31,7 +31,7 @@ class Body(htm.HTMLElement):
 @dataclass(eq=False)
 class HtmlDocument(htm.HTMLElement):
     csrf_field = "X-CSRF-TOKEN"
-    ensure_csrf_token_in_meta = True
+    ensure_csrf_token_in_meta: bool = field(default=True, init=False)
 
     def __init__(self, *args, **kwargs):
         self.document = self
