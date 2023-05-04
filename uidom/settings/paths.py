@@ -1,17 +1,14 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
-
 
 
 import os
 from collections.abc import Iterable
 from typing import List, Union
 
-__all__ = [
-    "make_paths"
-]
+__all__ = ["make_paths", "MakePath"]
 
 
 def path_exists(path):

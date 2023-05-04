@@ -15,7 +15,17 @@ from uidom.dom.htmldocument import HtmlDocument
 from uidom.dom.src import ext
 from uidom.settings.paths import make_paths
 
-__all__ = ["UiDOM", "WebAssets", "Dir", "DirConfig"]
+__all__ = [
+    "UiDOM",
+    "WebAssets",
+    "Dir",
+    "DirConfig",
+    "TemplateDir",
+    "StaticDir",
+    "UploadDir",
+    "DatabaseDir",
+    "CacheDir",
+]
 
 
 # file_logger.addHandler(logging.StreamHandler())
@@ -156,15 +166,15 @@ class StaticDir(Dir):
         self.FONT_DIR = self.FILE_DIR / self.FONT_PATH
 
         self.dir: Path = self.STATIC_DIR
-        self.medias: Path = self.MEDIA_DIR
-        self.files: Path = self.FILE_DIR
+        self.media: Path = self.MEDIA_DIR
+        self.file: Path = self.FILE_DIR
 
-        self.images: Path = self.IMAGE_DIR
-        self.audios: Path = self.AUDIO_DIR
-        self.videos: Path = self.VIDEO_DIR
+        self.image: Path = self.IMAGE_DIR
+        self.audio: Path = self.AUDIO_DIR
+        self.video: Path = self.VIDEO_DIR
         self.css: Path = self.CSS_DIR
         self.js: Path = self.JS_DIR
-        self.fonts: Path = self.FONT_DIR
+        self.font: Path = self.FONT_DIR
 
 
 class UploadDir(Dir):
@@ -211,13 +221,24 @@ class CacheDir(Dir):
 
 
 class WebAssets(DirConfig):
-    template: Dir
-    upload: Dir
-    static: Dir
-    database: Dir
-    cache: Dir
+    template: TemplateDir
+    upload: UploadDir
+    static: StaticDir
+    database: DatabaseDir
+    cache: CacheDir
 
-    def __init__(self, base_dir, sub_dir=None, *dir_types: T.Type[Dir], dry_run=True):
+    def __init__(
+        self,
+        base_dir: T.Union[str, Path],
+        sub_dir: T.Optional[T.Union[str, Path]] = None,
+        template_dir: T.Type[TemplateDir] = TemplateDir,
+        upload_dir: T.Type[UploadDir] = UploadDir,
+        static_dir: T.Type[StaticDir] = StaticDir,
+        database_dir: T.Type[DatabaseDir] = DatabaseDir,
+        cache_dir: T.Type[CacheDir] = CacheDir,
+        *dir_types: T.Type[Dir],
+        dry_run=True,
+    ):
         super().__init__(base_dir=base_dir, sub_dir=sub_dir or "")
         # basic settings
         self.dir = self.BASE_DIR
@@ -228,11 +249,11 @@ class WebAssets(DirConfig):
         self.dir_logger.addHandler(handler)
 
         # directories
-        self.template: TemplateDir = TemplateDir(dir_config=self)
-        self.upload: UploadDir = UploadDir(dir_config=self)
-        self.static: StaticDir = StaticDir(dir_config=self)
-        self.database: DatabaseDir = DatabaseDir(dir_config=self)
-        self.cache: CacheDir = CacheDir(dir_config=self)
+        self.template: TemplateDir = template_dir(dir_config=self)
+        self.upload: UploadDir = upload_dir(dir_config=self)
+        self.static: StaticDir = static_dir(dir_config=self)
+        self.database: DatabaseDir = database_dir(dir_config=self)
+        self.cache: CacheDir = cache_dir(dir_config=self)
         directories = [
             *self,
             *self.template,
@@ -244,6 +265,7 @@ class WebAssets(DirConfig):
         for dir_type in dir_types:
             directories.extend(*dir_type(self))
         if dry_run:
+            self.dir_logger.info(f"(DIR):{self.dir.parent}")
             self.dir_logger.info("== Following directories would be created ==")
             for dir_name in directories:
                 self.dir_logger.info(pformat(dir_name))
