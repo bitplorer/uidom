@@ -405,7 +405,6 @@ class TestStates(unittest.TestCase):
         self.assertEqual(child.parent, state_elem)
         self.assertIn(child, state_elem)
         self.assertNotIn(div("state child"), state_elem)
-
         self.assertEqual(
             parent.__render__(),
             """\
