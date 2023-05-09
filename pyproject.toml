@@ -43,7 +43,7 @@ toml = "^0.10.2"
 types-toml = "^0.10.8"
 
 [tool.poetry.scripts]
-uicli = "uidom.cli:uicli"
+uicli = "uidom.cli:uidom"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
