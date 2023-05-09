@@ -399,19 +399,4 @@ if __name__ == "__main__":
     class x_tag_2(DoubleTags):
         tagname = f"x-{tag_name}"
 
-    class chek(HTMLElement):
-        render_tag = True
-
-        def __checks__(self, element):
-            ...
-
-        def render(self, *args, **kwargs):
-            self.add(kwargs)
-            return args
-
-    # print(
-    #     chek(div("helloooooo"), div("hahah"), hmmmm=2)
-    #     & chek(div("helloooooo"), div("hahah"), hmmmm=2)
-    # )
-    # print(ComponentTags(div("helloooooo"), haha=1))
     print(x_tag_2(name="bbbb", age=12))

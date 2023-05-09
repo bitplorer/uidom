@@ -75,7 +75,3 @@ def business_card():
         ]:
             BusinessCard(**detail)
     return card
-
-
-if __name__ == "__main__":
-    print(BusinessCard(house_name="Lulz", city="Lala Land"))

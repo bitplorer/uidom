@@ -2,15 +2,12 @@
 // 
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
-
-
 function guidGenerator() {
     const S4 = function (){
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
     return S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4();
 }
-
 const toCamel = (s) => {
     return s.replace(/([-_][a-z])/ig, ($1) => {
         return $1.toUpperCase()
@@ -18,7 +15,6 @@ const toCamel = (s) => {
             .replace('_', '');
     });
 }
-
 const isJSON = (str) => {
     try {
         return (JSON.parse(str) && !!str);
@@ -26,7 +22,6 @@ const isJSON = (str) => {
         return false;
     }
 }
-
 const observeAttrChange = (el, attributeChangedCallback) => {
     var observer = new MutationObserver(mutations => {
         mutations.forEach((mutation) => {
@@ -44,7 +39,6 @@ const observeAttrChange = (el, attributeChangedCallback) => {
     });
     return observer;
 }
-
 (() => {
     let socket = {};
     let messageHandler = {};
@@ -69,7 +63,6 @@ const observeAttrChange = (el, attributeChangedCallback) => {
                     });
                 }
             }
-
             socket[`${endPoint}`].addEventListener('open', () => {
                 connection_resolvers[`${endPoint}`].forEach(r => r.resolve())
             });
@@ -103,8 +96,6 @@ const observeAttrChange = (el, attributeChangedCallback) => {
     document.messageHandler = messageHandler;
     document.waitForConnection = waitForConnection;
 })();
-
-
 // taken from https://stackoverflow.com/a/73956155
 // and https://github.com/alpinejs/alpine/blob/0a360fbae712fd6bf98b382140cdd7af3dc69644/packages/ui/src/menu.js
 // document.addEventListener("alpine:init", () => {
@@ -116,17 +107,13 @@ const observeAttrChange = (el, attributeChangedCallback) => {
 //         })
 //     }) 
 // });
-
-
 document.querySelectorAll('[x-component]').forEach(component => {
     const componentName = `x-${component.getAttribute('x-component')}`;
-
     class XComponent extends HTMLElement {
         
         constructor() {
             super();
         }
-
         async connectedCallback() {
             var isShadowRoot = component.getAttribute('shadowroot');
             let template;
@@ -138,7 +125,6 @@ document.querySelectorAll('[x-component]').forEach(component => {
             if (!!isShadowRoot){
                 
                 let shadow = this.attachShadow({mode: 'open'});
-
                 if (template?.content.childElementCount) {
                     shadow.appendChild(template.content.cloneNode(true));
                     }
@@ -198,7 +184,6 @@ document.querySelectorAll('[x-component]').forEach(component => {
                     });
                 });
             }
-
             // connecting to websockets
             if (this._dataState.get('ws')){
                 let messageHandler = document.messageHandler;
@@ -242,14 +227,12 @@ document.querySelectorAll('[x-component]').forEach(component => {
             }
             this.send(JSON.stringify(message));
         }
-
         attributeChangedCallback(attrName, o, n) {
             console.log('from attributeChangedCallback', attrName, o, n);
             if (n !== o){
                 this[attrName] = n;
             }
         }
-
         disconnectedCallback() {
             //super.disconnectedCallback();
             this.observer.disconnect();
@@ -273,7 +256,6 @@ document.querySelectorAll('[x-component]').forEach(component => {
                 }
             }
         }
-
         async getFile(url) {
             const res = await fetch(url);
             if (!res.ok) {
@@ -285,8 +267,6 @@ document.querySelectorAll('[x-component]').forEach(component => {
                 getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text(),
             };
         }
-
-
         dispatch(name, data, options = {
             bubble: true,
             cancelable: false,
@@ -300,8 +280,6 @@ document.querySelectorAll('[x-component]').forEach(component => {
             });
             this.dispatchEvent(event);
         }
-
-
         data() {
             
             let filterAttr = ["@", "x-", "id", "class", ":"]
@@ -310,13 +288,10 @@ document.querySelectorAll('[x-component]').forEach(component => {
                 ).filter(([attr, value]) => !filterAttr.some((letter) => attr.startsWith(letter)));
             return Object.fromEntries(thisEtries);            
         }
-
         stateData() {
             const attributes = this.getAttributeNames();
             const data = new Map();
-
             attributes.forEach(attribute => {
-
                 if (!isJSON(this.getAttribute(attribute))) {
                     data.set(attribute, this.getAttribute(attribute));
                 } else {
@@ -325,8 +300,6 @@ document.querySelectorAll('[x-component]').forEach(component => {
             });
             return data;
         }
-
     }
-
     customElements.define(componentName, XComponent);
 });

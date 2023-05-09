@@ -39,7 +39,7 @@ if settings.DEBUG:
 
 api.mount(
     "/css",
-    StaticFiles(directory=settings.webassets.static.dir, check_dir=False),
+    StaticFiles(directory=settings.webassets.static.css, check_dir=False),
     name="css",
 )
 api.mount(

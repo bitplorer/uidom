@@ -31,8 +31,7 @@ nv = nav_bar(
     ]
 )
 
-
 if __name__ == "__main__":
-    em_text = MarkdownElement("*hello world*")
+    em_text = MarkdownElement("~~hello world~~")
     print(em_text)
     # print(nv)
