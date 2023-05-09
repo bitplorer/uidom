@@ -369,7 +369,3 @@ class ReactiveComponent(Component):
     def _render(self, sb, indent_level, indent_str, pretty, xhtml):
         self._check_states_and_update()
         return super()._render(sb, indent_level, indent_str, pretty, xhtml)
-
-
-if __name__ == "__main__":
-    print(Component().attributes)
