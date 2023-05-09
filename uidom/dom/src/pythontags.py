@@ -68,9 +68,24 @@ class SelfAttr(Python):
         super(SelfAttr, self).__init__(f"self.{atr_name}", "", *dom_elements)
 
 
-if __name__ == "__main__":
-    import ast
+class With(Python):
+    self_dedent = True
+    child_dedent = False
+    left_delimiter = "with"
+    right_delimiter = ":"
 
+    def __init__(self, element_name, *children, **kwargs):
+        items = []
+        for k, v in kwargs.items():
+            k = self.clean_attribute(k)
+            k.replace("-", "_")
+            if k == "class":
+                k = "className"
+            items.append("%s='%s'" % (k, v))
+        super(With, self).__init__(element_name, f"({', '.join(items)})", *children)
+
+
+if __name__ == "__main__":
     person = Class(
         "Person",
         # Def("__init__", args="name address"),
@@ -78,3 +93,17 @@ if __name__ == "__main__":
         bases="models.Model logging.Logger",
     )
     print(person)
+
+    elem = With(
+        "html",
+        With("div", "pass", className="bg-rose-400"),
+        className="World",
+        hx_get="/index",
+    )
+    print("\n")
+    _html = Class(
+        "Html",
+        Def("render", elem, args="*args **kwargs"),
+        bases="HTMLElement",
+    )
+    print(_html)
