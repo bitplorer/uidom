@@ -4,7 +4,6 @@
 # https://opensource.org/licenses/MIT
 
 import argparse
-import sys
 import typing as t
 from functools import lru_cache
 from inspect import _empty
@@ -14,13 +13,13 @@ from typing import get_args
 from typingx import isinstancex
 from valio import Validator
 
-from uidom.dom.utils.functional import map_recursive
-from uidom.dom.utils.parameters import Parameters
+from uidom.utils.functional import map_recursive
+from uidom.utils.parameters import Parameters
 
 
 class CLIValidator(Validator):
     def custom_type(self, value, type_: type):
-        if not hasattr(type_, "__args__"):
+        if not hasattr(type_, "__args__") and isinstance(type_, type):
             # Handle the case where the type is a single type
             return (
                 map_recursive(lambda v: self._convert_value(v, type_), value)
@@ -31,30 +30,32 @@ class CLIValidator(Validator):
             # Handle the case where the type is a Union, Optional, or generic type
             subtypes = get_args(type_)
 
-            if type(None) not in subtypes and value is None:
-                ValueError(f"Value {value} is not a valid {type_}")
-
             if len(subtypes) == 1:
                 # Handle the case where the type is a List or Tuple with a single subtype
                 subtype = subtypes[0]
-                return map_recursive(lambda v: self.custom_type(v, subtype), value)
+                try:
+                    return self.custom_type(value, subtype)
+                except ValueError:
+                    pass
 
             if type(None) in subtypes and len(subtypes) == 2:
                 # Handle the case where the type is Optional[T]
                 subtype = subtypes[0] if subtypes[0] != type(None) else subtypes[1]
-                return map_recursive(lambda v: self.custom_type(v, subtype), value)
+                try:
+                    return self.custom_type(value, subtype)
+                except ValueError:
+                    pass
 
             # Handle the case where the type is a Union[T1, T2, ...] with multiple subtypes
 
             for subtype in subtypes:
                 try:
-                    return map_recursive(lambda v: self.custom_type(v, subtype), value)
+                    return self.custom_type(value, subtype)
                 except ValueError:
                     pass
             raise ValueError(f"Value {value} is not a valid {type_}")
         else:
-            if type_ is not None:
-                raise ValueError(f"Type {type_} not supported")
+            raise ValueError(f"Type {type_} not supported")
 
     def _convert_value(self, value, type_: type):
         if type_ is bool:
@@ -65,11 +66,9 @@ class CLIValidator(Validator):
             else:
                 raise ValueError(f"Value {value} is not a valid {type_}")
         try:
-            return (
-                map_recursive(lambda v: type_(v), value)
-                if type_ is not type(None)
-                else value
-            )
+            return type_(value) if type_ is not type(None) else value
+        except TypeError:
+            return value
         except ValueError:
             raise ValueError(f"Value {value} is not a valid {type_}")
 
@@ -88,22 +87,16 @@ class CLIValidator(Validator):
         return isinstancex(instance, self.annotation)
 
 
-@lru_cache
 def cli(function: t.Callable, *args):
     parser, func_param = _func_to_argparse_and_param(function, add_subparsers=True)
     namespace = parser.parse_args(args)
     arg_dict, kwarg_dict = func_param.parameters
-    _, var_arg = func_param.args
-    if var_arg is not None:
-        (var_arg,) = var_arg
-        var_arg = var_arg[0]
-    var_arg_name = var_arg or ""
+    var_arg_name = func_param.var_arg_name
     args_ = []
     for arg_name in list(arg_dict):
         arg_value = getattr(namespace, arg_name)
         if arg_name == var_arg_name:
-            if arg_value is not None:
-                args_.extend(arg_value)
+            args_.extend(arg_value)
         else:
             args_.append(arg_value)
     kwargs = {kw: getattr(namespace, kw) for kw in kwarg_dict}
@@ -125,7 +118,6 @@ def _func_to_argparse_and_param(
     # refer: https://pymotw.com/3/argparse/#mutually-exclusive-options
     func_param = Parameters(function, in_single_kwargs=False)
     func_name = function.__name__
-    sig_params = func_param.signature.parameters
     annotations = func_param.annotations
     arg_dict, kwarg_dict = func_param.parameters
     pos_arg, var_arg = func_param.args
@@ -159,14 +151,16 @@ def _func_to_argparse_and_param(
     optional_var_keyword = parser.add_argument_group(f"{func_name}: VAR_KEYWORD")
     filter_attr = ["self", "cls", "mcs"]
 
-    for arg_name in arg_dict:
-        if arg_name not in filter_attr:
-            arg_val = arg_dict[arg_name]
-            arg_annotation = annotations[arg_name]
+    for orig_arg_name in arg_dict:
+        if orig_arg_name not in filter_attr:
+            arg_default_val = func_param.default(orig_arg_name)
+            arg_val = arg_dict[orig_arg_name]
+            arg_annotation = annotations[orig_arg_name]
             arg_annotation_name = arg_annotation.__name__
+            arg_name = orig_arg_name.replace("_", "-")
             arg_cli_validator = CLIValidator(debug=True, logger=False)
             arg_cli_validator.annotation = arg_annotation
-            if sig_params[arg_name].default is not None and arg_val is None:
+            if arg_default_val is func_param.empty and not any([arg_val]):
                 # these are required arguments whoes default values are not present
                 # it may or may not have annotations
                 # refer: https://stackoverflow.com/a/59286623
@@ -188,7 +182,7 @@ def _func_to_argparse_and_param(
                 # annotations. if pos_arg, var_arg = ([], [('args', ())]),
                 # func.args is present it indicates that the pos_arg is empty
                 # and only variable argument present
-                if any(pos_arg) and any(arg_name == ar[0] for ar in pos_arg):
+                if any(pos_arg) and any(orig_arg_name == ar[0] for ar in pos_arg):
                     # if pos_arg is present then the default value is present for sure
                     if arg_annotation is _empty:
                         optional_positional_or_keyword.add_argument(
@@ -207,7 +201,7 @@ def _func_to_argparse_and_param(
                             required=False,
                             nargs="?",
                         )
-                if var_arg is not None and any(arg_name == ar[0] for ar in var_arg):
+                if any(var_arg) and any(orig_arg_name == ar[0] for ar in var_arg):
                     # we dont add any default value here as it is an optional field but also
                     # we don't know what will be the future value so leave it without defaults.
                     # PLEASE dont add defaults here.
@@ -227,40 +221,40 @@ def _func_to_argparse_and_param(
                             nargs="*",
                         )
 
-    for kw_name in kwarg_dict:
-        kw_annotation = annotations[kw_name]
+    for orig_kw_name in kwarg_dict:
+        kw_annotation = annotations[orig_kw_name]
         kw_annotation_name = kw_annotation.__name__
-
+        cli_kw_name = orig_kw_name.replace("_", "-")
         kw_cli_validator = CLIValidator(debug=True, logger=False)
         kw_cli_validator.annotation = kw_annotation
 
-        if any(kw_only) and kw_name in kw_only:
+        if any(kw_only) and orig_kw_name in kw_only:
             if kw_annotation is _empty:
                 optional_keyword_only.add_argument(
-                    f"--{kw_name}",
-                    default=kwarg_dict[kw_name],
-                    help=f"{kw_name} is an optional parameter, default {kwarg_dict[kw_name]}",
+                    f"--{cli_kw_name}",
+                    default=kwarg_dict[orig_kw_name],
+                    help=f"{cli_kw_name} is an optional parameter, default {kwarg_dict[orig_kw_name]}",
                     required=False,
                 )
             else:
                 optional_keyword_only.add_argument(
-                    f"--{kw_name}",
-                    default=kwarg_dict[kw_name],
-                    help=f"{kw_name} is an optional {kw_annotation_name} parameter, default {kwarg_dict[kw_name]}",
+                    f"--{cli_kw_name}",
+                    default=kwarg_dict[cli_kw_name],
+                    help=f"{cli_kw_name} is an optional {kw_annotation_name} parameter, default {kwarg_dict[orig_kw_name]}",
                     type=kw_cli_validator,
                     required=False,
                 )
-        elif var_kw is not None and kw_name in var_kw:
+        elif any(var_kw) and orig_kw_name in var_kw:
             if kw_annotation is _empty:
                 optional_var_keyword.add_argument(
-                    f"--{kw_name}",
-                    help=f"{kw_name} is an optional parameter",
+                    f"--{cli_kw_name}",
+                    help=f"{cli_kw_name} is an optional parameter",
                     required=False,
                 )
             else:
                 optional_var_keyword.add_argument(
-                    f"--{kw_name}",
-                    help=f"{kw_name} is an optional {kw_annotation_name} parameter",
+                    f"--{cli_kw_name}",
+                    help=f"{cli_kw_name} is an optional {kw_annotation_name} parameter",
                     type=kw_cli_validator,
                     required=False,
                 )
@@ -271,9 +265,9 @@ def _func_to_argparse_and_param(
             if callable(func_attr) and not attr.startswith("_"):
                 if subparsers is None:
                     subparsers = parser.add_subparsers(
-                        title="subcommands",
+                        title="Sub Commands",
                         description="valid subcommands",
-                        help=f" additional {func_name} sub-commands help",
+                        help=f" additional {func_name} sub-commands",
                     )
                 attr_parser = subparsers.add_parser(attr, help=func_attr.__doc__)
                 _, _ = _func_to_argparse_and_param(func_attr, attr_parser)
@@ -281,15 +275,14 @@ def _func_to_argparse_and_param(
 
 
 if __name__ == "__main__":
-    import json
-    import typing as t
-    from json import decoder
+    import sys
 
-    print(type(None) in get_args(t.Optional[int]))
-    vali = CLIValidator(debug=True, logger=False)
-    vtype = t.Union[bool, list[Path], bool]
+    from demosite.server import run
+
+    vali = CLIValidator(debug=True, logger=False, name="vali")
+    vtype = t.Union[bool, Path, list[bool]]
     vali.annotation = vtype
-    val = vali.custom_type([None, "1", ["Yes"]], type_=vtype)
+    val = vali.custom_type(["1", ["we"]], type_=vtype)
     print(val)
     # print(isinstance(val, vali))
-    # cli(cli, *sys.argv[1:])
+    # cli(run, *sys.argv[1:])
