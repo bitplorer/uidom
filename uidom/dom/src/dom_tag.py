@@ -4,9 +4,9 @@
 # https://opensource.org/licenses/MIT
 
 
-# pylint: disable=bad-indentation, bad-whitespace, missing-docstring
-
 import copy
+
+# pylint: disable=bad-indentation, bad-whitespace, missing-docstring
 import numbers
 import threading
 import typing
@@ -18,16 +18,16 @@ try:
     from collections.abc import Callable
 except ImportError:
     # Python 2.7
-    from collections import Callable
+    from collections import Callable  # type: ignore
 
 try:
-    basestring = basestring
+    basestring = basestring  # type: ignore
 except NameError:  # py3
     basestring = str
     unicode = str
 
 try:
-    import greenlet
+    import greenlet  # type: ignore
 except ImportError:
     greenlet = None
 
@@ -92,12 +92,13 @@ class dom_tag(object):
 
         # Add child elements
         if args:
-            self.add(*args)
+            self.add(args)
 
         for attr, value in kwargs.items():
             self.set_attribute(*type(self).clean_pair(attr, value))
 
-        self._ctx = None
+        # this is where the this class instance is added to the parent context via _add_to_context
+        self._ctx: typing.Optional[dom_tag.frame] = None
         self._add_to_ctx()
 
     # context manager
@@ -106,6 +107,11 @@ class dom_tag(object):
     _with_contexts: typing.DefaultDict = defaultdict(list)
 
     def _add_to_ctx(self):
+        # here we are assuming that when the self is initialized it is
+        # under only single level of context and that the thread_context to which its
+        # child is added is same as that of self. But its not true in case we define
+        # render() methods in dom_tag subclasses in with multiple levels of context
+        # are present where a child can be added to subcontext
         stack = dom_tag._with_contexts.get(_get_thread_context())
         if stack:
             self._ctx = stack[-1]
@@ -122,9 +128,9 @@ class dom_tag(object):
         frame = stack.pop()
 
         for item in frame.items:
-            if not hasattr(item, "_entry"):
-                if item in frame.used:
-                    continue
+            if item in frame.used:
+                continue
+            # if not hasattr(item, "_entry"):
             self.add(item)
         if not stack:
             del dom_tag._with_contexts[thread_id]
@@ -180,10 +186,13 @@ class dom_tag(object):
         # assume that a document is correct in the subtree
         if self.document != doc:
             self.document = doc
-            for i in self.children:
-                if not isinstance(i, dom_tag):
-                    return
-                i.setdocument(doc)
+            # we changed "for child in self.children" to "for child in self"
+            # because we want to implement custom __iter__ method that returns
+            # children that can refere any entry point in dom_tag subclasses
+            for child in self:
+                if not isinstance(child, dom_tag):
+                    continue
+                child.setdocument(doc)
 
     def add(self, *args):
         """
@@ -253,8 +262,16 @@ class dom_tag(object):
         attrs = [(self.clean_attribute(attr), value) for attr, value in kwargs.items()]
 
         results = []
-        for child in self.children:
+        # the reason for changing from "for child in self.children" to "for child in self" below
+        # is that self already has __iter__ method and it iter over self.children, also when we
+        # subclass dom_tag its subclasses can implement different __iter__ method so we don't have
+        # to care for each implementations.
+
+        for child in self:
             if isinstance(tag, (basestring, type)):
+                # tags here can be of any type (including basestring type), while
+                # child can be only string or dom_tag.
+                #
                 if (isinstance(tag, basestring) and type(child).__name__ == tag) or (
                     not isinstance(tag, basestring) and isinstance(child, tag)
                 ):
@@ -393,7 +410,7 @@ class dom_tag(object):
 
     def _render_children(self, sb, indent_level, indent_str, pretty, xhtml):
         inline = True
-        for child in self.children:
+        for child in self:
             if isinstance(child, dom_tag):
                 if pretty and not child.is_inline:
                     inline = False

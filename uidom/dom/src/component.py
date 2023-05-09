@@ -3,8 +3,8 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
+from __future__ import annotations
 
-import inspect
 from dataclasses import asdict, dataclass, field
 from html import unescape
 from pathlib import Path
@@ -12,12 +12,11 @@ from typing import Iterable, List, Union
 
 from marko import convert as markdown
 
-from uidom.dom.src import csstags, htmltags, jinjatags
-from uidom.dom.src import string_to_element as str2elem
-from uidom.dom.src import svgtags
+from uidom.dom.src import csstags, htmltags, jinjatags, svgtags
 from uidom.dom.src.dom_tag import dom_tag
+from uidom.dom.src.html_string import string_to_element
 from uidom.dom.src.main import extension
-from uidom.dom.utils.parameters import Parameters
+from uidom.utils.parameters import Parameters
 
 __all__ = ["Component", "ReactiveComponent"]
 
@@ -43,7 +42,6 @@ class Component(extension.Tags):
     string_is_markdown: bool = field(init=False, default=False)
 
     def __init__(self, *args, **kwargs):
-        super(Component, self).__init__()
         # first we get the child from the render method and sanitize it.
         child = self.render(*args, **kwargs)
 
@@ -52,30 +50,26 @@ class Component(extension.Tags):
                 child = (
                     markdown(child) if self.escape_string else unescape(markdown(child))
                 )
-            child = str2elem.string_to_element(child, escape=self.escape_string)
-            child_added = super(Component, self).add(child)
-            # string_to_element always returns a list thats why we parse a bit below
-            child_added = child_added[0] if len(child_added) == 1 else child_added
+            child = string_to_element(child, escape=self.escape_string)
 
         elif isinstance(child, Path):
             string_is_markdown = child.suffix == ".md"
-            child = self.from_file(child)
+            child = self._from_file(child)
             if string_is_markdown:
                 child = (
                     markdown(child) if self.escape_string else unescape(markdown(child))
                 )
-            child = str2elem.string_to_element(child, escape=self.escape_string)
-            child_added = super(Component, self).add(child)
-            # string_to_element always returns a list thats why we parse a bit below
-            child_added = child_added[0] if len(child_added) == 1 else child_added
-        else:
-            if isinstance(child, (list, tuple)) and len(child) == 1:
-                child = child[0]
-            child_added = (
-                super(Component, self).add(child) if child is not self else self
-            )
+            child = string_to_element(child, escape=self.escape_string)
 
-        self._entry = self if isinstance(child_added, (list, tuple)) else child_added
+        if isinstance(child, (list, tuple)) and len(child) == 1:
+            child = child[0]
+
+        super(Component, self).__init__()
+
+        if child is not self:
+            self.add(child)
+
+        self._entry = self if isinstance(child, (list, tuple)) else child
 
         # we perform checks on the _entry "after" the dom initialization because .get method
         # looks into children
@@ -85,7 +79,7 @@ class Component(extension.Tags):
         self, element: Union[dom_tag, extension.Tags]
     ) -> Union[dom_tag, extension.Tags]:  # noqa
         if self.render_tag:
-            raise ValueError(f"{self.render_tag} can not be true for Components")
+            raise ValueError(f"{self.render_tag=} can not be true for Components")
         return element
 
     def add(self, *args):
@@ -135,14 +129,30 @@ class Component(extension.Tags):
 
     __getattr__ = __getitem__
 
+    def clear(self):
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
+            self._entry.clear()
+        else:
+            super().clear()
+
     def __len__(self):
         if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
             return len(self._entry)
         return super().__len__()
 
+    def __iter__(self):
+        if not self.render_tag and hasattr(self, "_entry") and self._entry is not self:
+            return self._entry.__iter__()
+        return super().__iter__()
+
     def __hash__(self) -> int:
-        if hasattr(self, "_entry") and self._entry is not self:
-            return hash(self._entry)
+        # **DON'T create** hash with self._entry that is hash(self._entry),
+        # inside __exit__ stack frame has a 'set' of used tags. it uses
+        # hash to check membership. if we use it like below the Component
+        # classes will be skipped. SO PLEASE DON'T CHANGE IT. I wasted
+        # 3 days for this simple issue with lots of head scratching.
+        # if hasattr(self, "_entry") and self._entry is not self:
+        #     return hash(self._entry)
         return super().__hash__()
 
     def __eq__(self, other) -> bool:
@@ -188,31 +198,32 @@ class Component(extension.Tags):
             f"{self.__class__.__name__}.{self.render.__name__} method not implemented"
         )
 
-    def from_file(self, file_name: Union[str, Path]) -> str:
+    @classmethod
+    def _from_file(cls, file_name: Union[str, Path]) -> str:
         file_location = None
 
-        if isinstance(self.files_directory, Path):
-            if not self.files_directory.exists():
-                raise FileNotFoundError(f"file {self.files_directory=} does not exists")
+        if isinstance(cls.files_directory, Path):
+            if not cls.files_directory.exists():
+                raise FileNotFoundError(f"file {cls.files_directory=} does not exists")
 
-            if not self.files_directory.is_dir():
-                raise ValueError(f"{self.files_directory=} is not a directory")
+            if not cls.files_directory.is_dir():
+                raise ValueError(f"{cls.files_directory=} is not a directory")
 
-            file_location = self.files_directory / file_name
+            file_location = cls.files_directory / file_name
 
-        elif self.files_directory:
-            if not isinstance(self.files_directory, str):
-                raise ValueError(f"{self.files_directory=} is not str")
+        elif cls.files_directory:
+            if not isinstance(cls.files_directory, str):
+                raise ValueError(f"{cls.files_directory=} is not str")
 
-            self.files_directory = Path(self.files_directory)
+            cls.files_directory = Path(cls.files_directory)
 
-            if not self.files_directory.exists():
-                raise FileNotFoundError(f"file {self.files_directory=} does not exists")
+            if not cls.files_directory.exists():
+                raise FileNotFoundError(f"file {cls.files_directory=} does not exists")
 
-            if not self.files_directory.is_dir():
-                raise ValueError(f"{self.files_directory=} is not a directory")
+            if not cls.files_directory.is_dir():
+                raise ValueError(f"{cls.files_directory=} is not a directory")
 
-            file_location = self.files_directory / file_name
+            file_location = cls.files_directory / file_name
 
         else:
             file_location = Path(file_name) if isinstance(file_name, str) else file_name
@@ -224,6 +235,9 @@ class Component(extension.Tags):
             raise ValueError(f"{file_location} is not a file")
 
         return file_location.read_text()
+
+    def from_file(cls, file_name: Union[str, Path]) -> "Component":
+        return cls(cls._from_file(file_name))
 
     def script(self, *args, **kwargs):
         ...
@@ -259,19 +273,18 @@ class ReactiveComponent(Component):
         # as to_dict method of dataclass probably calls for locals that gets mangled with document locals
 
     def _get_param(self, function, new_kwargs):
-        func = Parameters(function, in_single_kwargs=False)
-        sig_params = func.signature.parameters
-        _arg_dict, _kwarg_dict = func.parameters
-        var_arg_name = func.var_arg_name
+        param = Parameters(function, in_single_kwargs=False)
+        _arg_dict, _kwarg_dict = param.parameters
+        var_arg_name = param.var_arg_name
         arg_dict = {k: new_kwargs.get(k, v) for k, v in _arg_dict.items()}
         kwargs = {k: new_kwargs.get(k, v) for k, v in _kwarg_dict.items()}
         args = []
         for arg_name in arg_dict:
             arg_val = arg_dict[arg_name]
             if (
-                sig_params[arg_name].default is inspect.Parameter.empty
+                param.default(arg_name) is param.empty
                 and arg_name not in new_kwargs
-                and not any(arg_val)
+                and not any([arg_val])
             ):
                 # So when we land here in this block of code, arg_name is not in new_kwargs
                 # so we haven't updated arg_dict from new_kwargs for sure, also we are sure
@@ -300,13 +313,23 @@ class ReactiveComponent(Component):
         # counter_2.increment() <- running the method re renders and updates counter_2 states
         # counter_2.increment()
         # return counters
-        # old_parent = self.parent
+        old_parent = self.parent
         old_entry_children = self._entry.children
 
-        # if old_parent is not None:
-        #     index_of_entry = old_parent.children.index(self)
+        if old_parent is not None:
+            index_of_entry = old_parent.children.index(self)
 
         self.clear()
+        # this self.clear is to clear any self._entry's childs that are present
+        if self._entry is not self:
+            # deleting self._entry makes sure that the stale self entry is removed
+            # from the tree completely.
+            del self._entry
+
+        # this clear runs on the self instead of self._entry as we have deleted
+        # this._entry so it ensures any trace of old children in the self is removed
+        self.clear()
+
         args, kwargs = self._get_param(self.render, states)
         if args and kwargs:
             elements = self.render(*args, **kwargs)
@@ -325,8 +348,8 @@ class ReactiveComponent(Component):
             unadded_old_entry_children = old_entry_children[len(new_entry_children) :]
             self._entry.add(unadded_old_entry_children)
 
-        # if old_parent is not None:
-        #     old_parent.set_attribute(index_of_entry, self)
+        if old_parent is not None:
+            old_parent.set_attribute(index_of_entry, self)
 
         return self._entry
 
@@ -346,3 +369,7 @@ class ReactiveComponent(Component):
     def _render(self, sb, indent_level, indent_str, pretty, xhtml):
         self._check_states_and_update()
         return super()._render(sb, indent_level, indent_str, pretty, xhtml)
+
+
+if __name__ == "__main__":
+    print(Component().attributes)

@@ -40,10 +40,10 @@ class Tags(dom_tag, dom1core):
     attribute_prefix_map: dict = {}
 
     def __init__(self, *args, **kwargs):
-        if any(args):
-            msg = f"can only pass {dom_tag!r} or {str!r} types in arguments, got {args!r} instead"
-            if not all(map(lambda x: isinstance(x, (dom_tag, str)), args)):
-                raise TypeError(msg)
+        # if any(args):
+        # msg = f"can only pass {dom_tag!r} or {str!r} types in arguments, got {args!r} instead"
+        # if not all(map(lambda x: isinstance(x, (dom_tag, str)), args)):
+        #     raise TypeError(msg)
         super(Tags, self).__init__(*args, **kwargs)
 
     def _render_open_tag(
@@ -321,10 +321,11 @@ class Tags(dom_tag, dom1core):
                 child._render(sb, indent_level, indent_str, pretty, xhtml)
 
             else:
+                if isinstance(child, dom_text):
+                    child = child.__render__()
+
                 # check if the child is not an empty string '' via if child:
                 if child or any(child):
-                    if isinstance(child, dom_text):
-                        child = child.__render__()
                     # if any child exists maybe its a string or some object, here we check if the pretty is True.
                     # Notice here the child is only string or we force it to act like string by casting it into unicode and
                     # we can't check child.is_inline so we fallback on 'pretty' flag. if its True we set the inline flag as
@@ -345,7 +346,7 @@ class Tags(dom_tag, dom1core):
                         lines = child.splitlines()
                         for line in lines:
                             sb.append(unicode(line))
-                            if line != lines[-1]:
+                            if line and line != lines[-1]:
                                 sb, inline = self._new_line_and_inline_handler(
                                     sb,
                                     indent_level,

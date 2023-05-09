@@ -163,11 +163,11 @@ class dom_text(dom_tag):
     is_inline = False
 
     def __init__(self, _text, escape=True):
-        super(dom_text, self).__init__()
         if escape:
             self.text = str_escape(_text)
         else:
             self.text = _text
+        super(dom_text, self).__init__()
 
     def _render(self, sb, *a, **kw):
         sb.append(self.text)
