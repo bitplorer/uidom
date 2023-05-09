@@ -3,6 +3,7 @@ name = "uidom"
 version = "0.2a"
 description = "HTML library"
 authors = ["bitplorer <bitplorer@outlook.com>"]
+license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
