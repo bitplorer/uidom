@@ -3,7 +3,7 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-from .uicli import uidom
+from .cli import uidom
 
 # import sys
 # from importlib import import_module, resources
