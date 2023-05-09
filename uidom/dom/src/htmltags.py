@@ -101,31 +101,13 @@ ERR_CONTEXT = "context"
 ERR_CONTENT = "content"
 
 
-class HtmlSingleTemplates(extension.SingleTemplates):
+class DocType(extension.SingleTemplates):
+    left_delimiter = "<!"
+    right_delimiter = ">"
     self_dedent = False
     child_dedent = True
     enable_left_delimiter_space = False
     enable_right_delimiter_space = False
-
-
-class HtmlDoubleTemplates(extension.DoubleTemplates):
-    # self_dedent = True
-    # child_dedent = True
-    enable_left_delimiter_space = True
-    enable_right_delimiter_space = True
-
-
-class HtmlSingleTags(extension.SingleTags):
-    child_dedent = True
-
-
-class HtmlDoubleTags(extension.DoubleTags):
-    pass
-
-
-class DocType(HtmlSingleTemplates):
-    left_delimiter = "<!"
-    right_delimiter = ">"
 
     def __init__(self, template_text="html", *dom_elements):
         """
@@ -1287,7 +1269,6 @@ class font(html_tag):
 class comment(extension.SingleTemplates):
     left_delimiter = "<!--"
     right_delimiter = "-->"
-    self_dedent = True
     enable_left_delimiter_space = True
     enable_right_delimiter_space = True
 
@@ -1314,7 +1295,7 @@ if __name__ == "__main__":
 
     print(comment("sjskdj"))
     print(div(div(div(div(script("aa")), __inline=True))))
-    print(extension.PlaceholderTag(dom_text("h"), dom_text("h"), dom_text("h")))
+    print(extension.PlaceholderTag(dom_text("a"), dom_text("b"), dom_text("  c data")))
     print(extension.PlaceholderTag("h", "h", "h"))
     print(div(div(img(img(), img(self_dedent=True), div()), img(), div(div()))))
     print(div(div(div(img(div(div(img())))))))
