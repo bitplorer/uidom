@@ -12,7 +12,7 @@ from .jinja import *  # isort: skip
 
 from .src import *  # isort: skip
 
-from .src.string_to_element import *  # isort: skip
+from .src.html_string import *  # isort: skip
 from .uniqueid import *  # isort: skip
 
 # https://github.com/microsoft/vscode/issues/35350#issuecomment-1093627529
