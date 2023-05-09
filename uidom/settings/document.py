@@ -3,7 +3,6 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-import logging
 import os
 import sys
 import typing as T
@@ -14,6 +13,7 @@ from pprint import pformat
 from uidom.dom.htmldocument import HtmlDocument
 from uidom.dom.src import ext
 from uidom.settings.paths import make_paths
+from uidom.utils.logger import uidom_logger
 
 __all__ = [
     "UiDOM",
@@ -26,9 +26,6 @@ __all__ = [
     "DatabaseDir",
     "CacheDir",
 ]
-
-
-# file_logger.addHandler(logging.StreamHandler())
 
 
 @dataclass
@@ -79,11 +76,9 @@ class DirConfig(DirType):
         if isinstance(self.base_dir, str):
             if os.path.isfile(self.base_dir):
                 # like when __file__ is passed in the BASE_DIR param
-                self.BASE_DIR = Path(self.base_dir).parent.resolve()
+                self.base_dir = Path(self.base_dir).parent.resolve()
             else:
-                self.BASE_DIR = Path(self.base_dir).resolve()
-
-        # self.SUB_DIR = self.sub_dir
+                self.base_dir = Path(self.base_dir).resolve()
 
         subdir: T.Union[str, Path] = (
             self.sub_dir
@@ -91,20 +86,20 @@ class DirConfig(DirType):
             else os.path.dirname(self.sub_dir)
         )
 
-        base_dir: T.Union[str, Path] = self.BASE_DIR
+        base_dir: T.Union[str, Path] = self.base_dir
 
         if subdir:
-            if isinstance(self.BASE_DIR, str):
-                if self.BASE_DIR != "__main__":
-                    if not os.path.isfile(self.BASE_DIR):
-                        if os.path.isdir(self.BASE_DIR):
-                            base_dir = os.path.join(self.BASE_DIR, subdir)
+            if isinstance(self.base_dir, str):
+                if self.base_dir != "__main__":
+                    if not os.path.isfile(self.base_dir):
+                        if os.path.isdir(self.base_dir):
+                            base_dir = os.path.join(self.base_dir, subdir)
                         else:
                             base_dir = os.path.join(
-                                self.BASE_DIR.replace(".", os.path.sep), subdir
+                                self.base_dir.replace(".", os.path.sep), subdir
                             )
                     else:
-                        base_dir = os.path.join(os.path.dirname(self.BASE_DIR), subdir)
+                        base_dir = os.path.join(os.path.dirname(self.base_dir), subdir)
                 else:
                     folder = sys.modules["__main__"].__file__ or ""
                     base_dir = (
@@ -113,7 +108,7 @@ class DirConfig(DirType):
                         else Path(folder) / subdir
                     )
             else:
-                base_dir = self.BASE_DIR / subdir
+                base_dir = self.base_dir / subdir
 
         self.BASE_DIR = Path(
             base_dir if any([base_dir]) else os.path.abspath(f".{os.path.sep}")
@@ -243,10 +238,7 @@ class WebAssets(DirConfig):
         # basic settings
         self.dir = self.BASE_DIR
 
-        self.dir_logger = logging.getLogger(str(self.dir.parent.name))
-        self.dir_logger.setLevel(logging.INFO)
-        handler = logging.StreamHandler(stream=sys.stdout)
-        self.dir_logger.addHandler(handler)
+        self.dir_logger = uidom_logger
 
         # directories
         self.template: TemplateDir = template_dir(dir_config=self)
@@ -279,7 +271,7 @@ class WebAssets(DirConfig):
             self.dir_logger.info(f"(DIR):{self.dir.parent}")
             for file in sorted(dirs_created):
                 if file:
-                    self.dir_logger.info(Path(file).relative_to(self.dir.parent))
+                    self.dir_logger.info(pformat(Path(file)))
 
     def __dir__(self) -> T.Iterable[str]:
         return sorted(
