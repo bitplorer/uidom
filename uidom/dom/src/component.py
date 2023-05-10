@@ -42,6 +42,9 @@ class Component(extension.Tags):
     string_is_markdown: bool = field(init=False, default=False)
 
     def __init__(self, *args, **kwargs):
+        global markdown
+        markdown = kwargs.pop("markdown", None) or markdown
+        markdown = getattr(markdown, "convert", markdown)
         # first we get the child from the render method and sanitize it.
         child = self.render(*args, **kwargs)
 
