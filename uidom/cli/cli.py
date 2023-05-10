@@ -53,28 +53,34 @@ async def home(scope, receive, send):
 
 SERVER_TEMP = _Template(
     """
-
-import uvicorn
-
+HAS_UVICORN = True
+ 
+try:
+    import uvicorn
+except ImportError:
+    pass
+    HAS_UVICORN = True
+    
 if __name__ == "__main__":
-    uvicorn.run(
-        "$variable::app_name.api:home",
-        host="127.0.0.1",
-        port=8081,
-        reload=True,
-        # ssl_keyfile='../$variable::app_name/key.pem',
-        # ssl_certfile='../$variable::app_name/cert.pem'
-    )
+    if HAS_UVICORN:
+        uvicorn.run(
+            "$variable::app_name.api:home",
+            host="127.0.0.1",
+            port=8081,
+            reload=True,
+            # ssl_keyfile='../$variable::app_name/key.pem',
+            # ssl_certfile='../$variable::app_name/cert.pem'
+        )
     """
 )
 
 
 DOCUMENT_TEMP = _Template(
     """
-from $variable::app_name import settings
-from $variable::app_name.tailwindcss import tailwind
 from uidom import UiDOM
 from uidom.dom import link, raw
+from $variable::app_name import settings
+from $variable::app_name.tailwindcss import tailwind
 
 __all__ = ["document"]
 
