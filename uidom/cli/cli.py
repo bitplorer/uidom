@@ -59,7 +59,7 @@ try:
     import uvicorn
 except ImportError:
     pass
-    HAS_UVICORN = True
+    HAS_UVICORN = False
     
 if __name__ == "__main__":
     if HAS_UVICORN:
