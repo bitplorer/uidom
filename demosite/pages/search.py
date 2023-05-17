@@ -104,7 +104,6 @@ class Search2(XComponent):
                 "bg-zinc-100 leading-none text-zinc-500 overflow-hidden rounded-md ",
                 x_data="{searchText: '', show: false, ...$el.parentElement.data()}",
             ):
-
                 div(
                     icon,
                     className="absolute "

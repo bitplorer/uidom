@@ -3,15 +3,12 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-from functools import partial
 from pathlib import Path
 
 from starlette.config import Config
 from starlette.websockets import WebSocket
 
 from uidom import WebAssets
-
-# from uidom.scripts import cdn
 
 BASE_DIR = Path(__file__).parent
 
@@ -23,21 +20,6 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 
 # defining webassets
 webassets = WebAssets(base_dir=BASE_DIR, sub_dir="assets")
-
-# cdn2static = partial(
-#     cdn.CDNToStatic,
-#     static_dir=webassets.STATIC_JS_DIR,
-#     static_url=webassets.url.STATIC_JS_URL,
-# )
-
-# unpkg_static = cdn2static(base_url="https://unpkg.com")
-# jsdelivr_static = cdn2static(base_url="https://cdn.jsdelivr.net/npm")
-
-# alpinejs_static = jsdelivr_static / "alpinejs"
-# htmx_static = unpkg_static / "htmx.org"
-
-# htmx_js = htmx_static["@1.8.6/dist/htmx.min.js"]
-# alpine_js = alpinejs_static["@3.12.0/dist/cdn.min.js"]
 
 if DEBUG:
     from uidom import reloader

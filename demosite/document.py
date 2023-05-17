@@ -63,7 +63,7 @@ document = UiDOM(
     body=[
         # Htmx and Hyperscript
         script(
-            src="https://unpkg.com/htmx.org@1.8.6/dist/htmx.min.js",
+            src="https://unpkg.com/htmx.org@1.9.0/dist/htmx.min.js",
             crossorigin="anonymous",
             rel="prefetch",
         ),
