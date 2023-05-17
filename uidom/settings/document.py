@@ -52,7 +52,7 @@ class UiDOM(object):
 class DirType(object):
     def __iter__(self):
         for item in self.__dict__:
-            if "ROOT" in item or "DIR" in item:
+            if "DIR" in item:
                 yield self.__dict__[item]
 
     def __next__(self):
@@ -191,12 +191,12 @@ class UploadDir(Dir):
         self.VIDEO_DIR = self.MEDIA_DIR / self.VIDEO_PATH
 
         self.dir: Path = self.UPLOAD_DIR
-        self.medias: Path = self.MEDIA_DIR
-        self.files: Path = self.FILE_DIR
+        self.media: Path = self.MEDIA_DIR
+        self.file: Path = self.FILE_DIR
 
-        self.images: Path = self.IMAGE_DIR
-        self.audios: Path = self.AUDIO_DIR
-        self.videos: Path = self.VIDEO_DIR
+        self.image: Path = self.IMAGE_DIR
+        self.audio: Path = self.AUDIO_DIR
+        self.video: Path = self.VIDEO_DIR
 
 
 class TemplateDir(Dir):
