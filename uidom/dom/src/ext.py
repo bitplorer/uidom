@@ -692,7 +692,6 @@ class StyleTags(Tags):
             pretty=pretty,
             xhtml=xhtml,
         )
-        # sb.append(''.join(["/", self.right_delimiter]) if self.is_single and xhtml else self.right_delimiter)
         return sb
 
     def _render_attribute(self, /, sb, indent_level, indent_str, pretty, xhtml):
@@ -744,7 +743,7 @@ class StyleTags(Tags):
 
             if value is None:  # minified xhtml attributes are added
                 r.append(" %s" % attribute)
-        return "".join(r)
+        return " ".join(r)
 
     @classmethod
     def clean_attribute(cls, attribute):
