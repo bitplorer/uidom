@@ -20,24 +20,24 @@ class BaseEventManager(object):
         self.__registered_events: list[str] = []
 
         # __original_method_registry keeps the track of the original methods that are decorated and are going to be
-        # added to the __events_when_activity and if the method has been already added to it then it won't
+        # added to the __events_with_activity and if the method has been already added to it then it won't
         # be added again as its the same method for the same event_name
         self.__original_method_registry: defaultdict = defaultdict(
             partial(defaultdict, list)
         )
-        self.__events_with_activity: defaultdict = defaultdict(
+        self.__events_with_activities: defaultdict = defaultdict(
             partial(defaultdict, list)
         )
 
-        # this _event_queue is used to signal that the
+        # this _event_queue can be used to signal for any purpose
         self._event_queue: Queue = Queue()
 
         # now adding the queue to the relay event so that anything that is pushed can be
 
     async def __aiter__(self):
-        for activity in self.__events_with_activity:
-            for event_name in self.__events_with_activity[activity]:
-                yield activity, event_name, self.__events_with_activity[activity][
+        for activity in self.__events_with_activities:
+            for event_name in self.__events_with_activities[activity]:
+                yield activity, event_name, self.__events_with_activities[activity][
                     event_name
                 ]
 
@@ -60,7 +60,9 @@ class BaseEventManager(object):
                         return await method(*args, **kwargs)
                     return method(*args, **kwargs)
 
-                self.__events_with_activity[activity][event_name].append(event_callback)
+                self.__events_with_activities[activity][event_name].append(
+                    event_callback
+                )
             else:
                 warn(
                     message=f"{activity} already added event {event_name} to method {method!r}"
@@ -71,9 +73,9 @@ class BaseEventManager(object):
 
     def _event_callbacks(self, event_name: str):
         callbacks = []
-        for activity in self.__events_with_activity:
-            if event_name in self.__events_with_activity[activity]:
-                callbacks.extend(self.__events_with_activity[activity][event_name])
+        for activity in self.__events_with_activities:
+            if event_name in self.__events_with_activities[activity]:
+                callbacks.extend(self.__events_with_activities[activity][event_name])
 
         return callbacks
 
@@ -86,8 +88,8 @@ class BaseEventManager(object):
         return self._event_callbacks(event_name)
 
     def __contains__(self, event_name):
-        for activity in self.__events_with_activity:
-            if event_name in self.__events_with_activity[activity]:
+        for activity in self.__events_with_activities:
+            if event_name in self.__events_with_activities[activity]:
                 return True
         return False
 
@@ -101,6 +103,10 @@ class BaseEventManager(object):
                 f"event {event_name} already added to the registered_events list"
             )
         self.__registered_events.append(event_name)
+
+    @property
+    def registered_activities(self) -> Dict[str, Dict[str, List[Callable]]]:
+        return self.__events_with_activities
 
     def _set_event_with_activity(
         self, activity: str, event_name_or_method: Union[str, CALLABLE]
@@ -123,7 +129,7 @@ class BaseEventManager(object):
         return self._on(activity, event_name)
 
     def _get_events_with_activity(self, activity: str) -> Dict[str, List[Callable]]:
-        return self.__events_with_activity[activity]
+        return self.registered_activities[activity]
 
     def set_event(
         self, activity: str, event_name_or_method: Union[str, CALLABLE]
