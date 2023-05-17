@@ -23,7 +23,7 @@ __all__ = [
     "CSRFToken",
     "Block",
     "Var",
-    "render",
+    "render_jinja",
     "JinjaSingleTags",
     "JinjaDoubleTags",
     "JinjaBaseTag",
@@ -41,7 +41,7 @@ class JinjaDoubleTags(JinjaBaseTag, extension.DoubleTemplates):
     enable_right_delimiter_space = True
 
     def __call__(self, **options):
-        return render(self, **options)
+        return render_jinja(self, **options)
 
 
 class JinjaSingleTags(JinjaBaseTag, extension.SingleTemplates):
@@ -51,7 +51,7 @@ class JinjaSingleTags(JinjaBaseTag, extension.SingleTemplates):
     enable_right_delimiter_space = True
 
     def __call__(self, **options):
-        return render(self, **options)
+        return render_jinja(self, **options)
 
 
 class Block(JinjaDoubleTags):
@@ -195,7 +195,7 @@ class Var(JinjaSingleTags):
         super(Var, self).__init__("", template_text, *dom_elements)
 
 
-def render(template, **options):
+def render_jinja(template, **options):
     return raw(
         Template(
             template.__render__() if isinstance(template, dom_tag) else template,

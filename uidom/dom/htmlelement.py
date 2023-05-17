@@ -7,7 +7,7 @@
 from dataclasses import dataclass
 
 from uidom.dom.src import DoubleTags, component
-from uidom.dom.src.jinjatags import render
+from uidom.dom.src.jinjatags import render_jinja
 
 __all__ = [
     "HTMLElement",
@@ -195,7 +195,7 @@ class JinjaElement(component.Component):
         return elem_or_str_or_path
 
     def __call__(self, **options):
-        return render(self, **options)
+        return render_jinja(self, **options)
 
 
 class MarkdownElement(component.Component):
