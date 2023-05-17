@@ -130,7 +130,6 @@ class dom_tag(object):
         for item in frame.items:
             if item in frame.used:
                 continue
-            # if not hasattr(item, "_entry"):
             self.add(item)
         if not stack:
             del dom_tag._with_contexts[thread_id]
@@ -514,7 +513,7 @@ def attr(*args, **kwargs):
     dicts = args + (kwargs,)
     for d in dicts:
         for attr, value in d.items():
-            c.set_attribute(*dom_tag.clean_pair(attr, value))
+            c.set_attribute(*c.clean_pair(attr, value))
 
 
 # escape() is used in render
