@@ -14,13 +14,49 @@ class CSS(extension.StyleTags):
 
 
 class CSSClass(extension.StyleTags):
-    is_class = True
+    tagname_prefix = "."
     is_inline = True
 
 
 class CSSId(extension.StyleTags):
-    is_id = True
+    tagname_prefix = "#"
     is_inline = True
+
+
+class Keyframes(extension.StyleTags):
+    tagname_prefix = "@keyframes "
+    attribute_joiner = "%s %s"
+
+    class EmptyStyleTag(extension.StyleTags):
+        tagname = ""
+        is_inline = True
+
+    def _render_attribute(self, /, sb, indent_level, indent_str, pretty, xhtml):
+        for key, value in self.attributes.items():
+            if not isinstance(value, (dict, self.EmptyStyleTag)):
+                raise TypeError(
+                    f"{key}={value} is not dict or {self.EmptyStyleTag.__class__} type"
+                )
+            if not isinstance(value, self.EmptyStyleTag):
+                self.attributes[key] = self.EmptyStyleTag(value)
+        return super()._render_attribute(sb, indent_level, indent_str, pretty, xhtml)
+
+    @staticmethod
+    def _to_kebab_case(string):
+        kebab_string = ""
+        for i, char in enumerate(string):
+            if char.isupper():
+                if i > 0:
+                    kebab_string += "-"
+                kebab_string += char.lower()
+            else:
+                kebab_string += char
+        return kebab_string
+
+    def _clean_name(self, name):
+        name = name.replace("_", "-")
+        name = self._to_kebab_case(name)
+        return super()._clean_name(name)
 
 
 class CSSProperty(extension.StyleTags):
@@ -45,7 +81,7 @@ class CSSProperty(extension.StyleTags):
 
         class Apply(extension.StyleTags):
             tagname = self._apply.lower()
-            is_apply = True
+            attribute_joiner = "@%s %s;"
             is_inline = self.is_inline
 
         self.cls = Class
@@ -65,16 +101,22 @@ if __name__ == "__main__":
         product_category = CSSProperty()
         product_id = CSSProperty()
 
-    order = Order(div("hello"))
+    order = Order()
     prod_name = Order.product_name.id(background_color="red", width="12%")
     category = Order.product_category.cls(color="#23cfff")
     prod_id = Order.product_id.apply(apply="bg-rose-500 text-rose-400")
-    print(order)
     # products.attributes.update(padding="10px")
     prod_name["boxsize"] = "border-box"
     prod_name["background-color"] = "red"
-    # print(prod_name)
     # print(order.product_name.css(textdecoration="none"))
     print(category)
     prod_id.add(prod_name)
-    print(prod_id)
+
+    class chart_animation(Keyframes):
+        pass
+
+    x = chart_animation(
+        _from=dict(transform="translateX(0%)", height="10px"),
+        to=dict(transform="translateX(100%)"),
+    )
+    print(x)
