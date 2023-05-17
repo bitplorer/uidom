@@ -664,9 +664,8 @@ class StyleTags(Tags):
     left_delimiter = "{"
     right_delimiter = "}"
     self_dedent = False
-    is_class = False
-    is_id = False
-    is_apply = False
+    tagname_prefix = ""
+    attribute_joiner = "%s: %s;"
 
     def _render_open_tag(
         self,
@@ -697,19 +696,13 @@ class StyleTags(Tags):
         return sb
 
     def _render_attribute(self, /, sb, indent_level, indent_str, pretty, xhtml):
-        if not self.is_apply:
-            attribute_joiner = (
-                "%s:%s;"
-                if not pretty
-                else f"{indent_str}%s: %s;\n" + (indent_str * indent_level)
-            )
-        else:
-            attribute_joiner = (
-                "@%s %s;"
-                if not pretty
-                else f"{indent_str}@%s %s;\n" + (indent_str * indent_level)
-            )
-        attribute_items = sorted(self.attributes.items())
+        attribute_joiner = (
+            f"{self.attribute_joiner}".replace(" ", "")
+            if not pretty
+            else f"{indent_str}{self.attribute_joiner}\n" + (indent_str * indent_level)
+        )
+
+        attribute_items = self.attributes.items()
 
         for attribute, value in attribute_items:
             if (
@@ -734,23 +727,16 @@ class StyleTags(Tags):
             if name[0] == "_":
                 name = name[1:]
 
-        if all([self.is_class, self.is_id]):
-            raise AttributeError(f"{name} can not have both is_class and is_id as True")
-
-        if self.is_class:
-            name = "".join([".", name])
-
-        if self.is_id:
-            name = "".join(["#", name])
+        name = "".join([self.tagname_prefix, name])
 
         return name
 
     @property
     def attr(self):
         r = []
-        attribute_joiner = "%s:%s;" if not self.is_apply else "@%s %s;"
+        attribute_joiner = self.attribute_joiner
 
-        for attribute, value in sorted(self.attributes.items()):
+        for attribute, value in self.attributes.items():
             if (
                 value is not False and value is not None
             ):  # False values must be omitted completely
