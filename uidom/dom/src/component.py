@@ -369,6 +369,12 @@ class ReactiveComponent(Component):
             # of those values and pass them while we re_render the Component.
             self._re_render(**self.__states)
 
+    def set_attribute(self, key, value):
+        self._check_states_and_update()
+        super().set_attribute(key=key, value=value)
+
+    __setitem__ = set_attribute
+
     def _render(self, sb, indent_level, indent_str, pretty, xhtml):
         self._check_states_and_update()
         return super()._render(sb, indent_level, indent_str, pretty, xhtml)
