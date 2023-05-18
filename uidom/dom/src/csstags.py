@@ -6,7 +6,7 @@
 
 from uidom.dom.src.main import extension
 
-__all__ = ["CSSClass", "CSSId", "CSS", "CSSProperty"]
+__all__ = ["CSSClass", "CSSId", "CSS", "CSSProperty", "Keyframes"]
 
 
 class CSS(extension.StyleTags):
