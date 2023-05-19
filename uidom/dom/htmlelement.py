@@ -113,11 +113,10 @@ class CustomElement(XComponent):
         return self.__custom_element_checks(element)
 
     def __custom_element_checks(self, element):  # noqa
-        shadow_root_attr = None
         try:
             shadow_root_attr = element["shadowroot"]
         except AttributeError:
-            pass
+            shadow_root_attr = None
 
         if shadow_root_attr:
             raise AttributeError(
@@ -125,6 +124,8 @@ class CustomElement(XComponent):
             )
         return element
 
+
+class ExampleCustomElement(CustomElement):
     def render(self, tag_name):
         # smallest example of custom elements
         with self.html_tags.template(x_component=tag_name) as cus_elem:
@@ -141,7 +142,10 @@ class WebComponent(XComponent):
         return self.__web_component_checks(element)
 
     def __web_component_checks(self, element):  # noqa
-        shadow_root_attr = element.get(shadowroot=None)
+        try:
+            shadow_root_attr = element["shadowroot"]
+        except AttributeError:
+            shadow_root_attr = element.get(shadowroot=None)
 
         if not shadow_root_attr:
             raise AttributeError(
@@ -149,6 +153,8 @@ class WebComponent(XComponent):
             )
         return element
 
+
+class ExampleWebComponent(WebComponent):
     def render(self, tag_name):
         # smallest example of a web component
         with self.html_tags.template(
@@ -166,16 +172,16 @@ class AlpineElement(component.Component):
     def __alpine_js_checks(self, element):
         # we look for x_data=None because we exactly don't know if its value is present,
         # so we get x_data for any value by making x_data=None.
-        x_data_attr = element.get(x_data=None)
+        try:
+            x_data_attr = element["x-data"]
+        except AttributeError:
+            x_data_attr = element.get(x_data=None)
 
         if not x_data_attr:
             raise AttributeError(
                 f"{self.__class__.__name__}.{element.__class__.__qualname__}: must have 'x-data' attribute"
             )
         return element
-
-    def render(self, *args, **kwargs):
-        ...
 
     def __and__(self, other):
         return super().__and__(other)
