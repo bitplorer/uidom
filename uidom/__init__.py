@@ -7,4 +7,4 @@
 from .slots import *  # isort: skip
 from .settings import *  # isort: skip
 
-__version__ = "0.2a5"
+__version__ = "0.2a6"
