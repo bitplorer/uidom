@@ -2,6 +2,7 @@ import asyncio
 import typing as t
 import unittest
 from dataclasses import dataclass
+from textwrap import dedent
 
 import toml
 
@@ -16,6 +17,36 @@ class TestVersion(unittest.TestCase):
 
     def test_version(self):
         self.assertEqual(__version__, self.version)
+
+
+class TestContext(unittest.TestCase):
+    def setUp(self):
+        def subcontext(*args):
+            with div("sub context") as _subcontext:
+                _subcontext.add(*args)
+            return _subcontext
+
+        self.subcontext = subcontext
+
+    def test_context_child(self):
+        with div("context") as context:
+            self.subcontext(div("inside subcontext"))
+
+        self.assertEqual(
+            context.__render__(),
+            dedent(
+                """\
+                <div>
+                  context
+                  <div>
+                    sub context
+                    <div>
+                      inside subcontext
+                    </div>
+                  </div>
+                </div>"""
+            ),
+        )
 
 
 class TestSingleTag(unittest.TestCase):
