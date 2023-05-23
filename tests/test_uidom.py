@@ -8,6 +8,7 @@ import toml
 
 from uidom import UiDOM, __version__
 from uidom.dom import *
+from uidom.dom.src.dom_tag import attr
 from uidom.web_io._events import BaseEventManager
 
 
@@ -737,6 +738,52 @@ class TestEventManager(unittest.TestCase):
         )
 
         asyncio.run(main())
+
+
+class TestFragments(unittest.TestCase):
+    def setUp(self):
+        self.Fragment = Fragment
+        self.MergeAttributesFragment = MergeAttributesFragment
+
+    def test_fragment(self):
+        with self.Fragment() as fragment:
+            attr(className="class_a")
+            attr(className="class_b")
+            div("a")
+            div("b")
+
+        # class_a is overridden by class_b here as attributes are not merged
+        self.assertEqual(
+            fragment.__render__(),
+            dedent(
+                """\
+                <div class="class_b">
+                  a
+                </div>
+                <div class="class_b">
+                  b
+                </div>"""
+            ),
+        )
+
+        with self.MergeAttributesFragment() as merged_attr_fragment:
+            attr(className="class_a")
+            attr(className="class_b")
+            div("a")
+            div("b")
+
+        self.assertEqual(
+            merged_attr_fragment.__render__(),
+            dedent(
+                """\
+                <div class="class_a class_b">
+                  a
+                </div>
+                <div class="class_a class_b">
+                  b
+                </div>"""
+            ),
+        )
 
 
 if __name__ == "__main__":
