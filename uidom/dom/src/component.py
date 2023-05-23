@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass, field
 from html import unescape
 from pathlib import Path
@@ -18,7 +19,7 @@ from uidom.dom.src.html_string import string_to_element
 from uidom.dom.src.main import extension
 from uidom.utils.parameters import Parameters
 
-__all__ = ["Component", "ReactiveComponent"]
+__all__ = ["Component", "ReactiveComponent", "Fragment", "MergeAttributesFragment"]
 
 
 @dataclass
@@ -258,6 +259,92 @@ class Component(extension.Tags):
 
     def __dir__(self) -> Iterable[str]:
         return sorted(iter(self.__dict__), key=lambda k: k)
+
+
+class Fragment(Component):
+    """Its just a placeholder which renders all its childrens
+        but not itself and passes all it attributes to its childrens.
+
+    Args:
+        None
+
+    Returns:
+        Fragment: it returns fragment which renders all its childrens
+    """
+
+    render_tag = False
+
+    def __enter__(self):
+        return super().__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        super().__exit__(exc_type, exc_val, exc_tb)
+        for child in self:
+            child.add(self.attributes)
+
+    def render(self):
+        # for this component to behave as a fragment we must simply return self
+        # Component class will take care of all the things itself.
+        return self
+
+
+class MergeAttributesFragment(Fragment):
+    """Merging the attributes with subcontexts via uidom.dom.src.dom_tag.attr
+
+    Args:
+        None:
+    Usage:
+        with MergeAttributesFragment():
+            attr(className=...)
+            attr(className=...)
+            div()
+            ### this div receives all the attributes set via attr methods contexts
+            ### but all the className kwargs are merged..
+
+    """
+
+    def _merge_x_data_attr(self, key, value):
+        if key == "x-data" and self.attributes.get(key, None):
+            x_data = json.loads(self.attributes.get(key).replace("'", '"'))
+            value = json.loads(value.replace("'", '"'))
+            if isinstance(x_data, dict) and isinstance(value, dict):
+                value = x_data | value
+            if value is None:
+                value = x_data
+            value = json.dumps(value).replace('"', "'")
+        return key, value
+
+    def _merge_event_attr(self, key, value):
+        if key.startswith("@") and self.attributes.get(key, None):
+            value = "; ".join([self.attributes[key], value])
+        return key, value
+
+    def _merge_bind_attr(self, key, value):
+        if key.startswith(":") and self.attributes.get(key, None):
+            raise ValueError(f"{key} merging not implemented yet")
+        return key, value
+
+    def _merge_class_attr(self, key, value):
+        if key == "class" and self.attributes.get(key, None):
+            value = " ".join([self.attributes[key], value])
+        return key, value
+
+    def set_attribute(self, key, value):
+        if key == "x-data":
+            key, value = self._merge_x_data_attr(key, value)
+
+        if key.startswith("@"):
+            key, value = self._merge_event_attr(key, value)
+
+        if key.startswith(":"):
+            key, value = self._merge_bind_attr(key, value)
+
+        if key == "class":
+            key, value = self._merge_class_attr(key, value)
+
+        super().set_attribute(key, value)
+
+    __setitem__ = set_attribute
 
 
 @dataclass(eq=False)
