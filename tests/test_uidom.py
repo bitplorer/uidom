@@ -743,7 +743,7 @@ class TestEventManager(unittest.TestCase):
 class TestFragments(unittest.TestCase):
     def setUp(self):
         self.Fragment = Fragment
-        self.MergeAttributesFragment = MergeAttributesFragment
+        self.MergeClassAttribute = MergeClassAttribute
 
     def test_fragment(self):
         with self.Fragment() as fragment:
