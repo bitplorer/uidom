@@ -766,14 +766,14 @@ class TestFragments(unittest.TestCase):
             ),
         )
 
-        with self.MergeAttributesFragment() as merged_attr_fragment:
+        with self.MergeClassAttribute() as merged_class_attr:
             attr(className="class_a")
             attr(className="class_b")
             div("a")
             div("b")
 
         self.assertEqual(
-            merged_attr_fragment.__render__(),
+            merged_class_attr.__render__(),
             dedent(
                 """\
                 <div class="class_a class_b">
