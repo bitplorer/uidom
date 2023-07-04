@@ -27,8 +27,25 @@ module.exports = {
             },
             minHeight: (theme) => ({
                 ...theme('spacing'),
-              })
-    }
+              }),
+
+            keyframes: {
+                'ripple': {
+                    'from': {
+                        opacity: 1,
+                        transform: scale(0),
+                    },
+                    'to':  {
+                        opacity: 0,
+                        transform: scale(1.5),
+                    }
+                }
+              },
+
+            animations: {
+                'ripple': 'ripple 0.5s linear',
+              }
+        }
     }
     
     }
