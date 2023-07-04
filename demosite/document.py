@@ -59,6 +59,10 @@ document = UiDOM(
             rel="prefetch",
         ),
         # script(src=settings.alpine_js, defer=None),
+        script(
+            src="https://unpkg.com/@material-tailwind/html@latest/scripts/ripple.js",
+            defer=None,
+        ),
     ],
     body=[
         # Htmx and Hyperscript
