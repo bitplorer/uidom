@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import asdict, dataclass, field
 from html import unescape
 from pathlib import Path
@@ -19,7 +18,7 @@ from uidom.dom.src.html_string import string_to_element
 from uidom.dom.src.main import extension
 from uidom.utils.parameters import Parameters
 
-__all__ = ["Component", "ReactiveComponent", "Fragment", "MergeAttributesFragment"]
+__all__ = ["Component", "ReactiveComponent", "Fragment", "MergeClassAttribute"]
 
 
 @dataclass
@@ -43,6 +42,8 @@ class Component(extension.Tags):
     string_is_markdown: bool = field(init=False, default=False)
 
     def __init__(self, *args, **kwargs):
+        super(Component, self).__init__()
+
         global markdown
         markdown = kwargs.pop("markdown", None) or markdown
         markdown = getattr(markdown, "convert", markdown)
@@ -67,8 +68,9 @@ class Component(extension.Tags):
 
         if isinstance(child, (list, tuple)) and len(child) == 1:
             child = child[0]
-
-        super(Component, self).__init__()
+        # commented and shifted __init__ below to the first line because then Fragment can
+        # add *args and **kwargs on initialization inside render method
+        # super(Component, self).__init__()
 
         if child is not self:
             self.add(child)
@@ -274,27 +276,32 @@ class Fragment(Component):
 
     render_tag = False
 
-    def __enter__(self):
-        return super().__enter__()
+    def _add_attrs_to_child(self, child):
+        child.safe_attributes.update(self.safe_attributes)
+        child.add(self.attributes)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        super().__exit__(exc_type, exc_val, exc_tb)
-        for child in self:
-            child.add(self.attributes)
+    def add(self, *args):
+        for arg in args:
+            if isinstance(arg, (extension.Tags, dom_tag)):
+                self._add_attrs_to_child(arg)
+        super().add(*args)
 
-    def render(self):
+    def render(self, *args, **kwargs):
+        self.add(kwargs)
+        self.add(args)
+
         # for this component to behave as a fragment we must simply return self
         # Component class will take care of all the things itself.
         return self
 
 
-class MergeAttributesFragment(Fragment):
+class MergeClassAttribute(Fragment):
     """Merging the attributes with subcontexts via uidom.dom.src.dom_tag.attr
 
     Args:
         None:
     Usage:
-        with MergeAttributesFragment():
+        with MergeClassAttribute():
             attr(className=...)
             attr(className=...)
             div()
@@ -303,42 +310,12 @@ class MergeAttributesFragment(Fragment):
 
     """
 
-    def _merge_x_data_attr(self, key, value):
-        if key == "x-data" and self.attributes.get(key, None):
-            x_data = json.loads(self.attributes.get(key).replace("'", '"'))
-            value = json.loads(value.replace("'", '"'))
-            if isinstance(x_data, dict) and isinstance(value, dict):
-                value = x_data | value
-            if value is None:
-                value = x_data
-            value = json.dumps(value).replace('"', "'")
-        return key, value
-
-    def _merge_event_attr(self, key, value):
-        if key.startswith("@") and self.attributes.get(key, None):
-            value = "; ".join([self.attributes[key], value])
-        return key, value
-
-    def _merge_bind_attr(self, key, value):
-        if key.startswith(":") and self.attributes.get(key, None):
-            raise ValueError(f"{key} merging not implemented yet")
-        return key, value
-
     def _merge_class_attr(self, key, value):
         if key == "class" and self.attributes.get(key, None):
             value = " ".join([self.attributes[key], value])
         return key, value
 
     def set_attribute(self, key, value):
-        if key == "x-data":
-            key, value = self._merge_x_data_attr(key, value)
-
-        if key.startswith("@"):
-            key, value = self._merge_event_attr(key, value)
-
-        if key.startswith(":"):
-            key, value = self._merge_bind_attr(key, value)
-
         if key == "class":
             key, value = self._merge_class_attr(key, value)
 
