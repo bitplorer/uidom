@@ -140,7 +140,13 @@ document.querySelectorAll('[x-component]').forEach(component => {
             }
             
             else {
-                this.append(component.content.cloneNode(true));
+                if (!!template){
+                    this.append(component.content.cloneNode(true));
+                    }
+                else {
+                    this.append(component.cloneNode(true));
+                }
+                
                 this.checkOrCreateId();
                 document.addEventListener('alpine:initialized', () => {
                     Alpine.initTree(this);
