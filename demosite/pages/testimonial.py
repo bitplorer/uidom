@@ -53,7 +53,7 @@ class Testimonial(Component):
     ):
         return f"""
     <div class="w-full p-4 md:w-1/2 border border-gray-500 rounded-md bg-gray-100">
-      <div class="h-full p-8 bg-gray-200 rounded-md">
+      <div class="h-full p-8 bg-green-400 rounded-md">
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="block w-5 h-5 mb-4 text-gray-400" viewBox="0 0 975.036 975.036">
           <path d="M925.036 57.197h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.399 
           69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l36 76c11.6 24.399 40.3 35.1 65.1 24.399 66.2-28.6 122.101-64.8 167.7-108.8 55.601-53.7 
@@ -64,7 +64,7 @@ class Testimonial(Component):
         </svg>
         <p class="mb-6 leading-relaxed font-montserrat">{description}</p>
         <a class="inline-flex items-center">
-        <div class="flex flex-row border border-gray-500 p-2 rounded-md bg-gray-300">
+        <div class="flex flex-row border border-gray-500 p-2 rounded-md">
           <img alt="testimonial" src={image} class="flex-shrink-0 object-cover object-center w-12 h-12 border rounded-full">
           <span class="flex flex-col flex-grow pl-4 ml-4 ">
             <span class="font-medium text-gray-900 font-montserrat ">{name}</span>
