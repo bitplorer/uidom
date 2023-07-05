@@ -1355,6 +1355,11 @@ select {
   background-color: rgb(100 116 139 / var(--tw-bg-opacity));
 }
 
+.bg-slate-900 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(15 23 42 / var(--tw-bg-opacity));
+}
+
 .bg-stone-200\/40 {
   background-color: rgb(231 229 228 / 0.4);
 }
@@ -1695,6 +1700,10 @@ select {
   font-family: 'Montserrat';
 }
 
+.font-oswald {
+  font-family: 'Oswald';
+}
+
 .font-teko {
   font-family: 'Teko';
 }
@@ -1799,6 +1808,11 @@ select {
 .text-indigo-500 {
   --tw-text-opacity: 1;
   color: rgb(99 102 241 / var(--tw-text-opacity));
+}
+
+.text-pink-600 {
+  --tw-text-opacity: 1;
+  color: rgb(219 39 119 / var(--tw-text-opacity));
 }
 
 .text-red-900 {
@@ -2251,4 +2265,21 @@ select {
     --tw-drop-shadow: drop-shadow(0 20px 13px rgb(0 0 0 / 0.03)) drop-shadow(0 8px 5px rgb(0 0 0 / 0.08));
     filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
   }
+}
+
+.\[\&\>\*\]\:data-\[ripple\=true\]\:pointer-events-none[data-ripple=true]>* {
+  pointer-events: none;
+}
+
+.\[\&\>\*\]\:data-\[ripple\=true\]\:absolute[data-ripple=true]>* {
+  position: absolute;
+}
+
+.\[\&\>\*\]\:data-\[ripple\=true\]\:rounded-full[data-ripple=true]>* {
+  border-radius: 9999px;
+}
+
+.\[\&\>\*\]\:data-\[ripple\=true\]\:bg-lime-600[data-ripple=true]>* {
+  --tw-bg-opacity: 1;
+  background-color: rgb(101 163 13 / var(--tw-bg-opacity));
 }
