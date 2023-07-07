@@ -33,7 +33,7 @@ __all__ = [
     "dataset_scrolled",
     "dataset_scrollable",
     "dataset_selected",
-    "data_x_data",
+    "dataset_xdata",
     "dataset_ripple",
     "dataset_before",
     "dataset_after",
