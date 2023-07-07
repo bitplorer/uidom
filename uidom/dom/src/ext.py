@@ -38,6 +38,7 @@ class Tags(dom_tag, dom1core):
     RENDER_TAG = "render_tag"
     file_extension = ".html"
     attribute_prefix_map: dict = {}
+    safe_attributes: dict = {}
 
     def __init__(self, *args, **kwargs):
         # if any(args):
@@ -63,7 +64,7 @@ class Tags(dom_tag, dom1core):
             # open tag is absent
             sb.append(self.left_delimiter)
             sb.append(name)
-            sb = self._render_attribute(sb)
+            sb = self._render_attribute(sb, indent_level, indent_str, pretty)
             sb.append(
                 "".join(["/", self.right_delimiter])
                 if self.is_single and xhtml
@@ -71,22 +72,36 @@ class Tags(dom_tag, dom1core):
             )
         return sb
 
-    def _render_attribute(self, sb):
+    def _wrap_attr_value(self, value, indent_level, indent_str, pretty):
+        # adding support to write multiline tailwindcss classes
+        multiline_string = textwrap.dedent(value)
+        wrapped_string = textwrap.fill(
+            multiline_string,
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
+        value = re.sub(r"\s+", " ", wrapped_string.strip())
+
+        return value
+
+    def _render_attribute(self, sb, indent_level, indent_str, pretty):
         for attribute, value in sorted(self.attributes.items()):
             if value is not False and value not in [
                 None
             ]:  # False values must be omitted completely
                 if attribute == "class":
-                    # adding support to write multiline tailwindcss classes
-                    multiline_string = textwrap.dedent(value)
-                    wrapped_string = textwrap.fill(
-                        multiline_string, break_long_words=False, break_on_hyphens=False
+                    value = self._wrap_attr_value(
+                        value, indent_level, indent_str, pretty
                     )
-                    value = re.sub(r"\s+", " ", wrapped_string.strip())
                 if not isinstance(
                     value, (typing.MutableMapping, typing.MutableSequence)
                 ):
-                    sb.append(' %s="%s"' % (attribute, escape(unicode(value), True)))
+                    if self.safe_attributes.get(attribute, True):
+                        sb.append(
+                            ' %s="%s"' % (attribute, escape(unicode(value), True))
+                        )
+                    else:
+                        sb.append(' %s="%s"' % (attribute, unicode(value)))
                 else:
                     value = htmlsafe_json_dumps(value)
                     sb.append(
@@ -105,7 +120,6 @@ class Tags(dom_tag, dom1core):
             sb.append(self.right_delimiter)
         return sb
 
-    # @staticmethod
     def _new_line_and_inline_handler(
         self, sb, indent_level, indent_str, pretty, is_inline
     ):
@@ -143,7 +157,7 @@ class Tags(dom_tag, dom1core):
             if attribute[0] == "_" and attribute[1] != "_":
                 attribute = attribute[1:]
 
-        # Workaround for dash plus support for VueJS, HTMX, Unpoly and AngularJS
+        # Workaround for dash plus support for VueJS, HTMX, AlpineJS, Unpoly and AngularJS
         special_prefix = any(
             [
                 attribute.startswith(x)
@@ -169,9 +183,8 @@ class Tags(dom_tag, dom1core):
             attribute = attribute.replace("v-bind", "")
             attribute = attribute.replace("x-bind-", ":")
             attribute = attribute.replace("x-bind", "")
-            attribute = attribute.replace("x-transition-enter", "x-transition:enter")
-            attribute = attribute.replace("x-transition-leave", "x-transition:leave")
-            attribute = attribute.replace("x-intersect-", "x-intersect:")
+            attribute = attribute.replace("-enter", ":enter")
+            attribute = attribute.replace("-leave", ":leave")
             attribute = attribute.replace("v-on:", "@")
             attribute = attribute.replace("v-on-", "@")
             attribute = attribute.replace("x-on:", "@")
@@ -471,6 +484,9 @@ class Tags(dom_tag, dom1core):
             & self
             & other
         )
+
+    def __iter__(self) -> typing.List[typing.Union[str, dom_tag, "Tags"]]:
+        return super().__iter__()
 
     def save(
         self,
