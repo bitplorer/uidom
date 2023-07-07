@@ -254,7 +254,7 @@ def dataset_ripple(**kwargs):
             setTimeout(function () {
                 rippleElem.setAttribute('data-ripple', false);
                 return rippleElem.remove();
-            }, 5000);
+            }, 500);
         }
         """,
         **kwargs,
@@ -275,45 +275,3 @@ def dataset_after(**kwargs):
         x_bind_data_after="window.getComputedStyle($el, 'after').content",
         **kwargs,
     )
-
-
-if __name__ == "__main__":
-    from uidom.dom import XComponent, div, template
-
-    with DataSet() as _data_ripple:
-        dataset_ripple()
-        dataset_pressed()
-
-    class ripple(XComponent):
-        def render(self, tag_name):
-            with _data_ripple:
-                xripple = div(
-                    className="""
-                data-[ripple=true]:absolute  
-                data-[ripple=true]:rounded-full
-                data-[ripple=true]:pointer-events-none
-                data-[ripple=true]:bg-rose-300
-                data-[ripple=true]:transition
-                data-[ripple=true]:transform
-                data-[ripple=true]:scale-0
-                data-[ripple=true]:opacity-100
-                data-[ripple=false]:transition
-                data-[ripple=false]:transform
-                data-[ripple=false]:scale-150
-                data-[ripple=false]:opacity-0
-                """,
-                    x_component=tag_name,
-                )
-            return xripple
-
-    x_ripple = ripple(tag_name="ripple")
-
-    class counter(Component):
-        def render(self, count, **kwargs):
-            with div(count, x_ripple, **kwargs) as btn:
-                x_ripple(className="""relative hidden""")
-            return btn
-
-    counts = counter(8)
-    # counts.count += 2
-    print(counts)
