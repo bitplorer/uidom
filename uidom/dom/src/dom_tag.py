@@ -39,6 +39,10 @@ def _get_thread_context():
     return hash(tuple(context))
 
 
+class dom_string(basestring):
+    pass
+
+
 class dom_tag(object):
     is_single = False  # Tag does not require matching end tag (ex. <hr/>)
     is_pretty = True  # Text inside the tag should be left as-is (ex. <pre>)
@@ -81,7 +85,7 @@ class dom_tag(object):
         """
 
         self.attributes = {}
-        self.children = []
+        self.children: typing.List[typing.Union[str, dom_tag]] = []
         self.parent = None
         self.document = None
 
@@ -92,7 +96,7 @@ class dom_tag(object):
 
         # Add child elements
         if args:
-            self.add(args)
+            self.add(*args)
 
         for attr, value in kwargs.items():
             self.set_attribute(*type(self).clean_pair(attr, value))
@@ -210,6 +214,14 @@ class dom_tag(object):
                         obj = escape(obj)
                 else:
                     obj = escape(obj)
+
+                # we are wrapping str into dom_string because when we use .get method we may
+                # for some reason want to get the parent of the string values in children,
+                # natively its not possible so we wrap str in dom_string and set self as parent
+
+                obj = dom_string(obj) if not isinstance(obj, dom_string) else obj
+                obj.parent = self
+
                 self.children.append(obj)
 
             elif isinstance(obj, dom_tag):
