@@ -8,6 +8,7 @@ import copy
 
 # pylint: disable=bad-indentation, bad-whitespace, missing-docstring
 import numbers
+import sys
 import threading
 import typing
 from collections import defaultdict, namedtuple
@@ -122,6 +123,16 @@ class dom_tag(object):
             stack[-1].items.append(self)
 
     def __enter__(self):
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # recursion limit taken from https://stackoverflow.com/a/50120316
+        # there is a need to increase recursion limit due to fastapi hitting
+        # maximum recursion limit, god knows for what reasons. lets see if
+        # it works, if it doesn't will roll it back in next release
+        self._orig_recurse_limit = sys.getrecursionlimit()
+        if self._orig_recurse_limit < 1500:
+            sys.setrecursionlimit(1500)
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
         stack = dom_tag._with_contexts[_get_thread_context()]
         stack.append(dom_tag.frame(self, [], set()))
         return self
@@ -137,6 +148,11 @@ class dom_tag(object):
             self.add(item)
         if not stack:
             del dom_tag._with_contexts[thread_id]
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # reset orig recursion limit to whatever it was, lets hope it works
+        sys.setrecursionlimit(self._orig_recurse_limit)
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     def __call__(self, func):
         """
