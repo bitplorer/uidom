@@ -6,30 +6,30 @@
 
 from dataclasses import dataclass, field
 
-from uidom.dom import htmlelement as htm
-from uidom.dom.src import dom_tag
+from uidom.dom.src import component
+from uidom.dom.src.dom_tag import dom_tag
 from uidom.dom.src.main import extension
 
 __all__ = ["HtmlDocument"]
 
 
-class Meta(htm.HTMLElement):
+class Meta(component.Component):
     def render(self, **kwargs):
         return self.html_tags.meta(**kwargs)
 
 
-class Head(htm.HTMLElement):
+class Head(component.Component):
     def render(self, *args, **kwargs):
         return self.html_tags.head(*args, **kwargs)
 
 
-class Body(htm.HTMLElement):
+class Body(component.Component):
     def render(self, *args, **kwargs):
         return self.html_tags.body(*args, **kwargs)
 
 
 @dataclass(eq=False)
-class HtmlDocument(htm.HTMLElement):
+class HtmlDocument(component.Component):
     csrf_field = "X-CSRF-TOKEN"
     ensure_csrf_token_in_meta: bool = field(default=True, init=False)
 
