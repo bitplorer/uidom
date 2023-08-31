@@ -6,7 +6,8 @@
 
 from dataclasses import dataclass
 
-from uidom.dom.src import DoubleTags, component
+from uidom.dom.src import component
+from uidom.dom.src.ext import DoubleTags
 from uidom.dom.src.jinjatags import render_jinja
 
 __all__ = [
