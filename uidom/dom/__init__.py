@@ -10,7 +10,15 @@ from .htmldocument import *  # isort: skip
 from .icons import *  # isort: skip
 from .jinja import *  # isort: skip
 
-from .src import *  # isort: skip
+from .src.component import *
+from .src.csstags import *
+from .src.ext import *
+from .src.htmltags import *
+from .src.jinjatags import *
+from .src.svgtags import *
+
+from .src.utils import *  # isort: skip
+from .src.dom_tag import *  # isort: skip
 
 from .src.html_string import *  # isort: skip
 from .uniqueid import *  # isort: skip
