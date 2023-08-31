@@ -25,11 +25,28 @@ INDEX_TEMP = _Template(
 from uidom.dom import *
 from $variable::app_name.document import document
 
-class Index(HTMLElement):
+class Index(Component):
     def render(self, *args, **kwargs):
         return document(div(*args, **kwargs))
 """
 )
+
+FASTAPI_INDEX_TEMP = _Template(
+    """
+from uidom.dom import *
+from $variable::app_name.api import api
+from $variable::app_name.document import document
+
+class Index(Component):
+    def render(self, *args, **kwargs):
+        return document(*args, **kwargs)
+
+@api.get("/")
+def index():
+    return Index(div("Hello World"))
+    """
+)
+
 
 API_TEMP = _Template(
     """
@@ -50,6 +67,63 @@ async def home(scope, receive, send):
     """
 )
 
+FASTAPI_API_TEMP = _Template(
+    """
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
+from uidom.routing.fastapi import HTMLRoute, StreamingRoute
+
+from $variable::app_name import settings
+
+api = FastAPI(
+    debug=settings.DEBUG,
+    default_response_class=HTMLResponse,
+    title="$variable::app_name",
+)
+api.router.route_class = StreamingRoute
+
+
+if settings.DEBUG:
+    # adding browser reloading
+    api.add_websocket_route(
+        path=settings.hot_reload_route.url_path,
+        route=settings.hot_reload_route,
+        name=settings.hot_reload_route.url_name,
+    )
+    api.add_event_handler("startup", settings.hot_reload_route.startup)
+    api.add_event_handler("shutdown", settings.hot_reload_route.shutdown)
+
+api.mount(
+    "/css",
+    StaticFiles(directory=settings.webassets.static.css, check_dir=False),
+    name="css",
+)
+api.mount(
+    "/js",
+    StaticFiles(directory=settings.webassets.static.js, check_dir=False),
+    name="js",
+)
+api.mount(
+    "/image",
+    StaticFiles(directory=settings.webassets.static.image, check_dir=False),
+    name="image",
+)
+api.mount(
+    "/font",
+    StaticFiles(directory=settings.webassets.static.font, check_dir=False),
+    name="font",
+)
+    """
+)
+
+
+FASTAPI_ROUTES_TEMP = _Template(
+    """
+from $variable::app_name.index import api
+    """
+)
 
 SERVER_TEMP = _Template(
     """
@@ -75,10 +149,34 @@ if __name__ == "__main__":
 )
 
 
+FASTAPI_SERVER_TEMP = _Template(
+    """
+HAS_UVICORN = True
+ 
+try:
+    import uvicorn
+except ImportError:
+    pass
+    HAS_UVICORN = False
+    
+if __name__ == "__main__":
+    if HAS_UVICORN:
+        uvicorn.run(
+            "$variable::app_name.routes:api",
+            host="127.0.0.1",
+            port=8081,
+            reload=True,
+            # ssl_keyfile='../$variable::app_name/key.pem',
+            # ssl_certfile='../$variable::app_name/cert.pem'
+        )
+    """
+)
+
+
 DOCUMENT_TEMP = _Template(
     """
 from uidom import UiDOM
-from uidom.dom import link, raw
+from uidom.dom import link, raw, uniqueid
 from $variable::app_name import settings
 from $variable::app_name.tailwindcss import tailwind
 
@@ -88,7 +186,7 @@ __all__ = ["document"]
 document = UiDOM(
     webassets=settings.webassets,
     head=[
-        link(href=f"/css/{tailwind.output_css}", rel="stylesheet"),
+        link(href=f"/css/{tailwind.output_css}?v={next(uniqueid)}", rel="stylesheet"),
     ],
     body=[
         raw(settings.hot_reload_route.script() if settings.DEBUG and settings.HAS_WEB_SOCK else ""),
@@ -118,7 +216,7 @@ except ImportError:
     
 BASE_DIR = Path(__file__).parent
 DEBUG = True
-webassets = WebAssets(base_dir=BASE_DIR, sub_dir="$variable::asset_dir")
+webassets = WebAssets(base_dir=BASE_DIR, sub_dir="$variable::asset_dir", dry_run=not DEBUG)
 
 
 if DEBUG:
@@ -148,30 +246,37 @@ TAILWIND_TEMP = _Template(
 from $variable::app_name import settings
 from uidom import TailwindCommand
 
-if settings.DEBUG:
-    tailwind = TailwindCommand(
-        file_path=__file__,
-        webassets=settings.webassets,
-        # input_css=settings.INPUT_CSS_FILE,
-        # output_css=settings.OUTPUT_CSS_FILE,
-        minify=not settings.DEBUG,
-    )
+tailwind = TailwindCommand(
+    file_path=__file__,
+    webassets=settings.webassets,
+    # input_css=settings.INPUT_CSS_FILE,
+    # output_css=settings.OUTPUT_CSS_FILE,
+    minify=not settings.DEBUG,
+)
 
 if __name__ == "__main__":
-    if settings.DEBUG:
-        tailwind.run()
+    tailwind.run()
 """
 )
 
 
 @app.command()
-def create_app(app_name: str, asset_folder: str):
+def create_app(app_name: str, asset_folder: str = ""):
     ":: command for creating new apps"
     if app_name is not None:
         create_permission = str(input(f"proceed to create app: {app_name} ? [y/n] "))
         permission = create_permission.lower() == "y"
+        app_logger = uidom_logger
+
         if permission:
-            app_logger = uidom_logger
+            HAS_FASTAPI = False
+            try:
+                import fastapi
+
+                HAS_FASTAPI = True
+            except ImportError:
+                pass
+
             app_logger.info(f" ==creating app== ")
             app_dir = Path(app_name).resolve()
             base_dir = app_dir / asset_folder
@@ -216,8 +321,19 @@ def create_app(app_name: str, asset_folder: str):
 
                 app_logger.info(str(document_file.name))
 
+            if HAS_FASTAPI:
+                # creting routes.py
+                ROUTES_TEXT = FASTAPI_ROUTES_TEMP.substitute({"app_name": app_name})
+                routes_file: Path = app_dir / "routes.py"
+                if not routes_file.exists():
+                    with routes_file.open(mode="w") as f:
+                        f.write(ROUTES_TEXT)
+                    app_logger.info(str(routes_file.name))
+
             # creating server.py
-            SERVER_TEXT = SERVER_TEMP.substitute({"app_name": app_name})
+            SERVER_TEXT = (
+                SERVER_TEMP if not HAS_FASTAPI else FASTAPI_SERVER_TEMP
+            ).substitute({"app_name": app_name})
 
             server_file: Path = app_dir / "server.py"
 
@@ -228,7 +344,9 @@ def create_app(app_name: str, asset_folder: str):
                 app_logger.info(str(server_file.name))
 
             # creating api.py
-            API_TEXT = API_TEMP.substitute({"app_name": app_name})
+            API_TEXT = (API_TEMP if not HAS_FASTAPI else FASTAPI_API_TEMP).substitute(
+                {"app_name": app_name}
+            )
 
             api_file: Path = app_dir / "api.py"
 
@@ -239,7 +357,9 @@ def create_app(app_name: str, asset_folder: str):
                 app_logger.info(str(api_file.name))
 
             # creating index.py
-            INDEX_TEXT = INDEX_TEMP.substitute({"app_name": app_name})
+            INDEX_TEXT = (
+                INDEX_TEMP if not HAS_FASTAPI else FASTAPI_INDEX_TEMP
+            ).substitute({"app_name": app_name})
 
             index_file: Path = app_dir / "index.py"
 
