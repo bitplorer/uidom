@@ -4,7 +4,7 @@
 # https://opensource.org/licenses/MIT
 
 
-from uidom.dom.src import Component
+from uidom.dom.src.component import Component
 from uidom.dom.src.utils import raw
 
 
