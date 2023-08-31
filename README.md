@@ -27,7 +27,7 @@ This library is inspired from dominate html library and takes it further. It sup
 """
 from fastapi import FastAPI
 from uidom import UiDOM
-from uidom.dom import HTMLElement, script, title, div
+from uidom.dom import Component, script, title, div
 from uidom.routing.fastapi import StreamingRoute
 
 document = UiDOM(body=[
@@ -37,7 +37,7 @@ document = UiDOM(body=[
 api = FastAPI() 
 api.router.route_class = StreamingRoute
 
-class ToggleMe(HTMLElement):
+class ToggleMe(Component):
 
     def render(self):
         with div(x_data={'open': 'true'}) as toggle:
@@ -46,7 +46,7 @@ class ToggleMe(HTMLElement):
                 div("Closed", x_show="!open"), 
         return toggle
 
-class App(HTMLElement):
+class App(Component):
 
     def render(self, *args, **kwargs):
         return document(*args, **kwargs, , head=title('App Page'))
@@ -179,7 +179,7 @@ print(HelloWorld())
 from uidom.dom import *
 
 
-class Modal(HTMLElement):
+class Modal(Component):
 
     def render(self, *args, **kwargs):
         return '''
