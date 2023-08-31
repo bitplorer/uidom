@@ -32,6 +32,8 @@ try:
 except ImportError:
     greenlet = None
 
+__all__ = ["dom_string", "dom_tag", "get_current", "attr"]
+
 
 def _get_thread_context():
     context = [threading.current_thread()]
@@ -151,7 +153,9 @@ class dom_tag(object):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         # reset orig recursion limit to whatever it was, lets hope it works
-        sys.setrecursionlimit(self._orig_recurse_limit)
+        current_recurse_limit = sys.getrecursionlimit()
+        if current_recurse_limit > self._orig_recurse_limit:
+            sys.setrecursionlimit(self._orig_recurse_limit)
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     def __call__(self, func):
