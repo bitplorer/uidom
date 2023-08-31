@@ -126,8 +126,8 @@ class TailwindCommand(Command):
     def __post_init__(self):
         self._root_dir = self.webassets.dir
         self._project_dir = Path(self.file_path).parent
-        self._input_file = self._root_dir / self.input_css
-        self._output_file = self.webassets.static.css / self.output_css
+        self._input_file: Path = self._root_dir / self.input_css
+        self._output_file: Path = self.webassets.static.css / self.output_css
         self.init_tailwind_project()
 
     def init_tailwind_project(self):
@@ -167,6 +167,8 @@ class TailwindCommand(Command):
                     f.write(
                         """@tailwind base;\n@tailwind components;\n@tailwind utilities;"""
                     )
+            if not self._output_file.exists():
+                self._output_file.touch()
 
     def is_tailwindcss_available(self):
         output = subprocess.run(
