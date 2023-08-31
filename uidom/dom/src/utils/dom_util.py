@@ -36,6 +36,18 @@ except NameError:
     basestring = str
     unichr = chr
 
+__all__ = [
+    "include",
+    "system",
+    "escape",
+    "unescape",
+    "url_escape",
+    "url_unescape",
+    "lazy",
+    "dom_text",
+    "raw",
+]
+
 
 def include(f):
     """
