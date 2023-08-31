@@ -74,13 +74,13 @@ class Tags(dom_tag, dom1core):
 
     def _wrap_attr_value(self, value, indent_level, indent_str, pretty):
         # adding support to write multiline tailwindcss classes
-        multiline_string = textwrap.dedent(value)
-        wrapped_string = textwrap.fill(
-            multiline_string,
-            break_long_words=False,
-            break_on_hyphens=False,
-        )
-        value = re.sub(r"\s+", " ", wrapped_string.strip())
+        value = textwrap.dedent(value)
+        # value = textwrap.fill(
+        #     value,
+        #     break_long_words=False,
+        #     break_on_hyphens=False,
+        # )
+        value = re.sub(r"\s+", " ", value.strip())
 
         return value
 
@@ -93,9 +93,7 @@ class Tags(dom_tag, dom1core):
                     value = self._wrap_attr_value(
                         value, indent_level, indent_str, pretty
                     )
-                if not isinstance(
-                    value, (typing.MutableMapping, typing.MutableSequence)
-                ):
+                if not isinstance(value, (dict, list)):
                     if self.safe_attributes.get(attribute, True):
                         sb.append(
                             ' %s="%s"' % (attribute, escape(unicode(value), True))
