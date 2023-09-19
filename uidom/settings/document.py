@@ -16,7 +16,7 @@ from uidom.settings.paths import make_paths
 from uidom.utils.logger import uidom_logger
 
 __all__ = [
-    "UiDOM",
+    "Document",
     "WebAssets",
     "Dir",
     "DirConfig",
@@ -29,7 +29,7 @@ __all__ = [
 
 
 @dataclass
-class UiDOM(object):
+class Document(object):
     head: T.Optional[T.Union[ext.Tags, list[ext.Tags]]] = None
     body: T.Optional[T.Union[ext.Tags, list[ext.Tags]]] = None
     ensure_csrf_token_in_meta: bool = field(default=False)

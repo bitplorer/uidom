@@ -6,7 +6,7 @@ from textwrap import dedent
 
 import toml
 
-from uidom import UiDOM, __version__
+from uidom import Document, __version__
 from uidom.dom import *
 from uidom.dom.src.dom_tag import attr
 from uidom.web_io._events import BaseEventManager
@@ -383,7 +383,7 @@ class TestStates(unittest.TestCase):
             def render(self, a):  # type: ignore[override]
                 return p(a=a)
 
-        self.document = UiDOM()
+        self.document = Document()
         self.StateElement = StateElement
 
     def test_states_mutation_updates_dictionary(self):

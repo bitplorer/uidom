@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
 DOCUMENT_TEMP = _Template(
     """
-from uidom import UiDOM
+from uidom import Document
 from uidom.dom import link, raw, uniqueid
 from $variable::app_name import settings
 from $variable::app_name.tailwindcss import tailwind
@@ -183,7 +183,7 @@ from $variable::app_name.tailwindcss import tailwind
 __all__ = ["document"]
 
 
-document = UiDOM(
+document = Document(
     webassets=settings.webassets,
     head=[
         link(href=f"/css/{tailwind.output_css}?v={next(uniqueid)}", rel="stylesheet"),

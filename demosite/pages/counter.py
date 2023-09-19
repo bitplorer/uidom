@@ -13,7 +13,7 @@ from valio import IntegerValidator
 from demosite import settings
 from demosite.api import api
 from demosite.document import document
-from uidom import UiDOM
+from uidom import Document
 from uidom.dom import *
 from uidom.dom.src.ws_rpc import ws_rpc
 from uidom.web_io import (
@@ -26,7 +26,7 @@ from uidom.web_io import (
 
 class ToggleInset(XComponent):
     def render(self, tag_name):
-        return string_to_element(
+        return defHTML(
             f"""
         <template x-component="{tag_name}" >
             <label for="Toggle1" x-data="$el.parentElement.data()" class="inline-flex items-center space-x-4 cursor-pointer dark:text-gray-100">
@@ -144,37 +144,37 @@ async def decrement(req: Request, count: int):
     return Counter(count).decrement()
 
 
-@api.get("/add/{count}")
-async def add(req: Request, count: int):
-    if "total_count" in req.session:
-        total_count = req.session["total_count"] + count
-    else:
-        total_count = req.session["total_count"] = count
+# @api.get("/add/{count}")
+# async def add(req: Request, count: int):
+#     if "total_count" in req.session:
+#         total_count = req.session["total_count"] + count
+#     else:
+#         total_count = req.session["total_count"] = count
 
-    return div(
-        f"{total_count}",
-        _id="cart",
-        hx_swap_oob="true",
-        className="rounded-full p-1 bg-rose-300",
-    ) & Counter(count=count)
+#     return div(
+#         f"{total_count}",
+#         _id="cart",
+#         hx_swap_oob="true",
+#         className="rounded-full p-1 bg-rose-300",
+#     ) & Counter(count=count)
 
 
-@api.get("/remove/{count}")
-async def remove(req: Request, count: int):
-    if "total_count" in req.session and req.session["total_count"] >= count:
-        reset_counter = req.session["total_count"] - count
-    else:
-        reset_counter = 0
-    removed = Counter(count=reset_counter)
-    return (
-        div(
-            f"{removed.count}",
-            _id="cart",
-            hx_swap_oob="true",
-            className="rounded-full p-1 bg-rose-300",
-        )
-        & removed
-    )
+# @api.get("/remove/{count}")
+# async def remove(req: Request, count: int):
+#     if "total_count" in req.session and req.session["total_count"] >= count:
+#         reset_counter = req.session["total_count"] - count
+#     else:
+#         reset_counter = 0
+#     removed = Counter(count=reset_counter)
+#     return (
+#         div(
+#             f"{removed.count}",
+#             _id="cart",
+#             hx_swap_oob="true",
+#             className="rounded-full p-1 bg-rose-300",
+#         )
+#         & removed
+#     )
 
 
 x_toggle = ToggleInset(tag_name="toggle")
@@ -202,7 +202,7 @@ async def counter(req: Request):
 
 @api.get("/rpc")
 async def rpc_check():
-    with UiDOM(
+    with Document(
         head=link(href="/css/styles.css", rel="stylesheet"),
         body=raw(settings.hot_reload_route.script() if settings.DEBUG else ""),
     )(script(ws_rpc())) as doc:
@@ -230,13 +230,16 @@ async def sockets(websocket: WebSocket, adapter_name: str):
 
 
 if __name__ == "__main__":
-    strn = """we will apply the changes only when the render_tag flag is set to True
-NOTE: we should **not add** "checks" for (pretty and not self.is_inline) here with
-'self_render_tag' as this is where we are adding the indentation and
-new-line **before** child is rendered."""
+    strn = """
+    ##we will apply the changes only when the render_tag flag is set to True
+    NOTE: we should **not add** "checks" for (pretty and not self.is_inline) here with
+    'self_render_tag' as this is where we are adding the indentation and
+    new-line 
+    **before** 
+    child is rendered."""
 
     class xxx(Component):
         def render(self):
-            return strn
+            return MarkdownElement(strn)
 
     print(p(p(strn, x_data={"a": True})))

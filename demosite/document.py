@@ -6,14 +6,14 @@
 
 from demosite import settings
 from demosite.tailwindcss import tailwind
-from uidom import UiDOM
+from uidom import Document
 from uidom.dom import link, raw, script
 from uidom.scripts import x_component_js
 
 __all__ = ["document"]
 
 
-document = UiDOM(
+document = Document(
     webassets=settings.webassets,
     head=[
         # custom tailwindcss styles sheet

@@ -13,7 +13,7 @@ from fastapi.routing import APIRouter
 
 from demosite.settings import DEBUG, hot_reload_route
 from demosite.tailwindcss import tailwind
-from uidom import UiDOM
+from uidom import Document
 from uidom.dom import *
 from uidom.dom.src.dom_tag import dom_tag
 from uidom.dom.src.main import extension
@@ -265,7 +265,7 @@ async def _header():
     return head_bar
 
 
-document = UiDOM(
+document = Document(
     head=[
         # custom tailwindcss styles sheet
         link(href=f"/css/{tailwind.output_css}", rel="stylesheet"),
