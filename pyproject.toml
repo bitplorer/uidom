@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "uidom"
-version = "0.3a5"
+version = "0.4a0"
 description = "HTML library"
 authors = ["bitplorer <bitplorer@outlook.com>"]
 license = "MIT"
@@ -18,7 +18,7 @@ typer = "^0.9.0"
 pytailwindcss = { version = ">=0.1.4", optional = true }
 watchgod = { version = ">=0.8.2", optional = true }
 uvicorn = {extras = ["standard"], version = "^0.18.2", optional = true }
-fastapi = { version = ">=0.79.0", optional = true }
+fastapi = { version = ">=0.103.1", optional = true }
 
 
 [tool.poetry.extras]
@@ -30,8 +30,8 @@ fastapidev = ["fastapi", "uvicorn", "pytailwindcss", "watchgod"]
 black = "^21.6b0"
 mypy = "^0.942"
 uvicorn = {extras = ["standard"], version = "^0.18.2"}
-starlette = "0.19.1"
-fastapi = "^0.79.0"
+starlette = "^0.27.0"
+fastapi = "^0.103.1"
 watchgod = "^0.8.2"
 pytailwindcss = "^0.1.4"
 deptry = "^0.11.0"
