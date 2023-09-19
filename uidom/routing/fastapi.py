@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Uni
 
 from fastapi import params, routing
 from fastapi.datastructures import Default, DefaultPlaceholder
-from fastapi.encoders import DictIntStrAny, SetIntStr
+from fastapi.types import IncEx
 from fastapi.utils import generate_unique_id
 from starlette.responses import JSONResponse, Response
 from starlette.routing import BaseRoute
@@ -36,8 +36,8 @@ class HTMLRoute(routing.APIRoute):
         name: Optional[str] = None,
         methods: Optional[Union[Set[str], List[str]]] = None,
         operation_id: Optional[str] = None,
-        response_model_include: Optional[Union[SetIntStr, DictIntStrAny]] = None,
-        response_model_exclude: Optional[Union[SetIntStr, DictIntStrAny]] = None,
+        response_model_include: Optional[IncEx] = None,
+        response_model_exclude: Optional[IncEx] = None,
         response_model_by_alias: bool = True,
         response_model_exclude_unset: bool = False,
         response_model_exclude_defaults: bool = False,
@@ -101,8 +101,8 @@ class StreamingRoute(routing.APIRoute):
         name: Optional[str] = None,
         methods: Optional[Union[Set[str], List[str]]] = None,
         operation_id: Optional[str] = None,
-        response_model_include: Optional[Union[SetIntStr, DictIntStrAny]] = None,
-        response_model_exclude: Optional[Union[SetIntStr, DictIntStrAny]] = None,
+        response_model_include: Optional[IncEx] = None,
+        response_model_exclude: Optional[IncEx] = None,
         response_model_by_alias: bool = True,
         response_model_exclude_unset: bool = False,
         response_model_exclude_defaults: bool = False,
