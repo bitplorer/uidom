@@ -13,6 +13,23 @@ function reloader_connect(isReconnect = false) {
     console.info(`[reloader] ${msg}`);
   }
 
+  // https://stackoverflow.com/a/76892302
+
+  const clearCacheAndReload =  () => {
+    if('caches' in window){
+        log_info("Clearing cache.");
+        caches.keys().then((names) => {
+            names.forEach(async (name) => {
+                await caches.delete(name)
+            })
+          log_info("Cache cleared.");
+        })
+    }
+    log_info("Reloading.");
+    window.location.reload();
+  }
+
+
   ws.onopen = function () {
     if (isReconnect) {
       // The server may have disconnected while it was reloading itself,
@@ -20,7 +37,7 @@ function reloader_connect(isReconnect = false) {
       // The page content may have changed because of this, so we don't
       // just want to reconnect, but also get that new page content.
       // A simple way to do this is to reload the page.
-      window.location.reload();
+      clearCacheAndReload();
       return;
     }
 
@@ -29,7 +46,7 @@ function reloader_connect(isReconnect = false) {
 
   ws.onmessage = function (event) {
     if (event.data === "reload") {
-      window.location.reload();
+      clearCacheAndReload();
     }
   };
 
