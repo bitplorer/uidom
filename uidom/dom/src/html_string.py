@@ -17,7 +17,7 @@ from uidom.dom.src.htmltags import html_tag
 from uidom.dom.src.parse_html import Element, tokenize_html
 from uidom.dom.src.utils import dom_text
 
-__all__ = ["HTMLStringToDom", "string_to_element"]
+__all__ = ["StringToHTML", "defHTML"]
 
 
 def create_dynamic_element(tag_name: str) -> T.Type[ext.Tags]:
@@ -36,7 +36,7 @@ def create_dynamic_element(tag_name: str) -> T.Type[ext.Tags]:
 
 
 @dataclass
-class HTMLStringToDom(object):
+class StringToHTML(object):
     # TODO convert DOM object instance to Code Object for AST conversion to python code.
     # from https://stackoverflow.com/questions/68577587/how-to-find-the-ast-assignment-node-related-to-the-instance-creation
     # this.ast_object can be easily used to create python code for any html object
@@ -115,12 +115,12 @@ class HTMLStringToDom(object):
                 if tag is not None:
                     with tag:
                         with element(**token.attrs) as child_tag:
-                            HTMLStringToDom(
+                            StringToHTML(
                                 token.children, modules=self.modules, escape=self.escape
                             ).parse(tag=child_tag)
                 else:
                     with element(**token.attrs) as tag:
-                        HTMLStringToDom(
+                        StringToHTML(
                             token.children, modules=self.modules, escape=self.escape
                         ).parse(tag=tag)
         return tag
@@ -129,19 +129,19 @@ class HTMLStringToDom(object):
         return str(self.parse())
 
 
-# don't decorate string_to_element with functools.lru_cache because if string_to_element is used in isolation
+# don't decorate defHTML with functools.lru_cache because if defHTML is used in isolation
 # like:
 # with div() as parent_div:
-#   child_element = string_to_element("some html string")
+#   child_element = defHTML("some html string")
 #
-# with lru_cache decorated on string_to_element the evaluation of child_element at run time will not happen twice
-# and thus parent_div will never add child_element in subsequest runs thus better way to cache string_to_element
+# with lru_cache decorated on defHTML the evaluation of child_element at run time will not happen twice
+# and thus parent_div will never add child_element in subsequest runs thus better way to cache defHTML
 # evaluation is to cache the method where it is used.
-def string_to_element(raw_string, escape=True) -> T.List[ext.Tags]:  # noqa
+def defHTML(raw_string, escape=True) -> T.List[ext.Tags]:  # noqa
     tokens = tokenize_html(raw_string).children
     elements = []
     for token in tokens:
-        element = HTMLStringToDom([token], escape=escape).parse()
+        element = StringToHTML([token], escape=escape).parse()
         if element:
             assert isinstance(
                 element, ext.Tags
@@ -156,14 +156,14 @@ def string_to_element(raw_string, escape=True) -> T.List[ext.Tags]:  # noqa
 # if __name__ == '__main__':
 # from uidom.dom import ConcatTag, For, Var, div, li, raw, script, ul
 
-# print(HTMLStringToElement("<li><ul><i><!--Hello World--></i></ul><a href='www.google.com'></a></li>"))
+# print(defHTML("<li><ul><i><!--Hello World--></i></ul><a href='www.google.com'></a></li>"))
 #     class XName(ext.Tags):
 #         tagname = "x-name"
 
 
-# print(HTMLStringToDom(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf")).parse())
+# print(defHTML(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf")).parse())
 # print(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf"))
-# print(StringToDom(str(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf", x_data=None))))
+# print(defHTML(str(div("hello", div("Jai SHree Ram"), script(raw("function () => {}")), className="sdaf", x_data=None))))
 # x = HTMLToPy(str(XName("hello", Var("haha"), ul(For("name in names", li(Var("name")))),
 #                        div("Jai SHree Ram aa", className="safn"), script(raw("function () => {}")),
 #                         script(src="https://unpkg.com/filepond/dist/filepond.js"),
@@ -173,4 +173,4 @@ def string_to_element(raw_string, escape=True) -> T.List[ext.Tags]:  # noqa
 #             div("Jai SHree Ram   a ", className="safn"), script(raw("function () => {}")),
 #                         script(src="https://unpkg.com/filepond/dist/filepond.js"),
 #                         className="sdaf", x_data={}, x_transition_enter=""))
-# print(HTMLStringToDom(str(ul(For("name in names", li(Var("name")))))))
+# print(defHTML(str(ul(For("name in names", li(Var("name")))))))

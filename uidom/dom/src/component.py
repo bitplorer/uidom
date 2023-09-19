@@ -14,7 +14,7 @@ from marko import convert as markdown
 
 from uidom.dom.src import csstags, htmltags, jinjatags, svgtags
 from uidom.dom.src.dom_tag import dom_tag
-from uidom.dom.src.html_string import string_to_element
+from uidom.dom.src.html_string import defHTML
 from uidom.dom.src.main import extension
 from uidom.utils.parameters import Parameters
 
@@ -55,7 +55,7 @@ class Component(extension.Tags):
                 child = (
                     markdown(child) if self.escape_string else unescape(markdown(child))
                 )
-            child = string_to_element(child, escape=self.escape_string)
+            child = defHTML(child, escape=self.escape_string)
 
         elif isinstance(child, Path):
             string_is_markdown = child.suffix == ".md"
@@ -64,7 +64,7 @@ class Component(extension.Tags):
                 child = (
                     markdown(child) if self.escape_string else unescape(markdown(child))
                 )
-            child = string_to_element(child, escape=self.escape_string)
+            child = defHTML(child, escape=self.escape_string)
 
         if isinstance(child, (list, tuple)) and len(child) == 1:
             child = child[0]
