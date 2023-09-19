@@ -6,15 +6,13 @@
 from demosite import settings
 from uidom import TailwindCommand
 
-if settings.DEBUG:
-    tailwind = TailwindCommand(
-        file_path=__file__,
-        webassets=settings.webassets,
-        # input_css=settings.INPUT_CSS_FILE,
-        # output_css=settings.OUTPUT_CSS_FILE,
-        minify=not settings.DEBUG,
-    )
+tailwind = TailwindCommand(
+    file_path=__file__,
+    webassets=settings.webassets,
+    # input_css=settings.INPUT_CSS_FILE,
+    # output_css=settings.OUTPUT_CSS_FILE,
+    minify=not settings.DEBUG,
+)
 
 if __name__ == "__main__":
-    if settings.DEBUG:
-        tailwind.run()
+    tailwind.run()

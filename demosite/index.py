@@ -15,10 +15,11 @@ from uidom.dom import *
 
 @api.get("/")
 async def index():
-    search = x_search(className="flex w-full")
-    icon = div(search_icon, className="flex px-2 text-stone-400")
-
     with document(x_toast, x_search) as page:
-        Modal(search, icon=icon)
+        Modal(
+            x_search(className="flex w-full"),
+            icon=div(search_icon, className="flex px-2 text-stone-400"),
+        )
         success_toast("Am Successful Yay!")
+    print("XComponent in document", XComponent in page)
     return page
