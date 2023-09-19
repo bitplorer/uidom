@@ -84,7 +84,7 @@ def side():
 
 class chartjs(Component):
     def render(self):
-        return string_to_element(
+        return defHTML(
             """
 <div>
   <canvas id="myChart"></canvas>

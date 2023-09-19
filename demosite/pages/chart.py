@@ -49,7 +49,7 @@ class PriceChartTemplate(XComponent):
 
     def render(self, tag_name):
         with template(x_component=tag_name) as _chart:
-            string_to_element(
+            defHTML(
                 """
 <div class="flex items-center justify-center p-4 bg-stone-600" x-data="{...productTicker(), ...$el.parentElement.data()}" x-effect="console.log(renderChart())">
     <div class="w-full overflow-hidden rounded shadow-xl md:flex" style="max-width:900px" x-data="renderChart" x-init="renderChart">
