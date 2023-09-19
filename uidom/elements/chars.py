@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from valio import StringValidator, Validator
 
-from uidom.dom.htmlelement import HTMLElement
+from uidom.dom.src import component
 
 __all__ = [
     # char html
@@ -21,12 +21,12 @@ __all__ = [
     "HiddenInput",
     "SearchInput",
     "CharField",
-    "CharFieldSet"
+    "CharFieldSet",
 ]
 
 
 @dataclass(eq=False)
-class CharLabel(HTMLElement):
+class CharLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -41,7 +41,7 @@ class CharLabelValidator(Validator):
 
 
 @dataclass(eq=False)
-class CharLegend(HTMLElement):
+class CharLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -53,20 +53,23 @@ class CharLegend(HTMLElement):
 
 min_length_field = StringValidator(logger=False, debug=True, name="min_length")
 max_length_field = StringValidator(logger=False, debug=True, name="max_length")
-spell_check_field = StringValidator(in_choice=["true", "false"], 
-                                    logger=False, debug=True, name="spell_check", 
-                                    default="true")
+spell_check_field = StringValidator(
+    in_choice=["true", "false"],
+    logger=False,
+    debug=True,
+    name="spell_check",
+    default="true",
+)
 
 
 @dataclass(eq=False)
-class CharInput(HTMLElement):
-
-    @max_length_field.add_validator
-    @min_length_field.add_validator
+class CharInput(component.Component):
+    @max_length_field.add_post_validator
+    @min_length_field.add_post_validator
     def cast2int(self, value):
         if value not in ["null", None]:
             try:
-                int(value)
+                return int(value)
             except TypeError as e:
                 raise ValueError(f"{value} is not an int value") from e
 
@@ -79,39 +82,44 @@ class CharInput(HTMLElement):
     name: T.Union[str, None] = StringValidator(logger=False, debug=True)
     type: T.Union[str, None] = StringValidator(
         in_choice=["text", "password", "hidden", "email", "search"],
-        debug=True, logger=False, default="text"
-        )
+        debug=True,
+        logger=False,
+        default="text",
+    )
 
     placeholder: T.Union[str, None] = StringValidator(logger=False, debug=True)
     spell_check: T.Union[str, None] = spell_check_field
     min_length: T.Union[str, None] = min_length_field
     max_length: T.Union[str, None] = max_length_field
-    pattern: T.Union[str, None] = StringValidator(logger=False, debug=True, default="null")
+    pattern: T.Union[str, None] = StringValidator(
+        logger=False, debug=True, default="null"
+    )
 
     def __post_init__(self, *args, **kwargs):
-        super(CharInput, self).__init__(*args,
-                                        name=self.name,
-                                        placeholder=self.placeholder,
-                                        spell_check=self.spell_check,
-                                        type=self.type,
-                                        min_length=self.min_length,
-                                        max_length=self.max_length,
-                                        pattern=self.pattern,
-                                        **kwargs)
+        super(CharInput, self).__init__(
+            *args,
+            name=self.name,
+            placeholder=self.placeholder,
+            spell_check=self.spell_check,
+            type=self.type,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
     def render(
-            self,
-            *args,
-            name: str = None,
-            placeholder: str = "",
-            spell_check: str,
-            type: str,
-            min_length: str,
-            max_length: str,
-            pattern: str,
-            **kwargs
-    ):  
-        
+        self,
+        *args,
+        name: str = None,
+        placeholder: str = "",
+        spell_check: str,
+        type: str,
+        min_length: str,
+        max_length: str,
+        pattern: str,
+        **kwargs,
+    ):
         return self.html_tags.input_(
             *args,
             type=type,
@@ -130,8 +138,7 @@ class CharInputValidator(Validator):
 
 
 @dataclass(eq=False)
-class TextInput(HTMLElement):
-
+class TextInput(component.Component):
     name: str
     placeholder: str
     spell_check: T.Union[str, None] = field(default=None)
@@ -140,25 +147,27 @@ class TextInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(TextInput, self).__init__(*args,
-                                        name=self.name,
-                                        placeholder=self.placeholder,
-                                        spell_check=self.spell_check,
-                                        min_length=self.min_length,
-                                        max_length=self.max_length,
-                                        pattern=self.pattern,
-                                        **kwargs)
+        super(TextInput, self).__init__(
+            *args,
+            name=self.name,
+            placeholder=self.placeholder,
+            spell_check=self.spell_check,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
     def render(
-            self,
-            *args,
-            name: str = None,
-            placeholder: str = "",
-            spell_check: str = "true",
-            min_length: str,
-            max_length: str = "null",
-            pattern: str = "null",
-            **kwargs
+        self,
+        *args,
+        name: str = None,
+        placeholder: str = "",
+        spell_check: str = "true",
+        min_length: str,
+        max_length: str = "null",
+        pattern: str = "null",
+        **kwargs,
     ):
         return CharInput(
             name=name,
@@ -172,7 +181,7 @@ class TextInput(HTMLElement):
 
 
 @dataclass(eq=False)
-class PasswordInput(HTMLElement):
+class PasswordInput(component.Component):
     name: str
     placeholder: str
     spell_check: T.Union[str, None] = field(default=None)
@@ -181,25 +190,27 @@ class PasswordInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(PasswordInput, self).__init__(*args,
-                                            name=self.name,
-                                            placeholder=self.placeholder,
-                                            spell_check=self.spell_check,
-                                            min_length=self.min_length,
-                                            max_length=self.max_length,
-                                            pattern=self.pattern,
-                                            **kwargs)
+        super(PasswordInput, self).__init__(
+            *args,
+            name=self.name,
+            placeholder=self.placeholder,
+            spell_check=self.spell_check,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
     def render(
-            self,
-            *args,
-            name,
-            placeholder,
-            spell_check,
-            min_length,
-            max_length,
-            pattern,
-            **kwargs
+        self,
+        *args,
+        name,
+        placeholder,
+        spell_check,
+        min_length,
+        max_length,
+        pattern,
+        **kwargs,
     ):
         return CharInput(
             *args,
@@ -210,12 +221,12 @@ class PasswordInput(HTMLElement):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
-            **kwargs
+            **kwargs,
         )
 
 
 @dataclass(eq=False)
-class HiddenInput(HTMLElement):
+class HiddenInput(component.Component):
     name: str
     placeholder: str
     spell_check: T.Union[str, None] = field(default=None)
@@ -224,25 +235,27 @@ class HiddenInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(HiddenInput, self).__init__(*args,
-                                          name=self.name,
-                                          placeholder=self.placeholder,
-                                          spell_check=self.spell_check,
-                                          min_length=self.min_length,
-                                          max_length=self.max_length,
-                                          pattern=self.pattern,
-                                          **kwargs)
+        super(HiddenInput, self).__init__(
+            *args,
+            name=self.name,
+            placeholder=self.placeholder,
+            spell_check=self.spell_check,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
     def render(
-            self,
-            *args,
-            name: str = None,
-            placeholder: str = "",
-            spell_check: str = "true",
-            min_length: str = "null",
-            max_length: str = "null",
-            pattern: str = "null",
-            **kwargs
+        self,
+        *args,
+        name: str = None,
+        placeholder: str = "",
+        spell_check: str = "true",
+        min_length: str = "null",
+        max_length: str = "null",
+        pattern: str = "null",
+        **kwargs,
     ):
         return CharInput(
             *args,
@@ -253,12 +266,12 @@ class HiddenInput(HTMLElement):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
-            **kwargs
+            **kwargs,
         )
 
 
 @dataclass(eq=False)
-class EmailInput(HTMLElement):
+class EmailInput(component.Component):
     name: str
     placeholder: str
     spell_check: T.Union[str, None] = field(default=None)
@@ -267,28 +280,30 @@ class EmailInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(EmailInput, self).__init__(*args,
-                                         name=self.name,
-                                         placeholder=self.placeholder,
-                                         spell_check=self.spell_check,
-                                         min_length=self.min_length,
-                                         max_length=self.max_length,
-                                         pattern=self.pattern,
-                                         **kwargs)
+        super(EmailInput, self).__init__(
+            *args,
+            name=self.name,
+            placeholder=self.placeholder,
+            spell_check=self.spell_check,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
     def render(
-            self,
-            *args,
-            name: str = None,
-            placeholder: str = "",
-            spell_check: str = "true",
-            min_length: str = "null",
-            max_length: str = "null",
-            pattern: str = "null",
-            **kwargs
+        self,
+        *args,
+        name: str = None,
+        placeholder: str = "",
+        spell_check: str = "true",
+        min_length: str = "null",
+        max_length: str = "null",
+        pattern: str = "null",
+        **kwargs,
     ):
         return CharInput(
-            *args, 
+            *args,
             name=name,
             placeholder=placeholder,
             spell_check=spell_check,
@@ -296,12 +311,12 @@ class EmailInput(HTMLElement):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
-            **kwargs
+            **kwargs,
         )
 
 
 @dataclass(eq=False)
-class SearchInput(HTMLElement):
+class SearchInput(component.Component):
     name: str
     placeholder: str
     spell_check: T.Union[str, None] = field(default=None)
@@ -310,25 +325,27 @@ class SearchInput(HTMLElement):
     pattern: T.Union[str, None] = field(default=None)
 
     def __post_init__(self, *args, **kwargs):
-        super(SearchInput, self).__init__(*args,
-                                          name=self.name,
-                                          placeholder=self.placeholder,
-                                          spell_check=self.spell_check,
-                                          min_length=self.min_length,
-                                          max_length=self.max_length,
-                                          pattern=self.pattern,
-                                          **kwargs)
+        super(SearchInput, self).__init__(
+            *args,
+            name=self.name,
+            placeholder=self.placeholder,
+            spell_check=self.spell_check,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            pattern=self.pattern,
+            **kwargs,
+        )
 
     def render(
-            self,
-            *args,
-            name: str = None,
-            placeholder: str = "",
-            spell_check: str = "true",
-            min_length: str = "null",
-            max_length: str = "null",
-            pattern: str = "null",
-            **kwargs
+        self,
+        *args,
+        name: str = None,
+        placeholder: str = "",
+        spell_check: str = "true",
+        min_length: str = "null",
+        max_length: str = "null",
+        pattern: str = "null",
+        **kwargs,
     ):
         return CharInput(
             *args,
@@ -339,12 +356,12 @@ class SearchInput(HTMLElement):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
-            **kwargs
+            **kwargs,
         )
 
 
 @dataclass(eq=False)
-class CharField(HTMLElement):
+class CharField(component.Component):
     labeled = CharLabelValidator(logger=False, debug=True)
     input = CharInputValidator(logger=False, debug=True)
 
@@ -354,32 +371,34 @@ class CharField(HTMLElement):
     type: str
 
     def __post_init__(self, *args, **kwargs):
-        super(CharField, self).__init__(*args,
-                                        label=self.label,
-                                        name=self.name,
-                                        placeholder=self.placeholder,
-                                        type=self.type,
-                                        **kwargs
-                                        )
+        super(CharField, self).__init__(
+            *args,
+            label=self.label,
+            name=self.name,
+            placeholder=self.placeholder,
+            type=self.type,
+            **kwargs,
+        )
 
     def render(self, *args, label, name, placeholder, type, **kwargs):
         self.labeled = CharLabel(label)
-        self.input = CharInput(
-                  name=name,
-                  placeholder=placeholder,
-                  type=type
-              )
-        return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
+        self.input = CharInput(name=name, placeholder=placeholder, type=type)
+        return self.html_tags.div(*args, self.label, self.input, **kwargs)
 
 
-class CharFieldSet(HTMLElement):
-
-    def render(self, legend: CharLegend, *fields: HTMLElement, **kwargs):
+class CharFieldSet(component.Component):
+    def render(self, legend: CharLegend, *fields: component.Component, **kwargs):
         return self.html_tags.fieldset(legend, *fields, **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(CharField(label="Cut", name="cut", placeholder="Diamond Cut", type="text"))
     print(HiddenInput(name="password", placeholder="Enter Password", min_length="4"))
-    print(CharInput(name="text", placeholder="Enter Password", min_length="13", spell_check="false"))
-    
+    print(
+        CharInput(
+            name="text",
+            placeholder="Enter Password",
+            min_length="13",
+            spell_check="false",
+        )
+    )

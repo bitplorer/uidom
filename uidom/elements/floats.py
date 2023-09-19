@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from valio import StringValidator
 
-from uidom.dom.htmlelement import HTMLElement
+from uidom.dom.src import component
 
 __all__ = [
     # integer html
@@ -22,7 +22,7 @@ __all__ = [
 
 
 @dataclass(eq=False)
-class FloatLabel(HTMLElement):
+class FloatLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -33,7 +33,7 @@ class FloatLabel(HTMLElement):
 
 
 @dataclass(eq=False)
-class FloatLegend(HTMLElement):
+class FloatLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -48,47 +48,38 @@ max_field = StringValidator(logger=False, debug=True)
 
 
 @dataclass(eq=False)
-class FloatInput(HTMLElement):
-    
-    @max_field.add_validator
-    @min_field.add_validator
+class FloatInput(component.Component):
+    @max_field.add_post_validator
+    @min_field.add_post_validator
     def cast2float(self, value):
         if value not in ["null", None]:
             try:
-                float(value)
-            except TypeError as e:
-                raise ValueError(f"{value} is not a float value") from e
-    
+                return float(value)
+            except ValueError as e:
+                raise ValueError(f"got an invalid float value {value}") from e
 
     name: str = StringValidator(logger=False, debug=True)
-    type: str = StringValidator(in_choice=["number", "range"], logger=False, debug=True, default="number")
+    type: str = StringValidator(
+        in_choice=["number", "range"], logger=False, debug=True, default="number"
+    )
     placeholder: str = StringValidator(logger=False, debug=True)
     min: str = min_field
     max: str = max_field
     pattern: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
-        super(FloatInput, self).__init__(*args,
-                                         name=self.name,
-                                         placeholder=self.placeholder,
-                                         type=self.type,
-                                         min=self.min,
-                                         max=self.max,
-                                         pattern=self.pattern,
-                                         **kwargs
-                                         )
-
-    def render(
-            self,
+        super(FloatInput, self).__init__(
             *args,
-            name,
-            placeholder="",
-            type,
-            min,
-            max,
-            pattern,
-            **kwargs
-    ):
+            name=self.name,
+            placeholder=self.placeholder,
+            type=self.type,
+            min=self.min,
+            max=self.max,
+            pattern=self.pattern,
+            **kwargs,
+        )
+
+    def render(self, *args, name, placeholder="", type, min, max, pattern, **kwargs):
         return self.html_tags.input_(
             *args,
             type=type,
@@ -102,8 +93,7 @@ class FloatInput(HTMLElement):
 
 
 @dataclass(eq=False)
-class FloatNumberInput(HTMLElement):
-
+class FloatNumberInput(component.Component):
     name: str
     placeholder: str
     min: T.Union[str, None] = None
@@ -111,25 +101,17 @@ class FloatNumberInput(HTMLElement):
     pattern: T.Union[str, None] = None
 
     def __post_init__(self, *args, **kwargs):
-        super(FloatNumberInput, self).__init__(*args,
-                                               name=self.name,
-                                               placeholder=self.placeholder,
-                                               min=self.min,
-                                               max=self.max,
-                                               pattern=self.pattern,
-                                               **kwargs
-                                               )
-
-    def render(
-            self,
+        super(FloatNumberInput, self).__init__(
             *args,
-            name,
-            placeholder="",
-            min,
-            max,
-            pattern,
-            **kwargs
-    ):
+            name=self.name,
+            placeholder=self.placeholder,
+            min=self.min,
+            max=self.max,
+            pattern=self.pattern,
+            **kwargs,
+        )
+
+    def render(self, *args, name, placeholder="", min, max, pattern, **kwargs):
         return FloatInput(
             name=name,
             placeholder=placeholder,
@@ -141,7 +123,7 @@ class FloatNumberInput(HTMLElement):
 
 
 @dataclass(eq=False)
-class FloatRangeInput(HTMLElement):
+class FloatRangeInput(component.Component):
     name: str
     placeholder: str
     min: T.Union[str, None] = None
@@ -149,25 +131,17 @@ class FloatRangeInput(HTMLElement):
     pattern: T.Union[str, None] = None
 
     def __post_init__(self, *args, **kwargs):
-        super(FloatRangeInput, self).__init__(*args,
-                                              name=self.name,
-                                              placeholder=self.placeholder,
-                                              min=self.min,
-                                              max=self.max,
-                                              pattern=self.pattern,
-                                              **kwargs
-                                              )
-
-    def render(
-            self,
+        super(FloatRangeInput, self).__init__(
             *args,
-            name,
-            placeholder="",
-            min,
-            max,
-            pattern,
-            **kwargs
-    ):
+            name=self.name,
+            placeholder=self.placeholder,
+            min=self.min,
+            max=self.max,
+            pattern=self.pattern,
+            **kwargs,
+        )
+
+    def render(self, *args, name, placeholder="", min, max, pattern, **kwargs):
         return FloatInput(
             name=name,
             placeholder=placeholder,
@@ -178,8 +152,16 @@ class FloatRangeInput(HTMLElement):
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from valio import Pattern, SetOf
+
     print(FloatRangeInput(name="test", placeholder="xyz"))
-    print(FloatInput(name="test", type="number", placeholder="space",
-                     pattern=SetOf(Pattern("0-9", count_min=1, count_max=6)).pattern, min="100"))
+    print(
+        FloatInput(
+            name="test",
+            type="number",
+            placeholder="space",
+            pattern=SetOf(Pattern("0-9", count_min=1, count_max=3)).pattern,
+            min="100",
+        )
+    )

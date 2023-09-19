@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from valio import StringValidator, Validator
 
-from uidom.dom.htmlelement import HTMLElement
+from uidom.dom.src import component
 
 __all__ = [
     # integer html
@@ -25,7 +25,7 @@ __all__ = [
 
 @Validator.register
 @dataclass(eq=False)
-class IntegerLabel(HTMLElement):
+class IntegerLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -40,7 +40,7 @@ class IntegerLabelValidator(Validator):
 
 
 @dataclass(eq=False)
-class IntegerLegend(HTMLElement):
+class IntegerLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -55,7 +55,7 @@ max_field = StringValidator(logger=False, debug=True, name="max")
 
 
 @dataclass(eq=False)
-class IntegerInput(HTMLElement):
+class IntegerInput(component.Component):
     @max_field.add_validator
     @min_field.add_validator
     def cast2int(self, value):
@@ -107,7 +107,7 @@ class IntegerInputValidator(Validator):
 
 
 @dataclass(eq=False)
-class IntegerNumberInput(HTMLElement):
+class IntegerNumberInput(component.Component):
     name: str
     placeholder: str
     min: T.Union[str, None] = field(default=None)
@@ -144,7 +144,7 @@ class IntegerNumberInputValidator(Validator):
 
 
 @dataclass(eq=False)
-class IntegerRangeInput(HTMLElement):
+class IntegerRangeInput(component.Component):
     name: str
     placeholder: str
     min: T.Union[str, None] = field(default=None)
@@ -190,7 +190,7 @@ class IntegerRangeInputValidator(Validator):
 
 
 @dataclass(eq=False)
-class TelephoneInput(HTMLElement):
+class TelephoneInput(component.Component):
     name: str
     placeholder: str
     min: T.Union[str, None] = field(default=None)
@@ -220,7 +220,7 @@ class TelephoneInput(HTMLElement):
 
 
 @dataclass(eq=False)
-class IntegerField(HTMLElement):
+class IntegerField(component.Component):
     labeled = IntegerLabelValidator(logger=False, debug=True)
     input = IntegerInputValidator(logger=False, debug=True)
 
@@ -246,7 +246,7 @@ class IntegerField(HTMLElement):
 
 
 @dataclass(eq=False)
-class IntegerNumberField(HTMLElement):
+class IntegerNumberField(component.Component):
     labeled = IntegerLabelValidator(logger=False, debug=True)
     input = IntegerNumberInputValidator(logger=False, debug=True)
 
@@ -270,7 +270,7 @@ class IntegerNumberField(HTMLElement):
 
 
 @dataclass(eq=False)
-class IntegerRangeField(HTMLElement):
+class IntegerRangeField(component.Component):
     labeled = IntegerLabelValidator(logger=False, debug=True)
     input = IntegerRangeInputValidator(logger=False, debug=True)
 

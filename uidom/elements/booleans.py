@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from valio import StringValidator, Validator
 
-from uidom.dom.htmlelement import HTMLElement
+from uidom.dom.src import component
 from uidom.elements.buttons import SubmitButton
 
 __all__ = [
@@ -24,7 +24,7 @@ __all__ = [
 
 
 @dataclass(eq=False)
-class BooleanLabel(HTMLElement):
+class BooleanLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -39,7 +39,7 @@ class BooleanLabelValidator(Validator):
 
 
 @dataclass(eq=False)
-class BooleanLegend(HTMLElement):
+class BooleanLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
 
     def __post_init__(self, *args, **kwargs):
@@ -50,7 +50,7 @@ class BooleanLegend(HTMLElement):
 
 
 @dataclass(eq=False)
-class BooleanInput(HTMLElement):
+class BooleanInput(component.Component):
     name: str = StringValidator(logger=False, debug=True)
     type: str = StringValidator(
         in_choice=["checkbox", "radio"], logger=False, debug=True, default="checkbox"
@@ -131,7 +131,7 @@ class RadioInput(BooleanInput):
 
 
 @dataclass(eq=False)
-class BooleanField(HTMLElement):
+class BooleanField(component.Component):
     labeled = BooleanLabelValidator(logger=False, debug=True)
     input = BooleanInputValidator(logger=False, debug=True)
     label: str
