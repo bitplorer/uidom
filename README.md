@@ -26,18 +26,18 @@ This library is inspired from dominate html library and takes it further. It sup
  This example should work as is. 
 """
 from fastapi import FastAPI
-from uidom import UiDOM
+from uidom import Document
 from uidom.dom import Component, script, title, div
 from uidom.routing.fastapi import StreamingRoute
 
-document = UiDOM(body=[
+document = Document(body=[
     script(src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js", defer=None, rel="prefetch")
     ])
 
 api = FastAPI() 
 api.router.route_class = StreamingRoute
 
-class ToggleMe(Component):
+class ToggleButton(Component):
 
     def render(self):
         with div(x_data={'open': 'true'}) as toggle:
@@ -54,7 +54,7 @@ class App(Component):
 
 @api.get('/')
 def index():
-    return App(ToggleMe())
+    return App(ToggleButton())
 
 ```
 
@@ -76,6 +76,9 @@ class Nav(JinjaElement):
             )
         )
 
+# or we can write Jinja Element directly
+
+Nav = JinjaElement(nav(ul(For("item in menu_items", li(a(Var("item.name"), href=Var("item.link")))))))
 
 nav_bar = Nav()
 menu_url = nt("menu_url", "name link")
