@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "uidom"
-version = "0.4a0"
+version = "0.4a1"
 description = "HTML library"
 authors = ["bitplorer <bitplorer@outlook.com>"]
 license = "MIT"
