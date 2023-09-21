@@ -69,6 +69,8 @@ async def home(scope, receive, send):
 
 FASTAPI_API_TEMP = _Template(
     """
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -77,23 +79,42 @@ from uidom.routing.fastapi import HTMLRoute, StreamingRoute
 
 from $variable::app_name import settings
 
+
+@asynccontextmanager
+async def lifespan(api: FastAPI):
+    if settings.DEBUG:
+        # adding browser reloading
+        api.add_websocket_route(
+            path=settings.hot_reload_route.url_path,
+            route=settings.hot_reload_route,
+            name=settings.hot_reload_route.url_name,
+        )
+    if settings.DEBUG:
+        await settings.hot_reload_route.startup()
+    yield
+    if settings.DEBUG:
+        await settings.hot_reload_route.shutdown()
+
+
 api = FastAPI(
     debug=settings.DEBUG,
     default_response_class=HTMLResponse,
     title="$variable::app_name",
+      lifespan=lifespan,
 )
 api.router.route_class = StreamingRoute
 
-
-if settings.DEBUG:
-    # adding browser reloading
-    api.add_websocket_route(
-        path=settings.hot_reload_route.url_path,
-        route=settings.hot_reload_route,
-        name=settings.hot_reload_route.url_name,
-    )
-    api.add_event_handler("startup", settings.hot_reload_route.startup)
-    api.add_event_handler("shutdown", settings.hot_reload_route.shutdown)
+# In older versions of FastAPI we can use hot reloader as follows
+# 
+# if settings.DEBUG:
+#     # adding browser reloading
+#     api.add_websocket_route(
+#         path=settings.hot_reload_route.url_path,
+#         route=settings.hot_reload_route,
+#         name=settings.hot_reload_route.url_name,
+#     )
+#     api.add_event_handler("startup", settings.hot_reload_route.startup)
+#     api.add_event_handler("shutdown", settings.hot_reload_route.shutdown)
 
 api.mount(
     "/css",
