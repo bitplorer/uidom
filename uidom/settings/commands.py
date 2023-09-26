@@ -124,6 +124,7 @@ class TailwindCommand(Command):
     minify: bool = False
 
     def __post_init__(self):
+        self.output_css = Path(self.output_css)
         self._root_dir = self.webassets.dir
         self._project_dir = Path(self.file_path).parent
         self._input_file: Path = self._root_dir / self.input_css
