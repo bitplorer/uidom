@@ -78,7 +78,7 @@ class Nav(JinjaElement):
 
 # or we can write Jinja Element directly
 
-Nav = JinjaElement(nav(ul(For("item in menu_items", li(a(Var("item.name"), href=Var("item.link")))))))
+Nav = lambda: JinjaElement(nav(ul(For("item in menu_items", li(a(Var("item.name"), href=Var("item.link")))))))
 
 nav_bar = Nav()
 menu_url = nt("menu_url", "name link")
