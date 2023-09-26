@@ -8,7 +8,7 @@ import asyncio
 import logging
 import platform
 import subprocess
-import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Union
@@ -128,6 +128,28 @@ class TailwindCommand(Command):
         self._project_dir = Path(self.file_path).parent
         self._input_file: Path = self._root_dir / self.input_css
         self._output_file: Path = self.webassets.static.css / self.output_css
+
+        # this sections of the code is for
+        try:
+            all_output_files = sorted(
+                Path(self.webassets.static.css).glob(f"*{self._output_file.suffix}"),
+                reverse=True,
+            )
+            old_output_file = all_output_files[0]
+            if len(all_output_files) > 1:
+                [file.unlink(missing_ok=True) for file in all_output_files[1:]]
+        except IndexError as e:
+            old_output_file = None
+
+        if old_output_file:
+            self._output_file = self.webassets.static.css / old_output_file
+            self._output_file = self._output_file.replace(
+                self._output_file.with_name(
+                    f"{self.output_css.stem}_{time.strftime('%d_%b_%Y_%H_%M_%S')}{self._output_file.suffix}"
+                )
+            )
+            self.output_css = self._output_file.name
+
         self.init_tailwind_project()
 
     def init_tailwind_project(self):
@@ -152,7 +174,6 @@ class TailwindCommand(Command):
     plugins: [
         require('@tailwindcss/aspect-ratio'),
         require('@tailwindcss/forms'),
-        require('@tailwindcss/line-clamp'),
         require('@tailwindcss/typography'),
         require('tailwindcss/colors'),
     ],
