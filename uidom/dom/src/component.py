@@ -5,9 +5,12 @@
 
 from __future__ import annotations
 
+import json
+import warnings
 from dataclasses import asdict, dataclass, field
 from html import unescape
 from pathlib import Path
+from textwrap import dedent
 from typing import Iterable, List, Union
 
 from marko import convert as markdown
@@ -242,6 +245,7 @@ class Component(extension.Tags):
 
         return file_location.read_text()
 
+    @classmethod
     def from_file(cls, file_name: Union[str, Path]) -> "Component":
         return cls(cls._from_file(file_name))
 
@@ -276,9 +280,80 @@ class Fragment(Component):
 
     render_tag = False
 
-    def _add_attrs_to_child(self, child):
-        child.safe_attributes.update(self.safe_attributes)
-        child.add(self.attributes)
+    def _add_attrs_to_child(self, child: Union[extension.Tags, dom_tag]):
+        # here we are adding safe_attributes because we need a way to bypass
+        # escaping of attribute values for
+
+        if hasattr(child, "safe_attributes"):
+            child.safe_attributes.update(self.safe_attributes)
+
+        for attr, value in self.attributes.items():
+            # ===================================================================
+            # --------------------------^ x-data section ------------------------
+            # ===================================================================
+            # merging x-data attr from Fragment class to child class
+            if attr == "x-data" and child.attributes.get(attr, None):
+                x_data = json.loads(child.attributes.get(attr).replace("'", '"'))
+
+                if value is None:
+                    value = x_data
+                else:
+                    value = json.loads(value.replace("'", '"'))
+                if isinstance(x_data, dict) and isinstance(value, dict):
+                    value = x_data | value
+
+                value = json.dumps(value).replace('"', "'")
+            # ===================================================================
+            # --------------------------$ x-data section ------------------------
+            # ===================================================================
+
+            # ===================================================================
+            # --------------------------^ class section -------------------------
+            # ===================================================================
+            # merging class attr from Fragment class to child class
+            if attr == "class" and child.attributes.get(attr, None):
+                value = " ".join([child.attributes[attr], value])
+
+            # ===================================================================
+            # --------------------------$ class section -------------------------
+            # ===================================================================
+
+            # ===================================================================
+            # --------------------------^ x-on @ event section ------------------
+            # ===================================================================
+            # merging event attr (starting with @) from Fragment class to child
+            # class
+            if attr.startswith("@") and child.attributes.get(attr, None):
+                # remove indentation and any newlines from the child attribute value
+                child_attr_value = " ".join(
+                    map(lambda x: x.strip(), dedent(child.attributes[attr]).split("\n"))
+                )
+
+                value = "; ".join([child_attr_value, value])
+            # ===================================================================
+            # --------------------------$ x-on @ event section ------------------
+            # ===================================================================
+
+            # ===================================================================
+            # --------------------------^ x-tansition section -------------------
+            # ===================================================================
+            # merging x-tansition from Fragment class to child class
+            if attr.startswith("x-transition") and child.attributes.get(attr, None):
+                if value:
+                    value = " ".join([child.attributes[attr], value])
+            # ===================================================================
+            # --------------------------^ x-tansition section -------------------
+            # ===================================================================
+
+            # ===================================================================
+            # --------------------------^ x-bind : section ----------------------
+            # ===================================================================
+            if attr.startswith(":") and child.attributes.get(attr, None):
+                warnings.warn(
+                    message=f"{self.__class__.__name__} has not implemented merging attribute: x-bind"
+                )
+
+            child.set_attribute(*child.clean_pair(attr, value))
 
     def add(self, *args):
         for arg in args:
