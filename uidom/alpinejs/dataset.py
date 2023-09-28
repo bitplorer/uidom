@@ -84,8 +84,12 @@ class MergeAlpineAttributes(Fragment):
         return key, value
 
     def _merge_bind_attr(self, key, value):
-        if self.attributes.get(key, None):
+        if self.attributes.get(key, None) and key != ":class":
             raise ValueError(f"{key} merging not implemented yet")
+        # am not sure how well have I handled this case, maybe in future
+        # I will be more clear on how to merge bindings. Till then let
+        # there be some working usage.
+        value = "; ".join([self.attributes[key], value])
         return key, value
 
     def _merge_transition_attr(self, key, value):
@@ -98,6 +102,7 @@ class MergeAlpineAttributes(Fragment):
     def _merge_class_attr(self, key, value):
         if key == "class" and self.attributes.get(key, None):
             value = " ".join([self.attributes[key], value])
+        self.safe_attributes[key] = False
         return key, value
 
     def set_attribute(self, key, value):
