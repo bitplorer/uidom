@@ -7,6 +7,7 @@ from textwrap import dedent
 import toml
 
 from uidom import Document, __version__
+from uidom.alpinejs import DataSet
 from uidom.dom import *
 from uidom.dom.src.dom_tag import attr
 from uidom.web_io._events import BaseEventManager
@@ -744,23 +745,29 @@ class TestFragments(unittest.TestCase):
     def setUp(self):
         self.Fragment = Fragment
         self.MergeClassAttribute = MergeClassAttribute
+        self.DataSet = DataSet
 
     def test_fragment(self):
         with self.Fragment() as fragment:
             attr(className="class_a")
             attr(className="class_b")
-            div("a")
-            div("b")
+            div("a", className="old_class_a")
+            div("b", className="old_class_b")
 
-        # class_a is overridden by class_b here as attributes are not merged
+        # class_a is overridden by class_b here as class attributes are not merged
+        # in Fragments but attributes of child elements of Fragments and Fragments
+        # are merged together on child elements nicely.
+        # we see class attributes of div's are preserved and new class attributes
+        # are merged with old classes.
+
         self.assertEqual(
             fragment.__render__(),
             dedent(
                 """\
-                <div class="class_b">
+                <div class="old_class_a class_b">
                   a
                 </div>
-                <div class="class_b">
+                <div class="old_class_b class_b">
                   b
                 </div>"""
             ),
@@ -780,6 +787,26 @@ class TestFragments(unittest.TestCase):
                   a
                 </div>
                 <div class="class_a class_b">
+                  b
+                </div>"""
+            ),
+        )
+        # with DataSet class we can merge not only classes on children but also
+        # x-data attributes, x-on events and x-transition and more.
+        with self.DataSet() as data_set_test:
+            attr(className="attr1", x_data="{'attr1_data': 'attr1'}")
+            attr(className="attr2", x_data="{'attr2_data': 'attr2'}")
+            div("a", className="attr_a", x_data="{'a_data': 'a'}")
+            div("b", className="attr_b", x_data="{'b_data': 'b'}")
+
+        self.assertEqual(
+            data_set_test.__render__(),
+            dedent(
+                """\
+                <div class="attr_a attr1 attr2" x-data="{'a_data': 'a', 'attr1_data': 'attr1', 'attr2_data': 'attr2'}">
+                  a
+                </div>
+                <div class="attr_b attr1 attr2" x-data="{'b_data': 'b', 'attr1_data': 'attr1', 'attr2_data': 'attr2'}">
                   b
                 </div>"""
             ),
