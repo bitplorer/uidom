@@ -179,7 +179,17 @@ class TailwindCommand(Command):
         require('tailwindcss/colors'),
     ],
     theme: {{
-        extend: {{}}
+        extend: {{
+            keyframes:{{
+                ripple:{{
+                    '0%': {{opacity:1, scale:0}},
+                    '100':{{opacity:0, scale:1.5}}
+                }}
+            }},
+            animation:{{
+                ripple: 'ripple 0.5s linear infinite'
+            }}
+        }}
     }}
     
     }}"""
