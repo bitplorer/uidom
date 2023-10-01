@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from uidom.routing.fastapi import HTMLRoute, StreamingRoute
+from uidom.htmx import HtmxMiddleware
+from uidom.routing.fastapi import DirectoryRouter, HTMLRoute, StreamingRoute
 
 from . import settings
 from .pages.card import card_router
@@ -21,11 +22,24 @@ api = FastAPI(
     default_response_class=HTMLResponse,
     title="Demosite",
 )
+
+
+@api.get("/{uid}/{products}")
+def world(id: str, products: str):
+    return id
+
+
+app_router = DirectoryRouter(base_directory="app")
+dir_router = DirectoryRouter(base_directory="sellers")
 api.router.route_class = StreamingRoute
+api.include_router(app_router)
+api.include_router(dir_router)
 api.include_router(header_router)
 api.include_router(chart_router)
 api.include_router(card_router)
 api.include_router(testing_api)
+
+api.add_middleware(HtmxMiddleware)
 
 if settings.DEBUG:
     # adding browser reloading

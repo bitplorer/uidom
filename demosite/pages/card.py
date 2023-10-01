@@ -32,7 +32,7 @@ class BusinessCard(Component):
         city=None,
     ):
         with div(className="flex p-2") as _card:
-            defHTML(
+            Fragment(
                 f"""
          <div id="app" class="flex overflow-hidden bg-white rounded shadow-md w-128 h-60 sm:flex-col text-grey-darkest">
             <img class="object-cover w-1/2 h-full rounded-l-sm sm:w-fit" src="https://bit.ly/2EApSiC" alt="Room Image">

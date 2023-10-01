@@ -16,6 +16,7 @@ from demosite.document import document
 from uidom import Document
 from uidom.dom import *
 from uidom.dom.src.ws_rpc import ws_rpc
+from uidom.routing.fastapi import DirectoryRouter
 from uidom.web_io import (
     EdgeDBFetcher,
     WebSocketAdapter,
@@ -56,13 +57,11 @@ class Counter(ReactiveComponent):
     def render(self, count):
         _id = next(uniqueid)
         with div(
-            x_data=None,
-            hx_boost="true",
             _id=f"id_{_id}",
             className="block w-4/5 items-center m-2 min-w-fit shadow-lg font-teko bg-gray-200 border border-stone-300 ",
         ) as counter_div:
             div(
-                x_text=count,
+                count,
                 className="flex bg-gradient-to-r from-transparent via-stone-600 to-transparent "
                 " h-6 w-full text-center text-white text-center "
                 "justify-center px-3 ",
@@ -86,26 +85,6 @@ class Counter(ReactiveComponent):
                     className="flex w-1/2 rounded-r bg-stone-400 text-white text-center "
                     "justify-center items-center hover:bg-stone-600/70 active:bg-stone-600/90 ",
                     preload="mousedown",
-                )
-            with div(className="inline-flex h-6 w-full my-2 px-2 font-montserrat"):
-                button(
-                    "remove",
-                    hx_get=f"/remove/{count}",
-                    hx_trigger="click",
-                    hx_target=f"#id_{_id}",
-                    hx_swap="outerHTML",
-                    className="flex w-1/2 bg-stone-400 text-white text-center "
-                    "justify-center items-center hover:bg-stone-600/70 active:bg-stone-600/90 ",
-                )
-
-                button(
-                    "add",
-                    hx_get=f"/add/{count}",
-                    hx_trigger="click",
-                    hx_target=f"#id_{_id}",
-                    className="flex w-1/2 rounded-full bg-stone-400 text-white text-center "
-                    "justify-center px-3 hover:bg-stone-600/70 active:bg-stone-600/90 mx-2 ",
-                    hx_swap="outerHTML",
                 )
         return counter_div
 
@@ -136,6 +115,9 @@ class Counter(ReactiveComponent):
 
 @api.get("/increment/{count}")
 async def increment(req: Request, count: int):
+    # for testing htmx middleware
+    if req.state.htmx:
+        print(req.state.htmx.current_url)
     return Counter(count).increment()
 
 
@@ -183,7 +165,7 @@ x_toggle = ToggleInset(tag_name="toggle")
 @api.get("/counter")
 async def counter(req: Request):
     with document(x_toggle) as counters:
-        with div(className="relative flex max-w-sm h-screen"):
+        with div(className="relative flex max-w-full h-screen"):
             Counter()
             # x_toggle(),
             Counter(count=2)
