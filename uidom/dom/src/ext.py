@@ -144,6 +144,8 @@ class Tags(dom_tag, dom1core):
         attribute = {
             "cls": "class",
             "className": "class",
+            "classname": "class",
+            "classes": "class",
             "class_name": "class",
             "fr": "for",
             "html_for": "for",

@@ -479,6 +479,8 @@ class dom_tag(object):
         attribute = {
             "cls": "class",
             "className": "class",
+            "classname": "class",
+            "classes": "class",
             "class_name": "class",
             "fr": "for",
             "html_for": "for",
