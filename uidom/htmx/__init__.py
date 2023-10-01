@@ -6,9 +6,10 @@
 
 import typing
 
+from uidom.htmx.middleware import HtmxMiddleware
 from uidom.web_io import HtmxEvents
 
-__all__ = ["Htmx"]
+__all__ = ["Htmx", "HtmxMiddleware"]
 
 
 class Htmx(HtmxEvents):
