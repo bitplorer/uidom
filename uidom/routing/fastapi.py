@@ -289,7 +289,6 @@ class DirectoryRouter(routing.APIRouter):
                         tags = ["default"]
                     else:
                         tags = relative_path_to_file_module.split("/")
-                        print(tags)
 
                     if relative_path_to_file_module.startswith("app"):
                         # remove "app" prefix from path as "app" is default
