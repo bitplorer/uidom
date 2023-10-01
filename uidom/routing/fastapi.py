@@ -3,9 +3,15 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-__all__ = ["HTMLRoute", "StreamingRoute"]
 
+__all__ = ["HTMLRoute", "StreamingRoute", "DirectoryRouter"]
+
+
+import importlib
+import re
+import sys
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Union
 
 from fastapi import params, routing
@@ -14,8 +20,14 @@ from fastapi.types import IncEx
 from fastapi.utils import generate_unique_id
 from starlette.responses import JSONResponse, Response
 from starlette.routing import BaseRoute
+from starlette.types import ASGIApp, Lifespan
 
-from uidom.response.starlette import async_html_response, html_response
+from uidom.response.starlette import (
+    HTMLResponse,
+    StreamingResponse,
+    async_html_response,
+    html_response,
+)
 
 
 class HTMLRoute(routing.APIRoute):
@@ -51,7 +63,7 @@ class HTMLRoute(routing.APIRoute):
         openapi_extra: Optional[Dict[str, Any]] = None,
         generate_unique_id_function: Union[
             Callable[["routing.APIRoute"], str], DefaultPlaceholder
-        ] = Default(generate_unique_id)
+        ] = Default(generate_unique_id),
     ) -> None:
         super().__init__(
             path=path,
@@ -116,7 +128,7 @@ class StreamingRoute(routing.APIRoute):
         openapi_extra: Optional[Dict[str, Any]] = None,
         generate_unique_id_function: Union[
             Callable[["routing.APIRoute"], str], DefaultPlaceholder
-        ] = Default(generate_unique_id)
+        ] = Default(generate_unique_id),
     ) -> None:
         super().__init__(
             path=path,
@@ -146,3 +158,186 @@ class StreamingRoute(routing.APIRoute):
             openapi_extra=openapi_extra,
             generate_unique_id_function=generate_unique_id_function,
         )
+
+
+class DirectoryRouter(routing.APIRouter):
+    # picked from https://github.com/ebubekir/fastapi-directory-routing
+    _METHODS = ["get", "post", "put", "patch", "delete", "options", "head"]
+
+    """DirectoryRouter class inherit from fastapi.APIRouter.
+
+    This class begins automatic route scanning upon initialization.
+
+    Args:
+        base_directory (str, optional): Defines the folder to be subjected to automatic route scanning.
+        route_file_name (str, optional): Specifies the file name within the folder where route scanning will be conducted
+
+    Examples:
+        >>> from fastapi import FastAPI
+        >>> from uidom.routing.fastapi import DirectoryRouter
+        >>> app = FastAPI()
+        >>> dir_router = DirectoryRouter()
+        >>> app.include_router(prefix="/dir-routes", router=dir_router)
+
+    Todo:
+        * For each route configuration, the __config__ variable will be searched within the files.
+        * Error and exception handling scenarios will be enhanced/developed.
+
+    """
+
+    def __init__(
+        self,
+        base_directory: str = "app",
+        route_file_name: str = "route",
+        *,
+        prefix: str = "",
+        tags: Optional[List[Union[str, Enum]]] = None,
+        dependencies: Optional[Sequence[params.Depends]] = None,
+        default_response_class: Type[Response] = Default(JSONResponse),
+        responses: Optional[Dict[Union[int, str], Dict[str, Any]]] = None,
+        callbacks: Optional[List[BaseRoute]] = None,
+        routes: Optional[List[routing.BaseRoute]] = None,
+        redirect_slashes: bool = True,
+        default: Optional[ASGIApp] = None,
+        dependency_overrides_provider: Optional[Any] = None,
+        route_class: Type[routing.APIRoute] = StreamingRoute,
+        on_startup: Optional[Sequence[Callable[[], Any]]] = None,
+        on_shutdown: Optional[Sequence[Callable[[], Any]]] = None,
+        # the generic to Lifespan[AppType] is the type of the top level application
+        # which the router cannot know statically, so we use typing.Any
+        lifespan: Optional[Lifespan[Any]] = None,
+        deprecated: Optional[bool] = None,
+        include_in_schema: bool = True,
+        generate_unique_id_function: Callable[[routing.APIRoute], str] = Default(
+            generate_unique_id
+        ),
+    ):
+        self._base_directory = base_directory
+        self._route_file_name = route_file_name
+        super().__init__(
+            prefix=prefix,
+            tags=tags,
+            dependencies=dependencies,
+            default_response_class=default_response_class,
+            responses=responses,
+            callbacks=callbacks,
+            routes=routes,
+            redirect_slashes=redirect_slashes,
+            default=default,
+            dependency_overrides_provider=dependency_overrides_provider,
+            route_class=route_class,
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+            lifespan=lifespan,
+            deprecated=deprecated,
+            include_in_schema=include_in_schema,
+            generate_unique_id_function=generate_unique_id_function,
+        )
+
+        self.build_router()
+
+    def build_router(self):
+        current_module = sys.modules["__main__"]
+        parent = Path(current_module.__file__).parent
+        _package_name = parent.name
+        files = (parent / self.base_directory).absolute().rglob("*.py")
+
+        for file in files:
+            if (self.route_file_name + ".py") == file.name:
+                # ===================================================== #
+                #     path to file module  excluding package folder     #
+                # ===================================================== #
+                #           example: app/subpmodule/module.py           #
+                relative_path_to_file_module = Path(file.parent).relative_to(parent)
+
+                # ===================================================== #
+                #     path to file module  including package folder     #
+                # ===================================================== #
+                #           example: package/app/module/module.py       #
+                relative_path_to_file_package = str(
+                    _package_name / relative_path_to_file_module
+                )
+
+                relative_path_to_file_module = str(relative_path_to_file_module)
+
+                #           example: package.app.module.route
+                route_module = (
+                    relative_path_to_file_package.replace("/", ".")
+                    + "."
+                    + self.route_file_name
+                )
+
+                # Import route file
+                route_file = importlib.import_module(route_module)
+
+                # Find routes
+                route_methods = [
+                    r for r in dir(route_file) if r.lower() in self._METHODS
+                ]
+
+                if route_methods:
+                    braces_or_brackets = self._find_braces_or_brackets(
+                        relative_path_to_file_module
+                    )
+                    # TODO: make a {items}, tags parsed well in advance
+                    # tag_string = ""
+                    # for str_to_remove in braces_or_brackets:
+                    #     tag_string = relative_path_to_file_module.replace(
+                    #         "/" + str_to_remove, ""
+                    #     )
+                    if relative_path_to_file_module.startswith("app"):
+                        tags = ["default"]
+                    else:
+                        tags = relative_path_to_file_module.split("/")
+                        print(tags)
+
+                    if relative_path_to_file_module.startswith("app"):
+                        # remove "app" prefix from path as "app" is default
+                        # folder.
+                        rel_path_without_app_prefix = (
+                            relative_path_to_file_module.replace("app", "")
+                        )
+                        prefix = (
+                            rel_path_without_app_prefix
+                            if rel_path_without_app_prefix
+                            else ""
+                        )
+                    else:
+                        prefix = "/" + relative_path_to_file_module
+
+                    if prefix:
+                        _router = routing.APIRouter(prefix=prefix, tags=tags)
+                    else:
+                        _router = routing.APIRouter(tags=tags)
+
+                    # important to pass on route_class to sub routers as
+                    # we have to use StreamingRoute for UiDOM components
+                    _router.route_class = self.route_class
+
+                    for method in route_methods:
+                        _router.add_api_route(
+                            "/", getattr(route_file, method), methods=[method.lower()]
+                        )
+
+                    self.include_router(_router)
+
+    def _find_braces_or_brackets(self, string):
+        # bing search query that generated the below pattern
+        # create a regex in python to match string inside
+        # {} and [] where strings can be of pattern
+        # "/hello/{world}/one/{plus}" or "/hello/[world]/[two]" etc
+
+        pattern = re.compile(r"\{[^}]*\}|\[[^\]]*\]")
+        return re.findall(pattern=pattern, string=string)
+
+    @property
+    def base_directory(self):
+        return self._base_directory
+
+    @base_directory.setter
+    def base_directory(self, value):
+        self._base_directory = value
+
+    @property
+    def route_file_name(self):
+        return self._route_file_name
