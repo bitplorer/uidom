@@ -363,7 +363,10 @@ class Fragment(Component):
 
     def render(self, *args, **kwargs):
         self.add(kwargs)
-        self.add(args)
+        [
+            self.add(defHTML(arg)) if isinstance(arg, str) else self.add(arg)
+            for arg in args
+        ]
 
         # for this component to behave as a fragment we must simply return self
         # Component class will take care of all the things itself.
