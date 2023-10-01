@@ -148,9 +148,6 @@ def defHTML(raw_string, escape=True) -> T.List[ext.Tags]:  # noqa
             ), f"{element=} is not instance of {ext.Tags}"
             elements.append(element)
     return elements
-    # element = HTMLStringToDom(raw_string, escape=escape).parse()
-    # assert isinstance(element, ext.Tags), f"{element=} is not instance of {ext.Tags}"
-    # return element
 
 
 # if __name__ == '__main__':
