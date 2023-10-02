@@ -32,13 +32,12 @@ __all__ = [
 class Document(object):
     head: T.Optional[T.Union[ext.Tags, list[ext.Tags]]] = None
     body: T.Optional[T.Union[ext.Tags, list[ext.Tags]]] = None
-    ensure_csrf_token_in_meta: bool = field(default=False)
+    ensure_csrf_token: bool = field(default=False)
     webassets: T.Optional["WebAssets"] = None
 
     def __call__(self, *args, head=None, body=None, **kwargs) -> HtmlDocument:
         html_doc = HtmlDocument
-        if not self.ensure_csrf_token_in_meta:
-            html_doc.ensure_csrf_token_in_meta = self.ensure_csrf_token_in_meta
+        html_doc.ensure_csrf_token = self.ensure_csrf_token
         return html_doc(
             *args,
             head=head,
