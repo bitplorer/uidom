@@ -21,5 +21,4 @@ async def index():
             icon=div(search_icon, className="flex px-2 text-stone-400"),
         )
         success_toast("Am Successful Yay!")
-    print("XComponent in document", XComponent in page)
     return page

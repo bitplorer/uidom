@@ -8,14 +8,13 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from demosite import settings
+from demosite.pages.card import card_router
+from demosite.pages.chart import chart_router
+from demosite.pages.check_component import testing_api
+from demosite.pages.header import header_router
 from uidom.htmx import HtmxMiddleware
 from uidom.routing.fastapi import DirectoryRouter, HTMLRoute, StreamingRoute
-
-from . import settings
-from .pages.card import card_router
-from .pages.chart import chart_router
-from .pages.check_component import testing_api
-from .pages.header import header_router
 
 api = FastAPI(
     debug=settings.DEBUG,
@@ -24,16 +23,7 @@ api = FastAPI(
 )
 
 
-@api.get("/{uid}/{products}")
-def world(id: str, products: str):
-    return id
-
-
-app_router = DirectoryRouter(base_directory="app")
-dir_router = DirectoryRouter(base_directory="sellers")
 api.router.route_class = StreamingRoute
-api.include_router(app_router)
-api.include_router(dir_router)
 api.include_router(header_router)
 api.include_router(chart_router)
 api.include_router(card_router)

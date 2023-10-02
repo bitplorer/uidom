@@ -10,7 +10,7 @@ from uidom.dom import *
 __all__ = ["ToastElement", "x_toast", "success_toast"]
 
 
-@dataclass
+@dataclass(eq=False)
 class ToastElement(HTMLElement):
     def __init__(self, *args, **kwargs):
         super(ToastElement, self).__init__(*args, **kwargs)
