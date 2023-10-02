@@ -28,7 +28,7 @@ testing_api = APIRouter(
 )
 
 
-@dataclass
+@dataclass(eq=False)
 class ToggleIconsWithoutClickAway(CustomElement):
     default_icon: dom_tag
     non_default_icon: dom_tag
@@ -82,7 +82,7 @@ x_toggle_dark_mode = ToggleIconsWithoutClickAway(
 )
 
 
-@dataclass
+@dataclass(eq=False)
 class DarkModeButton(XComponent):
     def render(self, tag_name):
         with template(x_component=tag_name) as dark_mode_btn:
@@ -112,7 +112,7 @@ class DarkModeButton(XComponent):
 x_dark_mode = DarkModeButton(tag_name="dark-mode")
 
 
-@dataclass
+@dataclass(eq=False)
 class Navigation(XComponent):
     def __post_init__(self, *args, **kwargs):
         super(Navigation, self).__post_init__(*args, **kwargs)
