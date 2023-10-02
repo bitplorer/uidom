@@ -10,6 +10,7 @@ __all__ = ["HTMLRoute", "StreamingRoute", "DirectoryRouter"]
 import importlib
 import re
 import sys
+from collections import defaultdict
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Union
@@ -243,82 +244,139 @@ class DirectoryRouter(routing.APIRouter):
         files = (parent / self.base_directory).absolute().rglob("*.py")
 
         for file in files:
-            if (self.route_file_name + ".py") == file.name:
-                # ===================================================== #
-                #     path to file module  excluding package folder     #
-                # ===================================================== #
-                #           example: app/subpmodule/module.py           #
-                relative_path_to_file_module = Path(file.parent).relative_to(parent)
+            # ===================================================== #
+            #     path to file module: excluding package folder     #
+            # ===================================================== #
+            #           example: app/submodule/module.py           #
+            relative_path_to_file_module = Path(file.parent).relative_to(parent)
 
-                # ===================================================== #
-                #     path to file module  including package folder     #
-                # ===================================================== #
-                #           example: package/app/module/module.py       #
-                relative_path_to_file_package = str(
-                    _package_name / relative_path_to_file_module
-                )
+            # ===================================================== #
+            #     path to file module: including package folder     #
+            # ===================================================== #
+            #           example: package/app/module/module.py       #
+            relative_path_to_file_package = str(
+                _package_name / relative_path_to_file_module
+            )
 
-                relative_path_to_file_module = str(relative_path_to_file_module)
+            relative_path_to_file_module = str(relative_path_to_file_module)
 
-                #           example: package.app.module.route
-                route_module = (
-                    relative_path_to_file_package.replace("/", ".")
-                    + "."
-                    + self.route_file_name
-                )
+            module = relative_path_to_file_package.replace("/", ".") + "." + file.stem
+            # Import route file
+            route_file = importlib.import_module(module)
 
-                # Import route file
-                route_file = importlib.import_module(route_module)
-
-                # Find routes
+            # Find routes
+            if file.stem == self.route_file_name:
                 route_methods = [
                     r for r in dir(route_file) if r.lower() in self._METHODS
                 ]
+            else:
+                # if the file name is NOT "routes" and we want to include method from that
+                # file in router, we can scan __all__ variable in directory for pyobjects
+                # that declare route methods, for example
+                #
+                # shoppers.py
+                #
+                #   __all__ = ["Shoppers"]
+                #
+                #   class Shoppers(Component):
+                #       routes = ["get", "post", "cart", etc...]
+                #
+                #       def get(self, ...):...
+                #
+                route_methods = defaultdict(dict)
 
-                if route_methods:
-                    braces_or_brackets = self._find_braces_or_brackets(
-                        relative_path_to_file_module
+                for klass_name in getattr(route_file, "__all__", []):
+                    klass = getattr(route_file, klass_name)
+                    for mthd in getattr(klass, "routes", []):
+                        route_methods[klass_name.lower()][mthd] = getattr(klass, mthd)
+
+            if route_methods:
+                # braces_or_brackets = self._find_braces_or_brackets(
+                #     relative_path_to_file_module
+                # )
+                # TODO: make a {items}, tags parsed well in advance
+                # tag_string = ""
+                # for str_to_remove in braces_or_brackets:
+                #     tag_string = relative_path_to_file_module.replace(
+                #         "/" + str_to_remove, ""
+                #     )
+
+                # Making "app" prefix as default
+                if relative_path_to_file_module.startswith("app"):
+                    tags = ["default"]
+                else:
+                    tags = relative_path_to_file_module.split("/")
+
+                if relative_path_to_file_module.startswith("app"):
+                    # remove "app" prefix from path as "app" is default
+                    # folder.
+                    rel_path_without_app_prefix = relative_path_to_file_module.replace(
+                        "app", ""
                     )
-                    # TODO: make a {items}, tags parsed well in advance
-                    # tag_string = ""
-                    # for str_to_remove in braces_or_brackets:
-                    #     tag_string = relative_path_to_file_module.replace(
-                    #         "/" + str_to_remove, ""
-                    #     )
-                    if relative_path_to_file_module.startswith("app"):
-                        tags = ["default"]
-                    else:
-                        tags = relative_path_to_file_module.split("/")
+                    prefix = (
+                        rel_path_without_app_prefix
+                        if rel_path_without_app_prefix
+                        else ""
+                    )
+                else:
+                    prefix = "/" + relative_path_to_file_module
 
-                    if relative_path_to_file_module.startswith("app"):
-                        # remove "app" prefix from path as "app" is default
-                        # folder.
-                        rel_path_without_app_prefix = (
-                            relative_path_to_file_module.replace("app", "")
-                        )
-                        prefix = (
-                            rel_path_without_app_prefix
-                            if rel_path_without_app_prefix
-                            else ""
-                        )
-                    else:
-                        prefix = "/" + relative_path_to_file_module
+                if prefix:
+                    _router = routing.APIRouter(prefix=prefix, tags=tags)
+                else:
+                    _router = routing.APIRouter(tags=tags)
+                #########################################################
+                #   important to pass on route_class to sub routers as  #
+                #   we have to use StreamingRoute for UiDOM components  #
+                #########################################################
+                _router.route_class = self.route_class
 
-                    if prefix:
-                        _router = routing.APIRouter(prefix=prefix, tags=tags)
-                    else:
-                        _router = routing.APIRouter(tags=tags)
-
-                    # important to pass on route_class to sub routers as
-                    # we have to use StreamingRoute for UiDOM components
-                    _router.route_class = self.route_class
-
+                if isinstance(route_methods, list):
+                    # these are methods inside normal route.py files
                     for method in route_methods:
+                        _method_attr = getattr(route_file, method)
                         _router.add_api_route(
-                            "/", getattr(route_file, method), methods=[method.lower()]
+                            "/",
+                            _method_attr,
+                            methods=[method.lower()],
+                            description=_method_attr.__doc__,
                         )
+                else:
+                    # these are methods inside non route.py files
+                    # with __all__ variable declared, important thing to
+                    # note is that all methods inside class MUST BE
+                    # classmethod or staticmethod
+                    for klass_name in route_methods:
+                        for _method in route_methods[klass_name]:
+                            _method_attr = route_methods[klass_name][_method]
+                            # here we set .name attribute to method because we want
+                            # htmx to use the route via hx_get=url_for(klass.method.name)
+                            name = f"{module}.{klass_name}:{_method}"
+                            _method_attr.name = name
+                            if _method.lower() in self._METHODS:
+                                # case for [get, post, path, delete, etc] CRUD methods
+                                _router.tags.extend([file.stem, klass_name])
+                                _router.add_api_route(
+                                    f"/{file.stem}/{klass_name}",
+                                    _method_attr,
+                                    name=name,
+                                    methods=[_method.lower()],
+                                    description=_method_attr.__doc__,
+                                )
+                            else:
+                                # case for other methods that are named other than CRUD
+                                # operations such as Counter.increment, they all will
+                                # default to "get" method.
+                                _router.tags.extend([file.stem, klass_name])
+                                _router.add_api_route(
+                                    f"/{file.stem}/{klass_name}/{_method.lower()}",
+                                    _method_attr,
+                                    name=name,
+                                    methods=["get"],
+                                    description=_method_attr.__doc__,
+                                )
 
-                    self.include_router(_router)
+                self.include_router(_router)
 
     def _find_braces_or_brackets(self, string):
         # bing search query that generated the below pattern
