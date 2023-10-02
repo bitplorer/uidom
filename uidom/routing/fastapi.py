@@ -352,7 +352,7 @@ class DirectoryRouter(routing.APIRouter):
                             # here we set .name attribute to method because we want
                             # htmx to use the route via hx_get=url_for(klass.method.name)
                             name = f"{module}.{klass_name}:{_method}"
-                            _method_attr.name = name
+                            _method_attr.__name__ = name
                             if _method.lower() in self._METHODS:
                                 # case for [get, post, path, delete, etc] CRUD methods
                                 _router.tags.extend([file.stem, klass_name])
