@@ -410,8 +410,8 @@ class TestStates(unittest.TestCase):
 <!DOCTYPE html>
 <html>
   <head>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" name="viewport">
     <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui" name="viewport">
   </head>
   <body>
     <div>
@@ -811,6 +811,18 @@ class TestFragments(unittest.TestCase):
                 </div>"""
             ),
         )
+
+
+# class TestDocumentHead(unittest.TestCase):
+#     def setUp(self) -> None:
+#         self.document = HtmlDocument
+
+#     def test_head(self):
+#         with self.document(ensure_csrf_token=False) as doc:
+#             with div() as dv:
+#                 x = Head(title("Test Title"))
+
+#         self.assertIn(x, doc)
 
 
 if __name__ == "__main__":
