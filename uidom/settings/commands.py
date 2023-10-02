@@ -170,6 +170,7 @@ class TailwindCommand(Command):
         "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/*.{{html,py}}",
         "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/*.{{html,py}}",
         "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/**/*.{{html,py}}",
+        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/**/**/*.{{html,py}}",
         ]
         }},
     plugins: [
