@@ -503,7 +503,7 @@ class ReactiveComponent(Component):
         original_states = self.__states
 
         self.__states = original_states | current_states
-        if original_states != self.__states:
+        if self.__states != original_states:
             # IMPORTANT: There is a reason we are not setting self._re_render(**current_states).
             # When dataclass creates dictionary it only creates dictionary of the declared fields
             # but kwargs that are passed in the above can contain key=value pairs such as tailwind
