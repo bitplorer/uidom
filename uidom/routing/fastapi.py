@@ -247,20 +247,19 @@ class DirectoryRouter(routing.APIRouter):
             # ===================================================== #
             #     path to file module: excluding package folder     #
             # ===================================================== #
-            #           example: app/submodule/module.py           #
-            relative_path_to_file_module = Path(file.parent).relative_to(parent)
+            #           example: app/module/                        #
+            relative_file_folder = Path(file.parent).relative_to(parent)
 
             # ===================================================== #
             #     path to file module: including package folder     #
             # ===================================================== #
-            #           example: package/app/module/module.py       #
-            relative_path_to_file_package = str(
-                _package_name / relative_path_to_file_module
-            )
+            #           example: package/app/module/                #
+            file_package_path = str(_package_name / relative_file_folder)
 
-            relative_path_to_file_module = str(relative_path_to_file_module)
+            relative_file_folder = str(relative_file_folder)
 
-            module = relative_path_to_file_package.replace("/", ".") + "." + file.stem
+            # example: package/app/module/ -> package.app.module
+            module = file_package_path.replace("/", ".") + "." + file.stem
             # Import route file
             route_file = importlib.import_module(module)
 
@@ -302,15 +301,15 @@ class DirectoryRouter(routing.APIRouter):
                 #     )
 
                 # Making "app" prefix as default
-                if relative_path_to_file_module.startswith("app"):
+                if relative_file_folder.startswith("app"):
                     tags = ["default"]
                 else:
-                    tags = relative_path_to_file_module.split("/")
+                    tags = relative_file_folder.split("/")
 
-                if relative_path_to_file_module.startswith("app"):
+                if relative_file_folder.startswith("app"):
                     # remove "app" prefix from path as "app" is default
                     # folder.
-                    rel_path_without_app_prefix = relative_path_to_file_module.replace(
+                    rel_path_without_app_prefix = relative_file_folder.replace(
                         "app", ""
                     )
                     prefix = (
@@ -319,9 +318,17 @@ class DirectoryRouter(routing.APIRouter):
                         else ""
                     )
                 else:
-                    prefix = "/" + relative_path_to_file_module
+                    prefix = "/" + relative_file_folder
 
                 if prefix:
+                    # remove private folders starting with "_" i.e. underscore
+                    # from prefix as we treat them as not included in api paths
+                    prefix = "/" + "/".join(
+                        filter(
+                            lambda x: x if not x.startswith("_") else None,
+                            prefix.split("/"),
+                        )
+                    )
                     _router = routing.APIRouter(prefix=prefix, tags=tags)
                 else:
                     _router = routing.APIRouter(tags=tags)
@@ -335,9 +342,11 @@ class DirectoryRouter(routing.APIRouter):
                     # these are methods inside normal route.py files
                     for method in route_methods:
                         _method_attr = getattr(route_file, method)
+                        _method_attr.__dict__["name"] = name
                         _router.add_api_route(
                             "/",
                             _method_attr,
+                            name=_method_attr.name,
                             methods=[method.lower()],
                             description=_method_attr.__doc__,
                         )
@@ -352,14 +361,27 @@ class DirectoryRouter(routing.APIRouter):
                             # here we set .name attribute to method because we want
                             # htmx to use the route via hx_get=url_for(klass.method.name)
                             name = f"{module}.{klass_name}:{_method}"
-                            _method_attr.__name__ = name
+                            _method_attr.__dict__["name"] = name
+
                             if _method.lower() in self._METHODS:
                                 # case for [get, post, path, delete, etc] CRUD methods
                                 _router.tags.extend([file.stem, klass_name])
+                                if not file.stem.startswith("_"):
+                                    _route_ = (
+                                        f"/{file.stem}/{klass_name}"
+                                        if not klass_name.startswith("_")
+                                        else f"/{file.stem}"
+                                    )
+                                else:
+                                    _route_ = (
+                                        f"/{klass_name}"
+                                        if not klass_name.startswith("_")
+                                        else f"/"
+                                    )
                                 _router.add_api_route(
-                                    f"/{file.stem}/{klass_name}",
+                                    _route_,
                                     _method_attr,
-                                    name=name,
+                                    name=_method_attr.name,
                                     methods=[_method.lower()],
                                     description=_method_attr.__doc__,
                                 )
@@ -368,10 +390,22 @@ class DirectoryRouter(routing.APIRouter):
                                 # operations such as Counter.increment, they all will
                                 # default to "get" method.
                                 _router.tags.extend([file.stem, klass_name])
+                                if not file.stem.startswith("_"):
+                                    _route_ = (
+                                        f"/{file.stem}/{klass_name}/{_method.lower()}"
+                                        if not klass_name.startswith("_")
+                                        else f"/{file.stem}/{_method.lower()}"
+                                    )
+                                else:
+                                    _route_ = (
+                                        f"/{klass_name}/{_method.lower()}"
+                                        if not klass_name.startswith("_")
+                                        else f"/{_method.lower()}"
+                                    )
                                 _router.add_api_route(
-                                    f"/{file.stem}/{klass_name}/{_method.lower()}",
+                                    _route_,
                                     _method_attr,
-                                    name=name,
+                                    name=_method_attr.name,
                                     methods=["get"],
                                     description=_method_attr.__doc__,
                                 )
