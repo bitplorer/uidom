@@ -329,6 +329,8 @@ class DirectoryRouter(routing.APIRouter):
                             prefix.split("/"),
                         )
                     )
+
+                    prefix = prefix if prefix != "/" else ""
                     _router = routing.APIRouter(prefix=prefix, tags=tags)
                 else:
                     _router = routing.APIRouter(tags=tags)
