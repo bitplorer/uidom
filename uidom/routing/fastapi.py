@@ -269,7 +269,7 @@ class DirectoryRouter(routing.APIRouter):
                     r for r in dir(route_file) if r.lower() in self._METHODS
                 ]
             else:
-                # if the file name is NOT "routes" and we want to include method from that
+                # if the file name is NOT "route.py" and we want to include method from that
                 # file in router, we can scan __all__ variable in directory for pyobjects
                 # that declare route methods, for example
                 #
