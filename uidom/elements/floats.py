@@ -24,23 +24,33 @@ __all__ = [
 @dataclass(eq=False)
 class FloatLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(FloatLabel, self).__init__(self.label, *args, **kwargs)
+        super(FloatLabel, self).__init__(
+            self.label, *args, className=self.className, **kwargs
+        )
 
-    def render(self, label, *args, **kwargs):
-        return self.html_tags.label(label, *args, **kwargs)
+    def render(self, label, *args, className, **kwargs):
+        return self.html_tags.label(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 @dataclass(eq=False)
 class FloatLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(FloatLegend, self)._init__(self.label, *args, **kwargs)
+        super(FloatLegend, self)._init__(
+            self.label, *args, className=self.className, **kwargs
+        )
 
-    def render(self, label, *args, **kwargs):
-        return self.html_tags.legend(label, *args, **kwargs)
+    def render(self, label, *args, className, **kwargs):
+        return self.html_tags.legend(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 min_field = StringValidator(logger=False, debug=True)
@@ -66,6 +76,7 @@ class FloatInput(component.Component):
     min: str = min_field
     max: str = max_field
     pattern: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
         super(FloatInput, self).__init__(
@@ -76,10 +87,13 @@ class FloatInput(component.Component):
             min=self.min,
             max=self.max,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
-    def render(self, *args, name, placeholder="", type, min, max, pattern, **kwargs):
+    def render(
+        self, *args, name, placeholder="", type, min, max, pattern, className, **kwargs
+    ):
         return self.html_tags.input_(
             *args,
             type=type,
@@ -88,6 +102,7 @@ class FloatInput(component.Component):
             min=min if min not in ["null", None] else False,
             max=max if max not in ["null", None] else False,
             pattern=pattern if pattern not in ["null", None] else False,
+            className=className if className else False,
             **kwargs,
         )
 
@@ -99,6 +114,7 @@ class FloatNumberInput(component.Component):
     min: T.Union[str, None] = None
     max: T.Union[str, None] = None
     pattern: T.Union[str, None] = None
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(FloatNumberInput, self).__init__(
@@ -108,10 +124,13 @@ class FloatNumberInput(component.Component):
             min=self.min,
             max=self.max,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
-    def render(self, *args, name, placeholder="", min, max, pattern, **kwargs):
+    def render(
+        self, *args, name, placeholder="", min, max, pattern, className, **kwargs
+    ):
         return FloatInput(
             name=name,
             placeholder=placeholder,
@@ -119,6 +138,7 @@ class FloatNumberInput(component.Component):
             min=min,
             max=max,
             pattern=pattern,
+            className=className,
         )
 
 
@@ -129,6 +149,7 @@ class FloatRangeInput(component.Component):
     min: T.Union[str, None] = None
     max: T.Union[str, None] = None
     pattern: T.Union[str, None] = None
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(FloatRangeInput, self).__init__(
@@ -138,10 +159,13 @@ class FloatRangeInput(component.Component):
             min=self.min,
             max=self.max,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
-    def render(self, *args, name, placeholder="", min, max, pattern, **kwargs):
+    def render(
+        self, *args, name, placeholder="", min, max, pattern, className, **kwargs
+    ):
         return FloatInput(
             name=name,
             placeholder=placeholder,
@@ -149,6 +173,7 @@ class FloatRangeInput(component.Component):
             min=min,
             max=max,
             pattern=pattern,
+            className=className,
         )
 
 

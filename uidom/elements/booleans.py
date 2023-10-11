@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from valio import StringValidator, Validator
 
 from uidom.dom.src import component
-from uidom.elements.buttons import SubmitButton
 
 __all__ = [
     # boolean html
@@ -26,12 +25,17 @@ __all__ = [
 @dataclass(eq=False)
 class BooleanLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(BooleanLabel, self).__init__(self.label, *args, **kwargs)
+        super(BooleanLabel, self).__init__(
+            self.label, *args, className=self.className, **kwargs
+        )
 
-    def render(self, label: str, *args, **kwargs):  # noqa
-        return self.html_tags.label(label, *args, **kwargs)
+    def render(self, label: str, *args, className, **kwargs):  # noqa
+        return self.html_tags.label(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 class BooleanLabelValidator(Validator):
@@ -41,12 +45,17 @@ class BooleanLabelValidator(Validator):
 @dataclass(eq=False)
 class BooleanLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(BooleanLegend, self).__init__(self.label, *args, **kwargs)
+        super(BooleanLegend, self).__init__(
+            self.label, *args, className=self.className, **kwargs
+        )
 
-    def render(self, label: str, *args, **kwargs):
-        return self.html_tags.legend(label, *args, **kwargs)
+    def render(self, label: str, *args, className, **kwargs):
+        return self.html_tags.legend(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 @dataclass(eq=False)
@@ -61,18 +70,25 @@ class BooleanInput(component.Component):
         debug=True,
         default="checked",
     )
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
         super(BooleanInput, self).__init__(
-            *args, name=self.name, type=self.type, checked=self.checked, **kwargs
+            *args,
+            name=self.name,
+            type=self.type,
+            checked=self.checked,
+            className=self.className,
+            **kwargs,
         )
 
-    def render(self, *args, name, type, checked, **kwargs):
+    def render(self, *args, name, type, checked, className, **kwargs):
         return self.html_tags.input_(
             *args,
             name=name,
             type=type,
             checked=checked if checked != "null" else False,
+            className=className if className else False,
             **kwargs,
         )
 
@@ -89,18 +105,24 @@ class CheckboxInput(BooleanInput):
         logger=False,
         debug=True,
     )
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
         super(BooleanInput, self).__init__(
-            *args, name=self.name, checked=self.checked, **kwargs
+            *args,
+            name=self.name,
+            checked=self.checked,
+            className=self.className,
+            **kwargs,
         )
 
-    def render(self, *args, name, checked, **kwargs):
+    def render(self, *args, name, checked, className, **kwargs):
         return super().render(
             *args,
             name=name,
             type="checkbox",
             checked=checked,
+            className=className,
             **kwargs,
         )
 
@@ -114,18 +136,24 @@ class RadioInput(BooleanInput):
         debug=True,
         default="checked",
     )
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
         super(BooleanInput, self).__init__(
-            *args, name=self.name, checked=self.checked, **kwargs
+            *args,
+            name=self.name,
+            checked=self.checked,
+            className=self.className,
+            **kwargs,
         )
 
-    def render(self, *args, name, checked, **kwargs):
+    def render(self, *args, name, checked, className, **kwargs):
         return super().render(
             *args,
             name=name,
             type="radio",
             checked=checked,
+            className=className,
             **kwargs,
         )
 
@@ -169,6 +197,7 @@ class BooleanField(component.Component):
 
 if __name__ == "__main__":
     from uidom.dom import form
+    from uidom.elements.buttons import SubmitButton
 
     field = BooleanField(
         label="Terms and Conditions", checked="null", name="select", type="radio"

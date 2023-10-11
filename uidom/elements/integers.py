@@ -27,12 +27,17 @@ __all__ = [
 @dataclass(eq=False)
 class IntegerLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerLabel, self).__init__(*args, label=self.label, **kwargs)
+        super(IntegerLabel, self).__init__(
+            *args, label=self.label, className=self.className, **kwargs
+        )
 
-    def render(self, label, *args, **kwargs):
-        return self.html_tags.label(label, *args, **kwargs)
+    def render(self, label, *args, className, **kwargs):
+        return self.html_tags.label(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 class IntegerLabelValidator(Validator):
@@ -42,12 +47,17 @@ class IntegerLabelValidator(Validator):
 @dataclass(eq=False)
 class IntegerLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(IntegerLegend, self).__init__(label=self.label, *args, *kwargs)
+        super(IntegerLegend, self).__init__(
+            label=self.label, className=self.className, *args, *kwargs
+        )
 
-    def render(self, label, *args, **kwargs):
-        return self.html_tags.legend(label, *args, **kwargs)
+    def render(self, label, *args, className, **kwargs):
+        return self.html_tags.legend(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 min_field = StringValidator(logger=False, debug=True, name="min")
@@ -73,6 +83,7 @@ class IntegerInput(component.Component):
     min: str = min_field
     max: str = max_field
     pattern: str = StringValidator(logger=False, debug=True, default=None)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
         super(IntegerInput, self).__init__(
@@ -83,10 +94,13 @@ class IntegerInput(component.Component):
             min=self.min,
             max=self.max,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
-    def render(self, *args, name, placeholder="", type, min, max, pattern, **kwargs):
+    def render(
+        self, *args, name, placeholder="", type, min, max, pattern, className, **kwargs
+    ):
         return self.html_tags.input_(
             *args,
             name=name,
@@ -95,6 +109,7 @@ class IntegerInput(component.Component):
             min=min if min not in ["null", None] else False,
             max=max if max not in ["null", None] else False,
             pattern=pattern if pattern not in ["null", None] else False,
+            className=className if className else False,
             **kwargs,
         )
 
@@ -113,6 +128,7 @@ class IntegerNumberInput(component.Component):
     min: T.Union[str, None] = field(default=None)
     max: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(IntegerNumberInput, self).__init__(
@@ -122,10 +138,13 @@ class IntegerNumberInput(component.Component):
             min=self.min,
             max=self.max,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
-    def render(self, *args, name, placeholder="", min, max, pattern="null", **kwargs):
+    def render(
+        self, *args, name, placeholder="", min, max, pattern="null", className, **kwargs
+    ):
         return IntegerInput(
             name=name,
             placeholder=placeholder,
@@ -133,6 +152,7 @@ class IntegerNumberInput(component.Component):
             min=min,
             max=max,
             pattern=pattern,
+            className=className,
         )
 
 
@@ -150,6 +170,7 @@ class IntegerRangeInput(component.Component):
     min: T.Union[str, None] = field(default=None)
     max: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(IntegerRangeInput, self).__init__(
@@ -159,6 +180,7 @@ class IntegerRangeInput(component.Component):
             min=self.min,
             max=self.max,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
@@ -170,6 +192,7 @@ class IntegerRangeInput(component.Component):
         min="null",
         max="null",
         pattern="null",
+        className,
         **kwargs,
     ):
         return IntegerInput(
@@ -179,6 +202,7 @@ class IntegerRangeInput(component.Component):
             min=min,
             max=max,
             pattern=pattern,
+            className=className,
         )
 
 
@@ -196,6 +220,7 @@ class TelephoneInput(component.Component):
     min: T.Union[str, None] = field(default=None)
     max: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(TelephoneInput, self).__init__(
@@ -205,10 +230,13 @@ class TelephoneInput(component.Component):
             min=self.min,
             max=self.max,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
-    def render(self, *args, name, placeholder="", min, max, pattern, **kwargs):
+    def render(
+        self, *args, name, placeholder="", min, max, pattern, className, **kwargs
+    ):
         return IntegerInput(
             type="tel",
             name=name,
@@ -216,6 +244,7 @@ class TelephoneInput(component.Component):
             min=min,
             max=max,
             pattern=pattern,
+            className=className,
         )
 
 

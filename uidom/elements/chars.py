@@ -28,12 +28,17 @@ __all__ = [
 @dataclass(eq=False)
 class CharLabel(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(CharLabel, self).__init__(label=self.label, *args, **kwargs)
+        super(CharLabel, self).__init__(
+            label=self.label, *args, className=self.className, **kwargs
+        )
 
-    def render(self, label: str, *args, **kwargs):  # noqa
-        return self.html_tags.label(label, *args, **kwargs)
+    def render(self, label: str, *args, className, **kwargs):  # noqa
+        return self.html_tags.label(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 class CharLabelValidator(Validator):
@@ -43,12 +48,17 @@ class CharLabelValidator(Validator):
 @dataclass(eq=False)
 class CharLegend(component.Component):
     label: str = StringValidator(logger=False, debug=True)
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
-        super(CharLegend, self).__init__(label=self.label, *args, **kwargs)
+        super(CharLegend, self).__init__(
+            label=self.label, *args, className=self.className, **kwargs
+        )
 
-    def render(self, label, *args, **kwargs):
-        return self.html_tags.legend(label, *args, **kwargs)
+    def render(self, label, *args, className, **kwargs):
+        return self.html_tags.legend(
+            label, *args, className=className if className else False, **kwargs
+        )
 
 
 min_length_field = StringValidator(logger=False, debug=True, name="min_length")
@@ -94,6 +104,7 @@ class CharInput(component.Component):
     pattern: T.Union[str, None] = StringValidator(
         logger=False, debug=True, default="null"
     )
+    className: str = StringValidator(logger=False, debug=True, default="")
 
     def __post_init__(self, *args, **kwargs):
         super(CharInput, self).__init__(
@@ -105,6 +116,7 @@ class CharInput(component.Component):
             min_length=self.min_length,
             max_length=self.max_length,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
@@ -118,6 +130,7 @@ class CharInput(component.Component):
         min_length: str,
         max_length: str,
         pattern: str,
+        className: str,
         **kwargs,
     ):
         return self.html_tags.input_(
@@ -129,6 +142,7 @@ class CharInput(component.Component):
             maxlength=max_length if max_length not in ["null", None] else False,
             spellcheck=spell_check if spell_check not in ["null", None] else False,
             pattern=pattern if pattern not in ["null", None] else False,
+            className=className if className else False,
             **kwargs,
         )
 
@@ -145,6 +159,7 @@ class TextInput(component.Component):
     min_length: T.Union[str, None] = field(default=None)
     max_length: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(TextInput, self).__init__(
@@ -155,6 +170,7 @@ class TextInput(component.Component):
             min_length=self.min_length,
             max_length=self.max_length,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
@@ -167,6 +183,7 @@ class TextInput(component.Component):
         min_length: str,
         max_length: str = "null",
         pattern: str = "null",
+        className: str = "",
         **kwargs,
     ):
         return CharInput(
@@ -177,6 +194,7 @@ class TextInput(component.Component):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
+            className=className,
         )
 
 
@@ -188,6 +206,7 @@ class PasswordInput(component.Component):
     min_length: T.Union[str, None] = field(default=None)
     max_length: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(PasswordInput, self).__init__(
@@ -198,6 +217,7 @@ class PasswordInput(component.Component):
             min_length=self.min_length,
             max_length=self.max_length,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
@@ -210,6 +230,7 @@ class PasswordInput(component.Component):
         min_length,
         max_length,
         pattern,
+        className,
         **kwargs,
     ):
         return CharInput(
@@ -221,6 +242,7 @@ class PasswordInput(component.Component):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
+            className=className,
             **kwargs,
         )
 
@@ -233,6 +255,7 @@ class HiddenInput(component.Component):
     min_length: T.Union[str, None] = field(default=None)
     max_length: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(HiddenInput, self).__init__(
@@ -243,6 +266,7 @@ class HiddenInput(component.Component):
             min_length=self.min_length,
             max_length=self.max_length,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
@@ -255,6 +279,7 @@ class HiddenInput(component.Component):
         min_length: str = "null",
         max_length: str = "null",
         pattern: str = "null",
+        className: str = "",
         **kwargs,
     ):
         return CharInput(
@@ -266,6 +291,7 @@ class HiddenInput(component.Component):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
+            className=className,
             **kwargs,
         )
 
@@ -278,6 +304,7 @@ class EmailInput(component.Component):
     min_length: T.Union[str, None] = field(default=None)
     max_length: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(EmailInput, self).__init__(
@@ -288,6 +315,7 @@ class EmailInput(component.Component):
             min_length=self.min_length,
             max_length=self.max_length,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
@@ -300,6 +328,7 @@ class EmailInput(component.Component):
         min_length: str = "null",
         max_length: str = "null",
         pattern: str = "null",
+        className: str = "",
         **kwargs,
     ):
         return CharInput(
@@ -311,6 +340,7 @@ class EmailInput(component.Component):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
+            className=className,
             **kwargs,
         )
 
@@ -323,6 +353,7 @@ class SearchInput(component.Component):
     min_length: T.Union[str, None] = field(default=None)
     max_length: T.Union[str, None] = field(default=None)
     pattern: T.Union[str, None] = field(default=None)
+    className: str = field(default="")
 
     def __post_init__(self, *args, **kwargs):
         super(SearchInput, self).__init__(
@@ -333,6 +364,7 @@ class SearchInput(component.Component):
             min_length=self.min_length,
             max_length=self.max_length,
             pattern=self.pattern,
+            className=self.className,
             **kwargs,
         )
 
@@ -345,6 +377,7 @@ class SearchInput(component.Component):
         min_length: str = "null",
         max_length: str = "null",
         pattern: str = "null",
+        className: str = "",
         **kwargs,
     ):
         return CharInput(
@@ -356,6 +389,7 @@ class SearchInput(component.Component):
             min_length=min_length,
             max_length=max_length,
             pattern=pattern,
+            className=className,
             **kwargs,
         )
 
@@ -383,7 +417,7 @@ class CharField(component.Component):
     def render(self, *args, label, name, placeholder, type, **kwargs):
         self.labeled = CharLabel(label)
         self.input = CharInput(name=name, placeholder=placeholder, type=type)
-        return self.html_tags.div(*args, self.label, self.input, **kwargs)
+        return self.html_tags.div(*args, self.labeled, self.input, **kwargs)
 
 
 class CharFieldSet(component.Component):
@@ -392,6 +426,7 @@ class CharFieldSet(component.Component):
 
 
 if __name__ == "__main__":
+    print(CharLabel("hello", className="bg-rose-400"))
     print(CharField(label="Cut", name="cut", placeholder="Diamond Cut", type="text"))
     print(HiddenInput(name="password", placeholder="Enter Password", min_length="4"))
     print(
@@ -400,5 +435,6 @@ if __name__ == "__main__":
             placeholder="Enter Password",
             min_length="13",
             spell_check="false",
+            className="flex bg-rose-300",
         )
     )
