@@ -26,8 +26,8 @@ from starlette.types import ASGIApp, Lifespan
 from uidom.response.starlette import (
     HTMLResponse,
     StreamingResponse,
-    async_html_response,
     html_response,
+    streaming_response,
 )
 
 
@@ -133,7 +133,7 @@ class StreamingRoute(routing.APIRoute):
     ) -> None:
         super().__init__(
             path=path,
-            endpoint=async_html_response(endpoint),
+            endpoint=streaming_response(endpoint),
             response_model=response_model,
             status_code=status_code,
             tags=tags,
@@ -265,9 +265,22 @@ class DirectoryRouter(routing.APIRouter):
 
             # Find routes
             if file.stem == self.route_file_name:
-                route_methods = [
-                    r for r in dir(route_file) if r.lower() in self._METHODS
-                ]
+                # first we will search the declared functions in __all__
+                # if we don't find any we will proceed to scan CRUD methods
+                # like in self._METHODS and add them to routes
+                # for example:
+                #
+                # app/login/route.py
+                #
+                # def get():...
+                #
+                # def post():...
+                #
+                route_methods = getattr(
+                    route_file,
+                    "__all__",
+                    [r for r in dir(route_file) if r.lower() in self._METHODS],
+                )
             else:
                 # if the file name is NOT "route.py" and we want to include method from that
                 # file in router, we can scan __all__ variable in directory for pyobjects
@@ -284,10 +297,19 @@ class DirectoryRouter(routing.APIRouter):
                 #
                 route_methods = defaultdict(dict)
 
-                for klass_name in getattr(route_file, "__all__", []):
+                for klass_name in getattr(
+                    route_file,
+                    "__all__",
+                    [r for r in dir(route_file) if r.lower() in self._METHODS],
+                ):
                     klass = getattr(route_file, klass_name)
-                    for mthd in getattr(klass, "routes", []):
-                        route_methods[klass_name.lower()][mthd] = getattr(klass, mthd)
+                    if getattr(klass, "routes", []):
+                        for mthd in getattr(klass, "routes"):
+                            route_methods[klass_name.lower()][mthd] = getattr(
+                                klass, mthd
+                            )
+                    else:
+                        route_methods["_DIRECT_ROUTES"][klass_name] = klass
 
             if route_methods:
                 # braces_or_brackets = self._find_braces_or_brackets(
@@ -300,21 +322,21 @@ class DirectoryRouter(routing.APIRouter):
                 #         "/" + str_to_remove, ""
                 #     )
 
-                # Making "app" prefix as default
-                if relative_file_folder.startswith("app"):
+                # Making "base_directory" prefix as default
+                if relative_file_folder.startswith(self.base_directory):
                     tags = ["default"]
                 else:
                     tags = relative_file_folder.split("/")
 
-                if relative_file_folder.startswith("app"):
-                    # remove "app" prefix from path as "app" is default
-                    # folder.
-                    rel_path_without_app_prefix = relative_file_folder.replace(
-                        "app", ""
+                if relative_file_folder.startswith(self.base_directory):
+                    # remove base_directory prefix from path as "base_directory"
+                    # is default folder.
+                    rel_path_without_base_directory_prefix = (
+                        relative_file_folder.replace(self.base_directory, "")
                     )
                     prefix = (
-                        rel_path_without_app_prefix
-                        if rel_path_without_app_prefix
+                        rel_path_without_base_directory_prefix
+                        if rel_path_without_base_directory_prefix
                         else ""
                     )
                 else:
@@ -346,13 +368,23 @@ class DirectoryRouter(routing.APIRouter):
                         _method_attr = getattr(route_file, method)
                         name = f"{module}:{_method}"
                         _method_attr.__dict__["name"] = name
-                        _router.add_api_route(
-                            "/",
-                            _method_attr,
-                            name=_method_attr.name,
-                            methods=[method.lower()],
-                            description=_method_attr.__doc__,
-                        )
+                        if method in self._METHODS:
+                            _router.add_api_route(
+                                "/",
+                                _method_attr,
+                                name=_method_attr.name,
+                                methods=[method.lower()],
+                                description=_method_attr.__doc__,
+                            )
+                        else:
+                            _router.add_api_route(
+                                method.lower(),
+                                _method_attr,
+                                name=_method_attr.name,
+                                methods=["get"],
+                                description=_method_attr.__doc__,
+                            )
+
                 else:
                     # these are methods inside non route.py files
                     # with __all__ variable declared, important thing to
@@ -367,7 +399,7 @@ class DirectoryRouter(routing.APIRouter):
                             _method_attr.__dict__["name"] = name
 
                             if _method.lower() in self._METHODS:
-                                # case for [get, post, path, delete, etc] CRUD methods
+                                # case for [get, post, patch, delete, etc] CRUD methods
                                 _router.tags.extend([file.stem, klass_name])
                                 if not file.stem.startswith("_"):
                                     _route_ = (
