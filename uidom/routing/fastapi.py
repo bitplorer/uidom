@@ -366,7 +366,7 @@ class DirectoryRouter(routing.APIRouter):
                     # these are methods inside normal route.py files
                     for method in route_methods:
                         _method_attr = getattr(route_file, method)
-                        name = f"{module}:{_method}"
+                        name = f"{module}:{method}"
                         _method_attr.__dict__["name"] = name
                         if method in self._METHODS:
                             _router.add_api_route(
