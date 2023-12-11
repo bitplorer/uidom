@@ -309,7 +309,7 @@ class DirectoryRouter(routing.APIRouter):
                                 klass, mthd
                             )
                     else:
-                        route_methods["_DIRECT_ROUTES"][klass_name] = klass
+                        route_methods["_FILE_ROUTES"][klass_name] = klass
 
             if route_methods:
                 # braces_or_brackets = self._find_braces_or_brackets(
@@ -323,7 +323,7 @@ class DirectoryRouter(routing.APIRouter):
                 #     )
 
                 # Making "base_directory" prefix as default
-                if relative_file_folder.startswith(self.base_directory):
+                if relative_file_folder == self.base_directory:
                     tags = ["default"]
                 else:
                     tags = relative_file_folder.split("/")
@@ -378,7 +378,7 @@ class DirectoryRouter(routing.APIRouter):
                             )
                         else:
                             _router.add_api_route(
-                                method.lower(),
+                                f"/{method.lower()}",
                                 _method_attr,
                                 name=_method_attr.name,
                                 methods=["get"],
