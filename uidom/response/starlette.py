@@ -14,7 +14,7 @@ from starlette.responses import StreamingResponse as StarletteStreamingResponse
 
 from uidom.dom.src import ext
 
-__all__ = ["HTMLResponse", "html_response", "StreamingResponse", "async_html_response"]
+__all__ = ["HTMLResponse", "html_response", "StreamingResponse", "streaming_response"]
 
 CallableType = T.TypeVar("CallableType", bound=T.Callable[..., T.Any])
 
@@ -30,7 +30,6 @@ class HTMLResponse(StarletteHTMLResponse):
         media_type: str = None,
         background: BackgroundTask = None,
     ) -> None:
-        
         super().__init__(html_content, status_code, headers, media_type, background)
 
     def render(self, content: T.Any) -> bytes:
@@ -51,6 +50,7 @@ def html_response(
                 if isinstance(content, ext.Tags):
                     return HTMLResponse(content)
                 return content
+
         else:
 
             @wraps(endpoint)
@@ -76,11 +76,16 @@ class StreamingResponse(StarletteStreamingResponse):
         media_type: str = None,
         background: BackgroundTask = None,
     ) -> None:
-        
-        super().__init__(html_content.__async_render__(), status_code, headers, media_type, background)
-        
+        super().__init__(
+            html_content.__async_render__(),
+            status_code,
+            headers,
+            media_type,
+            background,
+        )
 
-def async_html_response(
+
+def streaming_response(
     endpoint: T.Optional[CallableType] = None,
 ) -> T.Callable[..., StreamingResponse]:
     def decorate_sync_async(endpoint):
@@ -92,6 +97,7 @@ def async_html_response(
                 if isinstance(content, ext.Tags):
                     return StreamingResponse(content)
                 return content
+
         else:
 
             @wraps(endpoint)
@@ -104,4 +110,3 @@ def async_html_response(
         return decorated
 
     return decorate_sync_async(endpoint)
-
