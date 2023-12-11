@@ -216,7 +216,7 @@ document.querySelectorAll('[x-component]').forEach(component => {
             
             this.observer = observeAttrChange(this, (attr, oldVal, newVal) => {
                 // slice :attr to remove leading '_' (underscore) to check in this._dataState
-                console.log('from observer',attr, oldVal, newVal);
+                // console.log('from observer',attr, oldVal, newVal);
                 //console.log(attr, this._dataState.get(attr.replace('_data_', '')));
                 if (this._dataState.get(attr.replace('_data_', ''))) {
                     this.attributeChangedCallback(attr.replace('_data_', ''), oldVal, newVal);
@@ -260,8 +260,10 @@ document.querySelectorAll('[x-component]').forEach(component => {
             //super.disconnectedCallback();
             this.observer.disconnect();
             this.observer = null;
-            this.ws.close();
-            this.ws = null;
+            if (this.ws){
+                this.ws.close();
+                this.ws = null;
+            }
         }
         
         send(data, retries = 4) {
