@@ -32,11 +32,16 @@ class HtmlBaseMiddleware(object):
 
 @dataclass(eq=False)
 class HTMLElement(component.Component):
+    escape_string = False
+
     def __init__(self, *args, **kwargs):
         super(HTMLElement, self).__init__(*args, **kwargs)
 
     def __post_init__(self, *args, **kwargs):
         super(HTMLElement, self).__post_init__(*args, **kwargs)
+
+    def render(self, elem_or_str_or_path):
+        return elem_or_str_or_path
 
     def __and__(self, other):
         return super().__and__(other)
@@ -117,11 +122,14 @@ class CustomElement(XComponent):
         try:
             shadow_root_attr = element["shadowroot"]
         except AttributeError:
-            shadow_root_attr = None
+            try:
+                shadow_root_attr = element["shadowdom"]
+            except AttributeError:
+                shadow_root_attr = None
 
         if shadow_root_attr:
             raise AttributeError(
-                f"{self.__class__.__name__}.{element.__class__.__qualname__}: must not have 'shadowroot' attribute"
+                f"{self.__class__.__name__}.{element.__class__.__qualname__}: must not have 'shadowroot' or 'shadowdom' attribute"
             )
         return element
 
@@ -136,7 +144,7 @@ class ExampleCustomElement(CustomElement):
 
 @dataclass(eq=False)
 class WebComponent(XComponent):
-    # using "shadowroot" attribute to upgrade to the element in html to shadow-element
+    # using "shadowroot" or "shadowdom" attribute to upgrade to the element in html to shadow-element
 
     def __checks__(self, element):
         XComponent.__checks__(self, element)
@@ -149,8 +157,14 @@ class WebComponent(XComponent):
             shadow_root_attr = element.get(shadowroot=None)
 
         if not shadow_root_attr:
+            try:
+                shadow_root_attr = element["shadowdom"]
+            except AttributeError:
+                shadow_root_attr = element.get(shadowdom=None)
+
+        if not shadow_root_attr:
             raise AttributeError(
-                f"{self.__class__.__name__}.{element.__class__.__qualname__}: must have 'shadowroot' attribute"
+                f"{self.__class__.__name__}.{element.__class__.__qualname__}: must have 'shadowroot' or 'shadowdom' attribute"
             )
         return element
 
