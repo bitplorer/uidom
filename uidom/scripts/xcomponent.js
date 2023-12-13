@@ -128,7 +128,7 @@ document.querySelectorAll('[x-component]').forEach(component => {
         }
 
         async connectedCallback() {
-            var isShadowRoot = component.getAttribute('shadowroot');
+            var isShadowRoot = component.getAttribute('shadowroot') || component.getAttribute('shadowdom');
             let template;
             if (component.tagName === 'TEMPLATE'){
                 template = component;
@@ -140,6 +140,16 @@ document.querySelectorAll('[x-component]').forEach(component => {
                 let shadow = this.attachShadow({mode: 'open'});
 
                 if (template?.content.childElementCount) {
+                    // select element with x-data and populate it with this.data
+                    let data_element = template.content.querySelector('[x-data]');
+                    let orig_xdata = data_element?.getAttribute('x-data');
+                    if (orig_xdata && isJSON(orig_xdata)){
+                        orig_xdata = JSON.parse(orig_xdata);
+                        data_element.setAttribute('x-data', JSON.stringify({...orig_xdata, ...this.data()}));
+                    }
+                    else {
+                        data_element.setAttribute('x-data', JSON.stringify(this.data()));
+                    }
                     shadow.appendChild(template.content.cloneNode(true));
                     }
                 else {
@@ -155,6 +165,16 @@ document.querySelectorAll('[x-component]').forEach(component => {
             
             else {
                 if (!!template){
+                    // select element with x-data and populate it with this.data
+                    let data_element = component.content.querySelector('[x-data]');
+                    let orig_xdata = data_element?.getAttribute('x-data');
+                    if (orig_xdata && isJSON(orig_xdata)){
+                        orig_xdata = JSON.parse(orig_xdata);
+                        data_element.setAttribute('x-data', JSON.stringify({...orig_xdata, ...this.data()}));
+                    }
+                    else {
+                        data_element.setAttribute('x-data', JSON.stringify(this.data()));
+                    }
                     this.append(component.content.cloneNode(true));
                     }
                 else {
