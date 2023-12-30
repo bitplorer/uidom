@@ -75,7 +75,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from uidom.routing.fastapi import HTMLRoute, StreamingRoute
+from uidom.routing.fastapi import DirectoryRouter, HTMLRoute, StreamingRoute
 
 from $variable::app_name import settings
 
@@ -100,9 +100,11 @@ api = FastAPI(
     debug=settings.DEBUG,
     default_response_class=HTMLResponse,
     title="$variable::app_name",
-      lifespan=lifespan,
+    lifespan=lifespan,
 )
 api.router.route_class = StreamingRoute
+app_router = DirectoryRouter()
+api.include_router(app_router)
 
 # In older versions of FastAPI we can use hot reloader as follows
 # 
@@ -197,7 +199,7 @@ if __name__ == "__main__":
 DOCUMENT_TEMP = _Template(
     """
 from uidom import Document
-from uidom.dom import link, raw, uniqueid
+from uidom.dom import link, raw, uniqueid, meta, script
 from $variable::app_name import settings
 from $variable::app_name.tailwindcss import tailwind
 
@@ -207,9 +209,15 @@ __all__ = ["document"]
 document = Document(
     webassets=settings.webassets,
     head=[
+        meta(http_equiv="cache-control", content="no-cache") if settings.DEBUG else "",
+        meta(http_equiv="expires", content="0") if settings.DEBUG else "",
+        meta(http_equiv="pragma", content="no-cache") if settings.DEBUG else "",
         link(href=f"/css/{tailwind.output_css}?v={next(uniqueid)}", rel="stylesheet"),
     ],
     body=[
+        script(
+            src=f"/js/{html_elements().save(file_or_dir=settings.webassets.static.js)}"
+        ),
         raw(settings.hot_reload_route.script() if settings.DEBUG and settings.HAS_WEB_SOCK else ""),
     ],
 )

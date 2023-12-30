@@ -2,15 +2,12 @@
 // 
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
-
-
 function guidGenerator() {
     const S4 = function (){
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
     return S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4();
 }
-
 const toCamel = (s) => {
     return s.replace(/([-_][a-z])/ig, ($1) => {
         return $1.toUpperCase()
@@ -18,7 +15,6 @@ const toCamel = (s) => {
             .replace('_', '');
     });
 }
-
 const isJSON = (str) => {
     try {
         return (JSON.parse(str) && !!str);
@@ -26,7 +22,6 @@ const isJSON = (str) => {
         return false;
     }
 }
-
 const observeAttrChange = (el, attributeChangedCallback) => {
     var observer = new MutationObserver(mutations => {
         mutations.forEach((mutation) => {
@@ -44,7 +39,6 @@ const observeAttrChange = (el, attributeChangedCallback) => {
     });
     return observer;
 }
-
 (() => {
     let socket = {};
     let messageHandler = {};
@@ -69,7 +63,6 @@ const observeAttrChange = (el, attributeChangedCallback) => {
                     });
                 }
             }
-
             socket[`${endPoint}`].addEventListener('open', () => {
                 connection_resolvers[`${endPoint}`].forEach(r => r.resolve())
             });
@@ -103,17 +96,13 @@ const observeAttrChange = (el, attributeChangedCallback) => {
     document.messageHandler = messageHandler;
     document.waitForConnection = waitForConnection;
 })();
-
-
 document.querySelectorAll('[x-tagname]').forEach(component => {
     const componentName = `x-${component.getAttribute('x-tagname')}`;
-
     class XComponent extends HTMLElement {
         
         constructor() {
             super();
         }
-
         async connectedCallback() {
             var isShadowRoot = component.getAttribute('shadowroot') || component.getAttribute('shadowdom');
             let template;
@@ -125,7 +114,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             if (!!isShadowRoot){
                 
                 let shadow = this.attachShadow({mode: 'open'});
-
                 if (template?.content.childElementCount) {
                     // select element with x-data and populate it with this.data
                     let data_element = template.content.querySelector('[x-data]');
@@ -211,7 +199,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                     });
                 });
             }
-
             // connecting to websockets
             if (this._dataState.get('ws')){
                 let messageHandler = document.messageHandler;
@@ -255,14 +242,12 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             }
             this.send(JSON.stringify(message));
         }
-
         attributeChangedCallback(attrName, o, n) {
             console.log('from attributeChangedCallback', attrName, o, n);
             if (n !== o){
                 this[attrName] = n;
             }
         }
-
         disconnectedCallback() {
             //super.disconnectedCallback();
             this.observer.disconnect();
@@ -288,7 +273,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                 }
             }
         }
-
         async getFile(url) {
             const res = await fetch(url);
             if (!res.ok) {
@@ -300,8 +284,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                 getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text(),
             };
         }
-
-
         dispatch(name, data, options = {
             bubble: true,
             cancelable: false,
@@ -315,8 +297,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             });
             this.dispatchEvent(event);
         }
-
-
         data() {
             
             let filterAttr = ["@", "x-", "id", "class", ":"]
@@ -325,13 +305,10 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                 ).filter(([attr, value]) => !filterAttr.some((letter) => attr.startsWith(letter)));
             return Object.fromEntries(thisEtries);            
         }
-
         stateData() {
             const attributes = this.getAttributeNames();
             const data = new Map();
-
             attributes.forEach(attribute => {
-
                 if (!isJSON(this.getAttribute(attribute))) {
                     data.set(attribute, this.getAttribute(attribute));
                 } else {
@@ -340,8 +317,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             });
             return data;
         }
-
     }
-
     customElements.define(componentName, XComponent);
 });

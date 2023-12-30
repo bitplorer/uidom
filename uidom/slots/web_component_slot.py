@@ -1,5 +1,5 @@
 # Copyright (c) 2022 uidom
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -11,34 +11,25 @@ from uidom.dom.htmlelement import *
 from uidom.dom.src.htmltags import *
 from uidom.slots.custom_element_slot import x_slot
 
-__all__ = [
-    "WebComponentSlot"
-]
+__all__ = ["WebComponentSlot"]
 
 
 @dataclass
-class WebComponentSlot(XComponent):
+class WebComponentSlot(XElement):
     slot_names: typing.Union[list, tuple]
     classes: dict
     css: list[str]
-    slot_class: str = ''
+    slot_class: str = ""
 
     def __post_init__(self):
         super(WebComponentSlot, self).__post_init__(
             slot_names=self.slot_names,
             classes=self.classes,
             css=self.css,
-            slot_class=self.slot_class
+            slot_class=self.slot_class,
         )
 
-    def render(
-            self,
-            tag_name,
-            slot_names,
-            classes,
-            css,
-            slot_class
-    ):
+    def render(self, tag_name, slot_names, classes, css, slot_class):
         return div(
             template(
                 x_slot(
@@ -47,10 +38,12 @@ class WebComponentSlot(XComponent):
                     classes=classes,
                     css=css,
                     exportparts="*",
-                    className=slot_class if slot_class != '' else False,
-                ), tabindex=0
+                    className=slot_class if slot_class != "" else False,
+                ),
+                tabindex=0,
             ),
-            x_component=tag_name, shadowroot="true"
+            x_tagname=tag_name,
+            shadowroot="true",
         )
 
     def __checks__(self, element):

@@ -8,7 +8,7 @@ from demosite import settings
 from demosite.tailwindcss import tailwind
 from uidom import Document
 from uidom.dom import link, raw, script
-from uidom.scripts import x_component_js
+from uidom.scripts import x_element_js
 
 __all__ = ["document"]
 
@@ -88,7 +88,7 @@ document = Document(
         # custom-elements and web component support
         # script(x_component_js())
         script(
-            src=f"/js/{x_component_js().save(file_or_dir=settings.webassets.static.js / 'component.js')}"
+            src=f"/js/{x_element_js().save(file_or_dir=settings.webassets.static.js / 'component.js')}"
         ),
         # Chart JS
         script(

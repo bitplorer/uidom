@@ -26,7 +26,7 @@ class Slots(WebComponent):
         )
 
     def render(self, tag_name, slot_names, classes, css):
-        with template(x_component=tag_name, shadowroot="true") as slots:
+        with template(x_tagname=tag_name, shadowdom=True) as slots:
             # adding css files here...
             for css_href in css:
                 link(href=css_href, rel="stylesheet", type="text/css")

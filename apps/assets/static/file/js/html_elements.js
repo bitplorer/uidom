@@ -2,31 +2,26 @@
 // 
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
-
-
 function guidGenerator() {
     const S4 = function (){
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
     return S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4();
-}
-
+  }
 const toCamel = (s) => {
-    return s.replace(/([-_][a-z])/ig, ($1) => {
-        return $1.toUpperCase()
-            .replace('-', '')
-            .replace('_', '');
-    });
-}
-
-const isJSON = (str) => {
-    try {
-        return (JSON.parse(str) && !!str);
-    } catch (e) {
-        return false;
+        return s.replace(/([-_][a-z])/ig, ($1) => {
+            return $1.toUpperCase()
+                .replace('-', '')
+                .replace('_', '');
+        });
     }
-}
-
+const isJSON = (str) => {
+        try {
+            return (JSON.parse(str) && !!str);
+        } catch (e) {
+            return false;
+        }
+    }
 const observeAttrChange = (el, attributeChangedCallback) => {
     var observer = new MutationObserver(mutations => {
         mutations.forEach((mutation) => {
@@ -44,76 +39,72 @@ const observeAttrChange = (el, attributeChangedCallback) => {
     });
     return observer;
 }
-
 (() => {
-    let socket = {};
-    let messageHandler = {};
-    let connection_resolvers = {};
-    let waitForConnection = {}
-    // connection_resolvers is taken from https://stackoverflow.com/a/68559559
-    
-    const setUpOrGetWebSocket = (elementID, messageHandler, endPoint = '/ws') => {
-        if (!socket[`${endPoint}`]) {
-            let url = new URL(document.location);
-            const wsUrl = `${url.protocol.replace('http', 'ws')}//${url.hostname}:${url.port}${endPoint}`;
-            console.log(`creating new WebSocket Instance to ${wsUrl}`);
-            socket[`${endPoint}`] = new WebSocket(wsUrl);
-            if (!connection_resolvers[`${endPoint}`]){
-                connection_resolvers[`${endPoint}`] = [];
-            }
-            
-            if (!waitForConnection[`${endPoint}`]){
-                waitForConnection[`${endPoint}`] = () => {
-                    return new Promise((resolve, reject) => {
-                        connection_resolvers[`${endPoint}`].push({resolve, reject});
-                    });
-                }
-            }
-
-            socket[`${endPoint}`].addEventListener('open', () => {
-                connection_resolvers[`${endPoint}`].forEach(r => r.resolve())
-            });
-            
-            socket[`${endPoint}`].onopen = (event) => {
-                console.log(`connected to ${wsUrl}`);
-                socket[`${endPoint}`].send(`connection open to client element ${elementID}:${JSON.stringify(event)}`);
-            };
-            socket[`${endPoint}`].onclose = (event) => {
-                console.log(`connection closed to ${elementID}: ${wsUrl}`);
-                socket[`${endPoint}`] = null;
-                timeOut = setTimeout(
-                    () => {socket[`${endPoint}`] = setUpOrGetWebSocket(elementID, messageHandler, endPoint)}
-                    , 300);
-                clearTimeout(timeOut);
-            };
-            socket[`${endPoint}`].onerror = (event) => {
-                console.log(`connection closed to ${elementID}:${wsUrl} due to error {event}`);
-            };
+let socket = {};
+let messageHandler = {};
+let connection_resolvers = {};
+let waitForConnection = {}
+// connection_resolvers is taken from https://stackoverflow.com/a/68559559
+const setUpOrGetWebSocket = (elementID, messageHandler, endPoint = '/ws') => {
+    if (!socket[`${endPoint}`]) {
+        let url = new URL(document.location);
+        const wsUrl = `${url.protocol.replace('http', 'ws')}//${url.hostname}:${url.port}${endPoint}`;
+        console.log(`creating new WebSocket Instance to ${wsUrl}`);
+        socket[`${endPoint}`] = new WebSocket(wsUrl);
+        if (!connection_resolvers[`${endPoint}`]){
+            connection_resolvers[`${endPoint}`] = [];
         }
-        socket[`${endPoint}`].onmessage = (message) => {
-            let data = message.data;
-            if (isJSON(message)) {
-                data = JSON.parse(data);
+        
+        if (!waitForConnection[`${endPoint}`]){
+            waitForConnection[`${endPoint}`] = () => {
+                return new Promise((resolve, reject) => {
+                    connection_resolvers[`${endPoint}`].push({resolve, reject});
+                });
             }
-            messageHandler[`${elementID}`](data);
+        }
+        socket[`${endPoint}`].addEventListener('open', () => {
+            connection_resolvers[`${endPoint}`].forEach(r => r.resolve())
+        });
+        
+        socket[`${endPoint}`].onopen = (event) => {
+            console.log(`connected to ${wsUrl}`);
+            socket[`${endPoint}`].send(`connection open to client element ${elementID}:${JSON.stringify(event)}`);
         };
-        return socket[`${endPoint}`];
+        socket[`${endPoint}`].onclose = (event) => {
+            console.log(`connection closed to ${elementID}: ${wsUrl}`);
+            socket[`${endPoint}`] = null;
+            timeOut = setTimeout(
+                () => {socket[`${endPoint}`] = setUpOrGetWebSocket(elementID, messageHandler, endPoint)}
+                , 300);
+            clearTimeout(timeOut);
+        };
+        socket[`${endPoint}`].onerror = (event) => {
+            console.log(`connection closed to ${elementID}:${wsUrl} due to error {event}`);
+        };
+    }
+    socket[`${endPoint}`].onmessage = (message) => {
+        let data = message.data;
+        if (isJSON(message)) {
+            data = JSON.parse(data);
+        }
+        messageHandler[`${elementID}`](data);
     };
-    document.setUpOrGetWebSocket = setUpOrGetWebSocket;
-    document.messageHandler = messageHandler;
-    document.waitForConnection = waitForConnection;
+    return socket[`${endPoint}`];
+};
+document.setUpOrGetWebSocket = setUpOrGetWebSocket;
+document.messageHandler = messageHandler;
+document.waitForConnection = waitForConnection;
 })();
-
-
-document.querySelectorAll('[x-tagname]').forEach(component => {
-    const componentName = `x-${component.getAttribute('x-tagname')}`;
-
+  
+  
+// Define a function to create your custom element
+function createCustomElement(component) {
+    const TagName = `x-${component.getAttribute('x-tagname')}`;
     class XComponent extends HTMLElement {
         
         constructor() {
             super();
         }
-
         async connectedCallback() {
             var isShadowRoot = component.getAttribute('shadowroot') || component.getAttribute('shadowdom');
             let template;
@@ -125,18 +116,10 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             if (!!isShadowRoot){
                 
                 let shadow = this.attachShadow({mode: 'open'});
-
                 if (template?.content.childElementCount) {
                     // select element with x-data and populate it with this.data
                     let data_element = template.content.querySelector('[x-data]');
-                    let orig_xdata = data_element?.getAttribute('x-data');
-                    if (orig_xdata && isJSON(orig_xdata)){
-                        orig_xdata = JSON.parse(orig_xdata);
-                        data_element.setAttribute('x-data', JSON.stringify({...orig_xdata, ...this.data()}));
-                    }
-                    else {
-                        data_element.setAttribute('x-data', JSON.stringify(this.data()));
-                    }
+                    this.include_data_in_data(data_element);
                     shadow.appendChild(template.content.cloneNode(true));
                     }
                 else {
@@ -154,14 +137,7 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                 if (!!template){
                     // select element with x-data and populate it with this.data
                     let data_element = component.content.querySelector('[x-data]');
-                    let orig_xdata = data_element?.getAttribute('x-data');
-                    if (orig_xdata && isJSON(orig_xdata)){
-                        orig_xdata = JSON.parse(orig_xdata);
-                        data_element.setAttribute('x-data', JSON.stringify({...orig_xdata, ...this.data()}));
-                    }
-                    else {
-                        data_element.setAttribute('x-data', JSON.stringify(this.data()));
-                    }
+                    this.include_data_in_data(data_element);
                     this.append(component.content.cloneNode(true));
                     }
                 else {
@@ -173,8 +149,8 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                     Alpine.initTree(this);
                 });
             }
-                     
-                  
+                    
+                
             this.dataCallback = this.dataCallback.bind(this);              
             // <my-div active="true", data-target="#accordian"></my-div>
             // example: for setting up  name="cool-dude" value as this.name value
@@ -211,7 +187,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                     });
                 });
             }
-
             // connecting to websockets
             if (this._dataState.get('ws')){
                 let messageHandler = document.messageHandler;
@@ -236,9 +211,19 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             }
         }
         
+        include_data_in_data(data_element){
+            let orig_xdata = data_element?.getAttribute('x-data');
+            if (orig_xdata && isJSON(orig_xdata)){
+                orig_xdata = JSON.parse(orig_xdata);
+                data_element?.setAttribute('x-data', JSON.stringify({...orig_xdata, ...this.data()}));
+            }
+            else {
+                data_element?.setAttribute('x-data', JSON.stringify(this.data()));
+            }
+        }
         
         checkOrCreateId() {
-            if (!this.id) this.id = `x-${component.getAttribute('x-tagname')}` + '-' + guidGenerator();
+            if (!this.id) this.id = `${TagName}` + '-' + guidGenerator();
         }
         
         
@@ -255,14 +240,12 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             }
             this.send(JSON.stringify(message));
         }
-
         attributeChangedCallback(attrName, o, n) {
-            console.log('from attributeChangedCallback', attrName, o, n);
+            // console.log('from attributeChangedCallback', attrName, o, n);
             if (n !== o){
                 this[attrName] = n;
             }
         }
-
         disconnectedCallback() {
             //super.disconnectedCallback();
             this.observer.disconnect();
@@ -288,7 +271,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                 }
             }
         }
-
         async getFile(url) {
             const res = await fetch(url);
             if (!res.ok) {
@@ -300,8 +282,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                 getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text(),
             };
         }
-
-
         dispatch(name, data, options = {
             bubble: true,
             cancelable: false,
@@ -315,8 +295,6 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             });
             this.dispatchEvent(event);
         }
-
-
         data() {
             
             let filterAttr = ["@", "x-", "id", "class", ":"]
@@ -325,13 +303,10 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
                 ).filter(([attr, value]) => !filterAttr.some((letter) => attr.startsWith(letter)));
             return Object.fromEntries(thisEtries);            
         }
-
         stateData() {
             const attributes = this.getAttributeNames();
             const data = new Map();
-
             attributes.forEach(attribute => {
-
                 if (!isJSON(this.getAttribute(attribute))) {
                     data.set(attribute, this.getAttribute(attribute));
                 } else {
@@ -340,8 +315,34 @@ document.querySelectorAll('[x-tagname]').forEach(component => {
             });
             return data;
         }
-
     }
-
-    customElements.define(componentName, XComponent);
+    return XComponent
+}
+document.querySelectorAll('[x-tagname]').forEach(component => {
+    const componentName = `x-${component.getAttribute('x-tagname')}`;
+    if (!customElements.get(componentName)) {
+    customElements.define(componentName, createCustomElement(component));
+    }
+})
+// Create a new MutationObserver
+const bodyObserver = new MutationObserver(function(mutations) {
+    // Check if the DOM has changed
+    mutations.forEach(function(mutation) {
+    // Check if a new element has been added to the DOM
+    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        // Check if the new element starts with 'X-'
+        if (mutation.addedNodes[0].nodeName.startsWith('X-')) {
+        // Define your custom element if it has not already been defined
+        const elementName = mutation.addedNodes[0].nodeName.toLowerCase();
+        document.querySelectorAll('[x-tagname]').forEach(component => {
+            const componentName = `x-${component.getAttribute('x-tagname')}`;
+            if (componentName === elementName && !customElements.get(elementName)) {
+            customElements.define(elementName, createCustomElement(component));
+            }
+        })
+        }
+    }
+    });
 });
+// Start observing the DOM
+bodyObserver.observe(document.body, { childList: true, subtree: true });

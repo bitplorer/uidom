@@ -12,7 +12,7 @@ __all__ = ["x_nav"]
 
 
 @dataclass
-class ToggleIconsWithoutClickAway(XComponent):
+class ToggleIconsWithoutClickAway(XElement):
     default_icon: dom_tag
     non_default_icon: dom_tag
 
@@ -25,7 +25,7 @@ class ToggleIconsWithoutClickAway(XComponent):
         )
 
     def render(self, tag_name, default_icon, non_default_icon):
-        with template(x_component=tag_name) as toggele_witout_click_away:
+        with template(x_tagname=tag_name) as toggele_witout_click_away:
             with div(
                 className="flex rounded-full items-center justify-center cursor-pointer",
                 x_data="{'clicked': 'false', ...$el.parentElement.data(), ...$el.parentElement.$data}",
@@ -66,9 +66,9 @@ x_toggle_dark_mode = ToggleIconsWithoutClickAway(
 
 
 @dataclass
-class DarkModeButton(XComponent):
+class DarkModeButton(XElement):
     def render(self, tag_name):
-        with template(x_component=tag_name) as dark_mode_btn:
+        with template(x_tagname=tag_name) as dark_mode_btn:
             with button(
                 className="items-center justify-center overflow-hidden",
             ):
@@ -98,12 +98,12 @@ x_dark_mode = DarkModeButton(tag_name="dark-mode")
 
 
 @dataclass
-class Navigation(XComponent):
+class Navigation(XElement):
     def __post_init__(self, *args, **kwargs):
         super(Navigation, self).__post_init__(*args, **kwargs)
 
     def render(self, tag_name):
-        with template(x_component=tag_name) as navigation:
+        with template(x_tagname=tag_name) as navigation:
             with ul(
                 # x_data="{...$el.parentElement.data()}",
                 className="flex grow overflow-hidden w-full h-full self-stretch bg-inherit",
@@ -118,13 +118,18 @@ class Navigation(XComponent):
                             className="flex flex-row grow md:grow-0 items-center justify-center overflow-hidden",
                             x_bind_href="item.href",
                         ):
-                            with div(className="flex items-center justify-center text-center "):
+                            with div(
+                                className="flex items-center justify-center text-center "
+                            ):
                                 with div(
                                     # wrapped menu icon paddings
                                     className="flex md:hidden text-center items-center justify-center px-1 pt-1 sm:pt-0",
                                 ):
                                     # Menu Icon
-                                    span(className="iconify", x_bind_data_icon="item.icon")
+                                    span(
+                                        className="iconify",
+                                        x_bind_data_icon="item.icon",
+                                    )
 
                                 with div(
                                     # wrapped menu text paddings

@@ -28,10 +28,10 @@ class TogglePlain(AlpineComponent):
 
 
 @dataclass
-class ToggleInset(XComponent):
+class ToggleInset(XElement):
     def render(self, tag_name):
         return f"""
-        <template x-component="{tag_name}" >
+        <template x-tagname="{tag_name}" >
             <label for="Toggle1" x-data="$el.parentElement.data()" class="inline-flex items-center space-x-4 cursor-pointer dark:text-gray-100">
                 <span>Left</span>
                 <span class="relative">
@@ -46,10 +46,10 @@ class ToggleInset(XComponent):
 
 
 @dataclass
-class ToggleOutset(XComponent):
+class ToggleOutset(XElement):
     def render(self, tag_name):
         return f"""
-        <template x-component={tag_name}>
+        <template x-tagname={tag_name}>
             <label for="Toggle1" class="inline-flex items-center space-x-4 cursor-pointer dark:text-gray-100">
                 <span>Left</span>
                 <span class="relative">
@@ -64,4 +64,4 @@ class ToggleOutset(XComponent):
 
 
 if __name__ == "__main__":
-    print(ToggleOutset("xyz")["x-component"])
+    print(ToggleOutset("xyz")["x-tagname"])

@@ -47,9 +47,9 @@ class carousel(ReactiveComponent):
         )
 
 
-class CustomElementCheck(XComponent):
+class CustomElementCheck(XElement):
     def render(self, tag_name):
-        with template(x_component=tag_name) as custom:
+        with template(x_tagname=tag_name) as custom:
             with div(x_data={"name": "bar"}):
                 div(x_text="name")
                 with div(x_data={"place": "baz"}):

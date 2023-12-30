@@ -12,6 +12,7 @@ import re
 import sys
 from collections import defaultdict
 from enum import Enum
+from os.path import sep as path_sep
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Union
 
@@ -23,12 +24,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import BaseRoute
 from starlette.types import ASGIApp, Lifespan
 
-from uidom.response.starlette import (
-    HTMLResponse,
-    StreamingResponse,
-    html_response,
-    streaming_response,
-)
+from uidom.response.starlette import html_response, streaming_response
 
 
 class HTMLRoute(routing.APIRoute):
@@ -163,7 +159,7 @@ class StreamingRoute(routing.APIRoute):
 
 class DirectoryRouter(routing.APIRouter):
     # picked from https://github.com/ebubekir/fastapi-directory-routing
-    _METHODS = ["get", "post", "put", "patch", "delete", "options", "head"]
+    _METHODS = ["get", "post", "put", "patch", "delete"]
 
     """DirectoryRouter class inherit from fastapi.APIRouter.
 
@@ -259,7 +255,7 @@ class DirectoryRouter(routing.APIRouter):
             relative_file_folder = str(relative_file_folder)
 
             # example: package/app/module/ -> package.app.module
-            module = file_package_path.replace("/", ".") + "." + file.stem
+            module = file_package_path.replace(path_sep, ".") + "." + file.stem
             # Import route file
             route_file = importlib.import_module(module)
 
@@ -279,7 +275,7 @@ class DirectoryRouter(routing.APIRouter):
                 route_methods = getattr(
                     route_file,
                     "__all__",
-                    [r for r in dir(route_file) if r.lower() in self._METHODS],
+                    [r for r in dir(route_file) if r in self._METHODS],
                 )
             else:
                 # if the file name is NOT "route.py" and we want to include method from that
@@ -300,7 +296,7 @@ class DirectoryRouter(routing.APIRouter):
                 for klass_name in getattr(
                     route_file,
                     "__all__",
-                    [r for r in dir(route_file) if r.lower() in self._METHODS],
+                    [r for r in dir(route_file) if r in self._METHODS],
                 ):
                     klass = getattr(route_file, klass_name)
                     if getattr(klass, "routes", []):
@@ -326,7 +322,7 @@ class DirectoryRouter(routing.APIRouter):
                 if relative_file_folder == self.base_directory:
                     tags = ["default"]
                 else:
-                    tags = relative_file_folder.split("/")
+                    tags = relative_file_folder.split(path_sep)
 
                 if relative_file_folder.startswith(self.base_directory):
                     # remove base_directory prefix from path as "base_directory"
@@ -348,7 +344,7 @@ class DirectoryRouter(routing.APIRouter):
                     prefix = "/" + "/".join(
                         filter(
                             lambda x: x if not x.startswith("_") else None,
-                            prefix.split("/"),
+                            prefix.split(path_sep),
                         )
                     )
 
@@ -367,7 +363,7 @@ class DirectoryRouter(routing.APIRouter):
                     for method in route_methods:
                         _method_attr = getattr(route_file, method)
                         name = f"{module}:{method}"
-                        _method_attr.__dict__["name"] = name
+                        setattr(_method_attr, "name", name)
                         if method in self._METHODS:
                             _router.add_api_route(
                                 "/",
@@ -396,7 +392,7 @@ class DirectoryRouter(routing.APIRouter):
                             # here we set .name attribute to method because we want
                             # htmx to use the route via hx_get=url_for(klass.method.name)
                             name = f"{module}.{klass_name}:{_method}"
-                            _method_attr.__dict__["name"] = name
+                            setattr(_method_attr, "name", name)
 
                             if _method.lower() in self._METHODS:
                                 # case for [get, post, patch, delete, etc] CRUD methods

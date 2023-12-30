@@ -35,9 +35,9 @@ class DuplicateMessageFilter(logging.Filter):
     def filter(self, record):
         current_log = record.msg
         if current_log != self.last_log:
-            self.last_log = current_log
-            return True
-        return False
+            return False
+        self.last_log = current_log
+        return True
 
 
 uidom_logger = logging.getLogger("UiDOM")

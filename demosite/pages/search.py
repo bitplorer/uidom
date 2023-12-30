@@ -18,7 +18,7 @@ __all__ = ["x_search"]
 
 
 @dataclass
-class Search(XComponent):
+class Search(XElement):
     icon: dom_tag
     placeholder: str
     target_id: str
@@ -77,12 +77,12 @@ class Search(XComponent):
                 x_data="{searchText: '', show: false, ...$el.parentElement.data()}",
                 x_cloak=None,
             ),
-            x_component=tag_name,
+            x_tagname=tag_name,
         )
 
 
 @dataclass(eq=False)
-class Search2(XComponent):
+class Search2(XElement):
     icon: dom_tag
     placeholder: str
     target_id: str
@@ -97,7 +97,7 @@ class Search2(XComponent):
         )
 
     def render(self, tag_name, icon, placeholder, target_id, api):
-        with template(x_component=tag_name) as search_2:
+        with template(x_tagname=tag_name) as search_2:
             with div(
                 x_cloak=None,
                 className="relative flex flex-col grow h-max w-max justify-between items-center "

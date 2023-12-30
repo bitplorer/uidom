@@ -25,12 +25,12 @@ from uidom.web_io import (
 )
 
 
-class ToggleInset(XComponent):
+class ToggleInset(XElement):
     def render(self, tag_name):
         return defHTML(
             f"""
-        <template x-component="{tag_name}" >
-            <label for="Toggle1" x-data="$el.parentElement.data()" class="inline-flex items-center space-x-4 cursor-pointer dark:text-gray-100">
+        <template x-tagname="{tag_name}" >
+            <label for="Toggle1" x-data class="inline-flex items-center space-x-4 cursor-pointer dark:text-gray-100">
                 <span>Left</span>
                 <span class="relative">
                     <input _id="Toggle1" type="checkbox" class="hidden peer">

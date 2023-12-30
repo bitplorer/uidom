@@ -57,7 +57,7 @@ class SlotElement(CustomElement):
                         }
                     }"""
             ),
-            x_component=tag_name,
+            x_tagname=tag_name,
         )
 
 

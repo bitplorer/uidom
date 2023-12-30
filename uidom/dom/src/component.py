@@ -53,6 +53,11 @@ class Component(extension.Tags):
         # first we get the child from the render method and sanitize it.
         child = self.render(*args, **kwargs)
 
+        if child is None:
+            raise ValueError(
+                f"{self.__class__.__name__} `render` method must return a value."
+            )
+
         if isinstance(child, str):
             if self.string_is_markdown:
                 child = (

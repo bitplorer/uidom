@@ -83,9 +83,9 @@ x_toggle_dark_mode = ToggleIconsWithoutClickAway(
 
 
 @dataclass(eq=False)
-class DarkModeButton(XComponent):
+class DarkModeButton(XElement):
     def render(self, tag_name):
-        with template(x_component=tag_name) as dark_mode_btn:
+        with template(x_tagname=tag_name) as dark_mode_btn:
             with button(
                 className="items-center justify-center overflow-hidden",
             ):
@@ -113,12 +113,12 @@ x_dark_mode = DarkModeButton(tag_name="dark-mode")
 
 
 @dataclass(eq=False)
-class Navigation(XComponent):
+class Navigation(XElement):
     def __post_init__(self, *args, **kwargs):
         super(Navigation, self).__post_init__(*args, **kwargs)
 
     def render(self, tag_name):
-        with template(x_component=tag_name) as navigation:
+        with template(x_tagname=tag_name) as navigation:
             with ul(
                 # x_data=None,
                 className="flex grow overflow-hidden w-full h-full self-stretch bg-inherit",

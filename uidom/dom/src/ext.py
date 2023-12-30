@@ -377,7 +377,12 @@ class Tags(dom_tag, dom1core):
                 if not isinstance(child, PlaceholderTag) or (
                     isinstance(child, PlaceholderTag) and any(child)
                 ):
-                    if not self_render_tag and pretty and self.children[-1] != child:
+                    if (
+                        not self_render_tag
+                        and pretty
+                        and self.children
+                        and self.children[-1] != child
+                    ):
                         sb, inline = self._new_line_and_inline_handler(
                             sb,
                             indent_level,

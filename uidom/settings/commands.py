@@ -128,19 +128,24 @@ class TailwindCommand(Command):
         self._root_dir = self.webassets.dir
         self._project_dir = Path(self.file_path).parent
         self._input_file: Path = self._root_dir / self.input_css
+        # path of output file is ../assets/../style.css
         self._output_file: Path = self.webassets.static.css / self.output_css
 
-        # this sections of the code is for
+        # this sections of the code is for checking is any old css files exists
+        # and if any file exists then delete all older files except the newest one.
         try:
             all_output_files = sorted(
                 Path(self.webassets.static.css).glob(f"*{self._output_file.suffix}"),
                 reverse=True,
             )
+
             old_output_file = all_output_files[0]
             if len(all_output_files) > 1:
                 [file.unlink(missing_ok=True) for file in all_output_files[1:]]
         except IndexError as e:
             old_output_file = None
+            # here none of the css file exists so we will create it
+            self._output_file.touch()
 
         if old_output_file:
             self._output_file = self.webassets.static.css / old_output_file

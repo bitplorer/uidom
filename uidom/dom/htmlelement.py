@@ -4,7 +4,9 @@
 # https://opensource.org/licenses/MIT
 
 
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 from uidom.dom.src import component
 from uidom.dom.src.ext import DoubleTags
@@ -12,8 +14,9 @@ from uidom.dom.src.jinjatags import render_jinja
 
 __all__ = [
     "HTMLElement",
+    "XTemplate",
     "AMPElement",
-    "XComponent",
+    "XElement",
     "CustomElement",
     "WebComponent",
     "AlpineElement",
@@ -21,13 +24,6 @@ __all__ = [
     "JinjaElement",
     "MarkdownElement",
 ]
-
-
-@dataclass
-class HtmlBaseMiddleware(object):
-    """
-    HTMLBaseMiddleware to intercept and modify dom elements.
-    """
 
 
 @dataclass(eq=False)
@@ -70,52 +66,66 @@ class AMPElement(component.Component):
 
 
 @dataclass(eq=False)
-class XComponent(component.Component):
+class XTemplate(DoubleTags):
+    def __init__(self, *args, **kwargs):
+        if getattr(self, "xelement", None) is None:
+            parent_path = Path(sys.modules["__main__"].__file__).parent
+            self.xelement = HTMLElement(parent_path / kwargs.pop("filename"))
+            self.tagname = f"x-{self.xelement['x-tagname']}"
+        super(XTemplate, self).__init__(*args, **kwargs)
+
+    def __hash__(self) -> int:
+        return super().__hash__()
+
+
+@dataclass(eq=False)
+class XElement(component.Component):
     tag_name: str
 
     def __post_init__(self, *args, **kwargs):
-        super(XComponent, self).__init__(*args, tag_name=self.tag_name, **kwargs)
+        super(XElement, self).__init__(*args, tag_name=self.tag_name, **kwargs)
 
-        class Element(DoubleTags):
+        class Template(XTemplate):
             tagname = f"x-{self.tag_name}"  # noqa
+            xelement = self
 
-        self.Element = Element
-        self.Element.is_inline = self.is_inline
-        self.Element.is_single = self.is_single
-        self.Element.is_pretty = self.is_pretty
+        self.Template = Template
+        self.Template.is_inline = self.is_inline
+        self.Template.is_single = self.is_single
+        self.Template.is_pretty = self.is_pretty
 
     def __checks__(self, element):
         component.Component.__checks__(self, element)
-        return self.__x_component_checks(element)
+        return self.__x_element_checks(element)
 
-    def __x_component_checks(self, element):
-        x_component_attr = None
+    def __x_element_checks(self, element):
+        x_tagname_attr = None
         try:
-            # check if "x-component" attribute is present in element, if it throws error raise
+            # check if "x-tagname" attribute is present in element, if it throws error raise
             # AttributeError
-            x_component_attr = element["x-component"]
+            x_tagname_attr = element["x-tagname"]
         except AttributeError:
             pass
 
-        if not x_component_attr:
+        if not x_tagname_attr:
             raise AttributeError(
-                f"{self.__class__.__name__}.{element.__class__.__qualname__}: must have 'x-component' attribute"
+                f"{self.__class__.__name__}.{element.__class__.__qualname__}: must have 'x-tagname' attribute"
             )
         return element
 
     def __call__(self, *args, **kwargs):
-        return self.Element(*args, **kwargs)
+        return self.Template(*args, **kwargs)
 
     def __and__(self, other):
         return super().__and__(other)
 
 
 @dataclass(eq=False)
-class CustomElement(XComponent):
-    # using x-component attribute to upgrade to the element in html to light-element
+class CustomElement(XElement):
+    # using x-tagname attribute to upgrade to the element in html to light-element
 
     def __checks__(self, element):
-        XComponent.__checks__(self, element)
+        XElement.__checks__(self, element)
         return self.__custom_element_checks(element)
 
     def __custom_element_checks(self, element):  # noqa
@@ -143,11 +153,11 @@ class ExampleCustomElement(CustomElement):
 
 
 @dataclass(eq=False)
-class WebComponent(XComponent):
+class WebComponent(XElement):
     # using "shadowroot" or "shadowdom" attribute to upgrade to the element in html to shadow-element
 
     def __checks__(self, element):
-        XComponent.__checks__(self, element)
+        XElement.__checks__(self, element)
         return self.__web_component_checks(element)
 
     def __web_component_checks(self, element):  # noqa
@@ -203,9 +213,9 @@ class AlpineElement(component.Component):
 
 
 @dataclass(eq=False)
-class AlpineComponent(AlpineElement, XComponent):
+class AlpineComponent(AlpineElement, XElement):
     def __checks__(self, element):
-        XComponent.__checks__(self, element)
+        XElement.__checks__(self, element)
         return AlpineElement.__checks__(self, element)
 
 

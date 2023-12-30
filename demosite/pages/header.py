@@ -32,9 +32,9 @@ x_toggle_nav = ToggleIconsWithoutClickAway(
 )
 
 
-class Header(XComponent):
+class Header(XElement):
     def render(self, tag_name):
-        with template(x_component=tag_name) as _header:
+        with template(x_tagname=tag_name) as _header:
             with div(
                 x_data="{open:false, isMed: '', ...$el.parentElement.data()}",
                 className="""

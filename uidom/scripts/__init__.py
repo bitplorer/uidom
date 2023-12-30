@@ -8,22 +8,25 @@ from pathlib import Path
 from uidom.dom import raw
 from uidom.dom.src.component import Component
 
-__all__ = ["x_component_js_text", "x_component_js"]
+__all__ = ["x_component_js", "custom_element_js"]
 
 
-def x_component_js_text():
-    X_COMPONENT_SCRIPT_FILE = Path(__file__).parent / "xcomponent.js"
-    if not X_COMPONENT_SCRIPT_FILE.exists():
-        raise FileNotFoundError(f"{X_COMPONENT_SCRIPT_FILE=} doesn't exists")
-    return X_COMPONENT_SCRIPT_FILE.read_text()
+def read_text(file_name):
+    SCRIPT_FILE = Path(__file__).parent / file_name
+    if not SCRIPT_FILE.exists():
+        raise FileNotFoundError(f"{SCRIPT_FILE=} doesn't exists")
+    return SCRIPT_FILE.read_text()
 
 
 class x_component_js(Component):
     file_extension = ".js"
 
     def render(self):
-        return raw(x_component_js_text())
+        return raw(read_text("xcomponent.js"))
 
 
-if __name__ == "__main__":
-    print(x_component_js())
+class html_elements(Component):
+    file_extension = ".js"
+
+    def render(self):
+        return raw(read_text("html_element.js"))

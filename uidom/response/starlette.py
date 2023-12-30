@@ -12,7 +12,7 @@ from starlette.background import BackgroundTask
 from starlette.responses import HTMLResponse as StarletteHTMLResponse
 from starlette.responses import StreamingResponse as StarletteStreamingResponse
 
-from uidom.dom.src import ext
+from uidom.dom.src import dom_tag
 
 __all__ = ["HTMLResponse", "html_response", "StreamingResponse", "streaming_response"]
 
@@ -24,7 +24,7 @@ class HTMLResponse(StarletteHTMLResponse):
 
     def __init__(
         self,
-        html_content: ext.Tags,
+        html_content: dom_tag.dom_tag,
         status_code: int = 200,
         headers: dict = None,
         media_type: str = None,
@@ -47,7 +47,7 @@ def html_response(
             @wraps(endpoint)
             async def decorated(*args, **kwargs) -> HTMLResponse:
                 content = await endpoint(*args, **kwargs)
-                if isinstance(content, ext.Tags):
+                if isinstance(content, dom_tag.dom_tag):
                     return HTMLResponse(content)
                 return content
 
@@ -56,10 +56,11 @@ def html_response(
             @wraps(endpoint)
             def decorated(*args, **kwargs) -> HTMLResponse:
                 content = endpoint(*args, **kwargs)
-                if isinstance(content, ext.Tags):
+                if isinstance(content, dom_tag.dom_tag):
                     return HTMLResponse(content)
                 return content
 
+        decorated.__doc__ = endpoint.__doc__
         return decorated
 
     return decorate_sync_async(endpoint)
@@ -70,7 +71,7 @@ class StreamingResponse(StarletteStreamingResponse):
 
     def __init__(
         self,
-        html_content: ext.Tags,
+        html_content: dom_tag.dom_tag,
         status_code: int = 200,
         headers: dict = None,
         media_type: str = None,
@@ -94,7 +95,7 @@ def streaming_response(
             @wraps(endpoint)
             async def decorated(*args, **kwargs) -> StreamingResponse:
                 content = await endpoint(*args, **kwargs)
-                if isinstance(content, ext.Tags):
+                if isinstance(content, dom_tag.dom_tag):
                     return StreamingResponse(content)
                 return content
 
@@ -103,10 +104,11 @@ def streaming_response(
             @wraps(endpoint)
             def decorated(*args, **kwargs) -> StreamingResponse:
                 content = endpoint(*args, **kwargs)
-                if isinstance(content, ext.Tags):
+                if isinstance(content, dom_tag.dom_tag):
                     return StreamingResponse(content)
                 return content
 
+        decorated.__doc__ = endpoint.__doc__
         return decorated
 
     return decorate_sync_async(endpoint)
