@@ -200,6 +200,7 @@ DOCUMENT_TEMP = _Template(
     """
 from uidom import Document
 from uidom.dom import link, raw, uniqueid, meta, script
+from uidom.scripts import html_elements
 from $variable::app_name import settings
 from $variable::app_name.tailwindcss import tailwind
 
