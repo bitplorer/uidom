@@ -8,9 +8,9 @@ import asyncio
 import logging
 import platform
 import subprocess
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from textwrap import dedent
 from typing import Optional, Union
 
 import valio
@@ -115,7 +115,7 @@ class TailwindValidator(valio.Validator):
 
 
 @dataclass
-class TailwindCommand(Command):
+class TailwindCommand(object):
     tailwindcss = TailwindValidator(debug=True, logger=False, default="tailwindcss")
     file_path: Union[str, Path]
     webassets: WebAssets
@@ -145,16 +145,16 @@ class TailwindCommand(Command):
         except IndexError as e:
             old_output_file = None
             # here none of the css file exists so we will create it
-            self._output_file.touch()
 
         if old_output_file:
             self._output_file = self.webassets.static.css / old_output_file
-            self._output_file = self._output_file.replace(
-                self._output_file.with_name(
-                    f"{self.output_css.stem}_{time.strftime('%d_%b_%Y_%H_%M_%S')}{self._output_file.suffix}"
-                )
-            )
             self.output_css = self._output_file.name
+            self._output_file = self._output_file.replace(
+                self._output_file.with_name(self.output_css)
+            )
+        else:
+            self._output_file = self.webassets.static.css / self.output_css
+            self._output_file.touch()
 
         self.init_tailwind_project()
 
@@ -167,38 +167,41 @@ class TailwindCommand(Command):
                 if tailwind_config_js.exists():
                     with tailwind_config_js.open("w", encoding="utf-8") as tw:
                         tw.write(
-                            f"""module.exports = {{
-    mode: "jit",
-    darkMode: "class",
-    content: {{
-        files:[
-        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/*.{{html,py}}",
-        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/*.{{html,py}}",
-        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/**/*.{{html,py}}",
-        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/**/**/*.{{html,py}}",
-        ]
-        }},
-    plugins: [
-        require('@tailwindcss/aspect-ratio'),
-        require('@tailwindcss/forms'),
-        require('@tailwindcss/typography'),
-        require('tailwindcss/colors'),
-    ],
-    theme: {{
-        extend: {{
-            keyframes:{{
-                ripple:{{
-                    '0%': {{opacity:1, scale:0}},
-                    '100':{{opacity:0, scale:1.5}}
-                }}
-            }},
-            animation:{{
-                ripple: 'ripple 0.5s linear infinite'
-            }}
-        }}
-    }}
-    
-    }}"""
+                            dedent(
+                                f"""
+                                    module.exports = {{
+                                    mode: "jit",
+                                    darkMode: "class",
+                                    content: {{
+                                        files:[
+                                        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/*.{{html,py}}",
+                                        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/*.{{html,py}}",
+                                        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/**/*.{{html,py}}",
+                                        "../../{self._project_dir.relative_to(self._root_dir.parent.parent)}/**/**/**/*.{{html,py}}",
+                                        ]
+                                        }},
+                                    plugins: [
+                                        require('@tailwindcss/aspect-ratio'),
+                                        require('@tailwindcss/forms'),
+                                        require('@tailwindcss/typography'),
+                                        require('tailwindcss/colors'),
+                                    ],
+                                    theme: {{
+                                        extend: {{
+                                            keyframes:{{
+                                                ripple:{{
+                                                    '0%': {{opacity:1, scale:0}},
+                                                    '100':{{opacity:0, scale:1.5}}
+                                                }}
+                                            }},
+                                            animation:{{
+                                                ripple: 'ripple 0.5s linear infinite'
+                                            }}
+                                        }}
+                                    }}
+                                    
+                                    }}"""
+                            )
                         )
             if not self._input_file.exists() and tailwind_config_js.exists():
                 with self._input_file.open("w", encoding="utf-8") as f:
@@ -244,7 +247,9 @@ class TailwindCommand(Command):
                     self._output_file.relative_to(self._root_dir),
                     f"--{(self.minify and 'minify') or 'watch'}",
                 ],
-                cwd=self._root_dir,
+                cwd=self._root_dir.as_posix().encode()
+                if not IS_WINDOWS
+                else str(self._root_dir).encode(),
             )
             return output
         except (Exception,) as e:
@@ -257,7 +262,7 @@ class TailwindCommand(Command):
 
         try:
             if not hasattr(self, "_tailwind_process"):
-                tailwind_process = asyncio.create_subprocess_shell(
+                self._tailwind_process = await asyncio.create_subprocess_shell(
                     " ".join(
                         [
                             self.tailwindcss,
@@ -268,15 +273,16 @@ class TailwindCommand(Command):
                             f"--{(self.minify and 'minify') or 'watch'}",
                         ]
                     ),
-                    cwd=self._root_dir,
-                    stdout=subprocess.PIPE,  # if you want the output in the terminal comment this line
-                    stderr=subprocess.PIPE,
+                    cwd=self._root_dir.as_posix().encode()
+                    if not IS_WINDOWS
+                    else str(self._root_dir).encode(),
+                    stdout=asyncio.subprocess.PIPE,  # if you want the output in the terminal comment this line
+                    stderr=asyncio.subprocess.PIPE,
                 )
-                self._tailwind_process = tailwind_process
-            process = await self._tailwind_process
-            stdout, stderr = await process.communicate()
-            logger.info(f"Output: { stdout}")
-            logger.info(f"Error: { stderr}")
+
+            stdout, stderr = await self._tailwind_process.communicate()
+            logger.info(f"Output: { stdout.decode()}")
+            logger.info(f"Error: { stderr.decode()}")
         except (Exception,) as e:
             logger.error(e)
 
