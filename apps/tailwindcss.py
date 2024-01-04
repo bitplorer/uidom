@@ -1,4 +1,3 @@
-
 from apps import settings
 from uidom import TailwindCommand
 
