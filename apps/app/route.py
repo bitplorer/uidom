@@ -32,7 +32,7 @@ async def get():
         x_button(
             # filename="app/btn.html",
             btn_text="Login",
-            btn_class="""flex text-rose-600 text-sm px-2 py-4 items-center justify-center text-center""",
+            btn_class="""flex font-bold text-[#322872] text-sm px-6 py-2 items-center justify-center text-center border border-[#661112] rounded-md""",
             className="[&:not(:defined)]:opacity-0 transition ease-in duration-[400ms]",
             hx_get="/login",
             hx_target="#content",
