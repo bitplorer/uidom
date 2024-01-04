@@ -125,7 +125,7 @@ function createCustomElement(component) {
                 if (template?.content.childElementCount) {
                     // select element with x-data and populate it with this.data
                     let data_element = template.content.querySelector('[x-data]');
-                    this.include_data_in_data(data_element);
+                    this.include_data_in_xdata(data_element);
                     shadow.appendChild(template.content.cloneNode(true));
                     }
                 else {
@@ -143,7 +143,7 @@ function createCustomElement(component) {
                 if (!!template){
                     // select element with x-data and populate it with this.data
                     let data_element = component.content.querySelector('[x-data]');
-                    this.include_data_in_data(data_element);
+                    this.include_data_in_xdata(data_element);
                     this.append(component.content.cloneNode(true));
                     }
                 else {
@@ -217,7 +217,7 @@ function createCustomElement(component) {
             }
         }
         
-        include_data_in_data(data_element){
+        include_data_in_xdata(data_element){
             let orig_xdata = data_element?.getAttribute('x-data');
             if (orig_xdata && isJSON(orig_xdata)){
                 orig_xdata = JSON.parse(orig_xdata);
